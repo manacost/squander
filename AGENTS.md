@@ -28,13 +28,13 @@ Name unit tests `*.test.ts` or `*.spec.ts` beneath `src/`; Vitest only discovers
 ## Git Guidelines
 
 - Commit frequently at meaningful checkpoints, once a coherent change is complete and its relevant checks pass. Each commit must be atomic: one logical change, independently understandable and revertible.
-- Use Conventional Commits: `type(scope): imperative summary`. Use `feat`, `fix`, `refactor`, `test`, `chore`, `build`, `ci`, or `perf`; omit the scope for repository-wide changes. Examples: `fix(scenes): correct current scene`, `feat(viewport): add zoom limits`, and `chore: update project rules`.
+- Use Conventional Commits: `type(scope): imperative summary`. Use `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `build`, `ci`, or `perf`; omit the scope for repository-wide changes. Examples: `fix(scenes): correct current scene`, `feat(viewport): add zoom limits`, and `chore: update project rules`.
 - Stage only files belonging to the current change. Preserve unrelated work and avoid mixing generated files with source changes.
 - Pull requests should explain the behavior change, list validation performed, link related issues, and include screenshots or recordings for visible UI or rendering changes.
 
 ## Documentation Guidelines
 
-We never allow documentation. Do not create or update documentation files or documentation pages, including for public API changes. Express behavior through clear code and focused tests. Leave existing documentation in place. Explicitly requested edits to project rules such as this file are allowed.
+We never allow documentation to go stale. Update affected documentation and examples in the same atomic commit as changes to public APIs, behavior, configuration, or workflows. Before completing a change, verify that the relevant documentation matches the implementation and correct any discrepancies.
 
 ## Agent-Specific Instructions
 
