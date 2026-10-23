@@ -25,10 +25,17 @@ Use two-space indentation, double quotes, trailing commas, and a 140-character p
 
 Name unit tests `*.test.ts` or `*.spec.ts` beneath `src/`; Vitest only discovers that tree. Place browser flows in `tests/`. Coverage is minimal, so add focused tests and manually exercise the relevant demo for rendering or lifecycle work. Run `npm run package` when changing exports.
 
-## Commit & Pull Request Guidelines
+## Git Guidelines
 
-History uses short, imperative subjects such as `Update docs`, `Fix Scenes.current being incorrect`, and `Add demo of scene stack`. Keep each commit focused and avoid mixing generated files with source changes. Pull requests should explain the behavior change, list validation performed, link related issues, and include screenshots or recordings for visible UI or rendering changes.
+- Commit frequently at meaningful checkpoints, once a coherent change is complete and its relevant checks pass. Each commit must be atomic: one logical change, independently understandable and revertible.
+- Use Conventional Commits: `type(scope): imperative summary`. Use `feat`, `fix`, `refactor`, `test`, `chore`, `build`, `ci`, or `perf`; omit the scope for repository-wide changes. Examples: `fix(scenes): correct current scene`, `feat(viewport): add zoom limits`, and `chore: update project rules`.
+- Stage only files belonging to the current change. Preserve unrelated work and avoid mixing generated files with source changes.
+- Pull requests should explain the behavior change, list validation performed, link related issues, and include screenshots or recordings for visible UI or rendering changes.
+
+## Documentation Guidelines
+
+We never allow documentation. Do not create or update documentation files or documentation pages, including for public API changes. Express behavior through clear code and focused tests. Leave existing documentation in place. Explicitly requested edits to project rules such as this file are allowed.
 
 ## Agent-Specific Instructions
 
-Inspect `git status` before editing and preserve unrelated work in a dirty tree. Prefer source code over stale examples when behavior differs. Keep changes scoped, update documentation for public API changes, and report pre-existing check failures separately.
+Inspect `git status` before editing and preserve unrelated work in a dirty tree. Prefer source code over stale examples when behavior differs. Keep changes scoped and report pre-existing check failures separately.
