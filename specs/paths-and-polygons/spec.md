@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are outside Phase 2 (AD-027).
+
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
 - Support filled and outlined simple polygons, including concave polygons, without holes or self-intersections.
@@ -31,6 +33,8 @@ A game creates an L-shaped polygon once and draws it at several locations; its c
 A reusable path combines straight and curved segments. Repeated drawing changes its placement without changing the path shape.
 
 ## Acceptance criteria
+
+- Verify overlapping translucent draws against independently calculated source-over results, including reversed order and mixed primitive types. Fully transparent draws leave earlier content unchanged.
 
 - Verify omitted opacity equals 1, zero opacity contributes no visible color, and color alpha 0.5 with opacity 0.5 yields effective source alpha 0.25 before coverage. Verify the next draw retains its own default opacity.
 

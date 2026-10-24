@@ -1,6 +1,6 @@
 # Phase 3 capability candidates
 
-Last updated: 2026-10-23.
+Last updated: 2026-10-24.
 
 This is a planning backlog, not committed implementation scope. Entries need
 capability specs, acceptance criteria, and test mappings before implementation.
@@ -26,6 +26,9 @@ were planning labels only. Lists replace the earlier tables for readability.
 - **Swappable cameras/projections:** a possible extension within the 2D commitment.
 - **Filled curved paths, polygon holes, and fill rules:** extensions beyond Phase
   2's stroked paths and simple concave polygons.
+
+- **Additional blend modes:** additive and multiply blending, beyond Phase 2’s
+  normal source-over alpha blending (AD-027).
 
 ## Exploratory possibilities
 

@@ -23,7 +23,7 @@ log when architectural. No fixed implementation values below are implied.
 
 ## Rendering
 
-- `sprite-drawing`: color helper signatures/ranges and error types, color encoding/blending and invalid per-draw opacity handling,
+- `sprite-drawing`: color helper signatures/ranges and error types, color/alpha encoding and invalid per-draw opacity handling,
   atlas metadata, and negative-scale policy.
 - `shape-drawing`: anchors, stroke alignment, fixed cap/join behavior, degenerates,
   antialiasing, and stroke width under transforms.
@@ -67,9 +67,15 @@ remaining capability contracts above before their dependent implementation slice
 
 ## Rendering questionnaire progress
 
-Questions 1–5 of 6 have established radians with a `degrees()` helper (AD-022),
-image flips that preserve geometry and origins (AD-023), equal color helpers
-returning a shared readonly `Color` (AD-024), construction-time errors for invalid
-colors with finite hue wrapping (AD-025), and multiplicative per-draw opacity
-(AD-026). Exact helper contracts remain open. Six is the estimate for this rendering
-block, not all remaining project decisions. Continue with blending scope.
+The six-question rendering block is complete:
+
+- Radians with a `degrees()` helper (AD-022).
+- Image flips preserve geometry and origins (AD-023).
+- Equal color helpers return a shared readonly `Color` (AD-024).
+- Invalid colors throw at construction; finite hue wraps (AD-025).
+- Per-draw opacity multiplies alpha (AD-026).
+- Phase 2 uses normal source-over blending; additional modes are Phase 3 candidates (AD-027).
+
+This completes the block, not all rendering contracts. Exact helper contracts and
+internal encodings remain open. The next block covers geometry contracts, starting
+with shape anchors; its initial estimate is five questions.

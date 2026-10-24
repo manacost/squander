@@ -335,8 +335,8 @@ makes an example clear. Convert authoring representations to a consistent RGB
 representation at construction rather than making each draw interpret HSL or hex.
 The renderer owns the required color-space conversions.
 
-Exact helper signatures/ranges, internal encoding, and blending policy still need
-explicit contracts. AD-025 defines invalid-input behavior; AD-026 defines opacity
+Exact helper signatures/ranges and internal encoding still need explicit contracts.
+AD-027 defines Phase 2 blending scope. AD-025 defines invalid-input behavior; AD-026 defines opacity
 composition. Supporting HSL
 does not imply HSL interpolation or a palette-manipulation API in Phase 2.
 
@@ -362,6 +362,18 @@ calls. Developers can fade an item without constructing a new color.
 
 This defines source alpha, not the final framebuffer alpha or the blend equation.
 Invalid per-draw opacity handling and internal alpha encoding remain open.
+
+## AD-027: Normal alpha blending in Phase 2
+
+Use normal source-over alpha blending for every Phase 2 draw: later sprites,
+shapes, paths, polygons, and text appear over earlier content, with transparency
+revealing what is behind them. Apply AD-026's effective source alpha consistently
+across primitive types. Batching must preserve these results and draw order.
+
+Do not expose selectable blend modes in Phase 2. Additional modes, including
+additive and multiply blending, are Phase 3 candidates rather than committed
+implementation scope. Internal alpha encoding and color-space handling remain
+implementation contracts to resolve and verify.
 
 ## Implementation readiness
 

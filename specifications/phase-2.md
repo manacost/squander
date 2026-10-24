@@ -32,7 +32,8 @@ Svelte/SvelteKit integration. The interview direction is consolidated into
 
 ### Rendering and viewports
 
-- WebGPU is the sole backend. All primitive types preserve draw call order.
+- WebGPU is the sole backend. All primitive types preserve draw call order and
+  use normal source-over alpha blending. Additional blend modes are Phase 3 candidates.
 - Sprites support regions, tint, opacity, scaling, rotation, and flips, with
   explicit options and no style leakage between draws.
 - Positive X points right and positive Y down. Sprite origins default to top-left
