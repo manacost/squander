@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
+
 - Accept the shared readonly `Color` type, constructed through equally supported HSL/HSLA, RGB/RGBA, and hex helpers (AD-024).
 - Color helpers validate at construction and throw for invalid inputs, including nonfinite numbers and alpha outside 0–1; finite hue wraps around a full turn (AD-025).
 
@@ -32,6 +34,8 @@ The game draws a stroked rectangle around a sprite; its interior stays transpare
 A filled circle is drawn over a rectangle and a line crosses both, with output following call order.
 
 ## Acceptance criteria
+
+- Verify omitted opacity equals 1, zero opacity contributes no visible color, and color alpha 0.5 with opacity 0.5 yields effective source alpha 0.25 before coverage. Verify the next draw retains its own default opacity.
 
 - Verify equivalent helper-created colors produce equivalent drawing results; examples need not prefer one helper family.
 - Verify color construction rejects invalid alpha and nonfinite channels with informative errors, accepts alpha endpoints, and treats hue values separated by a full turn as equivalent.

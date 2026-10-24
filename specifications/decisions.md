@@ -335,8 +335,9 @@ makes an example clear. Convert authoring representations to a consistent RGB
 representation at construction rather than making each draw interpret HSL or hex.
 The renderer owns the required color-space conversions.
 
-Exact helper signatures/ranges, internal encoding, alpha composition, and
-blending policy still need explicit contracts. AD-025 defines invalid-input behavior. Supporting HSL
+Exact helper signatures/ranges, internal encoding, and blending policy still need
+explicit contracts. AD-025 defines invalid-input behavior; AD-026 defines opacity
+composition. Supporting HSL
 does not imply HSL interpolation or a palette-manipulation API in Phase 2.
 
 ## AD-025: Validate colors at construction
@@ -349,6 +350,18 @@ Reject NaN and infinity. Finite hue values intentionally wrap around a full turn
 Validate at construction so drawing consumes validated color values. Exact RGB
 and saturation/lightness input ranges, supported hex formats, error types, and
 how the type prevents unchecked construction remain API design details.
+
+## AD-026: Per-draw opacity multiplies alpha
+
+Provide per-draw `opacity`, defaulting to 1, for sprites, shapes (including paths
+and polygons), and text. Multiply it by the color's alpha and, where applicable,
+the texture or glyph's alpha/coverage. An opaque sprite pixel with tint alpha 0.5
+and opacity 0.5 has effective source alpha 0.25; a transparent pixel stays
+transparent. A draw's opacity does not mutate its color, assets, or subsequent
+calls. Developers can fade an item without constructing a new color.
+
+This defines source alpha, not the final framebuffer alpha or the blend equation.
+Invalid per-draw opacity handling and internal alpha encoding remain open.
 
 ## Implementation readiness
 
