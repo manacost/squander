@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { app, Game, Scenes } from "$lib/index.ts";
+  import { app, Game, Scenes } from "#lib/index.ts";
   import { Text } from "pixi.js";
 
-  //   import { Game } from "$lib/core/ui/Game.svelte";
+  //   import { Game } from "#lib/core/ui/Game.svelte";
 
   const hello_world_scene = Scenes.create(async () => {
     return {

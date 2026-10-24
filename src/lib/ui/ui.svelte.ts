@@ -1,7 +1,7 @@
 import { mount as mountComponent, unmount, type ComponentProps, type Component as Svelte5Component, type SvelteComponent } from "svelte";
 
 import { get, writable, type Unsubscriber, type Writable } from "svelte/store";
-import { assert } from "$lib/core/assert.js";
+import { assert } from "#lib/core/assert.js";
 
 export const root_el = writable<HTMLElement | undefined>(undefined);
 

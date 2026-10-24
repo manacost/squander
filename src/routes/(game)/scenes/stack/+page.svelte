@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Game from "$lib/ui/Game.svelte";
-  import pixi_demo from "$lib/scenes/pixi-demo.js";
-  import { app, Scenes } from "$lib/index.js";
-  import { wait } from "$lib/core/utils.ts";
+  import Game from "#lib/ui/Game.svelte";
+  import pixi_demo from "#lib/scenes/pixi-demo.js";
+  import { app, Scenes } from "#lib/index.js";
+  import { wait } from "#lib/core/utils.ts";
 
   const scene_a = Scenes.create(async () => {
     return {

@@ -1,4 +1,4 @@
-import { Scenes } from "$lib/core/scene.js";
+import { Scenes } from "#lib/core/scene.js";
 import { Container, Assets, Sprite, Texture } from "pixi.js";
 import { app } from "../core/app.js";
 

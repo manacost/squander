@@ -1,4 +1,4 @@
-import { Scenes } from "$lib/core/scene.js";
+import { Scenes } from "#lib/core/scene.js";
 import { battle_system } from "./instance.js";
 import { wait } from "./utils.js";
 

@@ -1,9 +1,9 @@
 import type { Ticker } from "pixi.js";
 import { create_cooldown, wait } from "./utils.js";
 import battle from "./battle.js";
-import { create_signal } from "$lib/core/signal.js";
-import { Scenes } from "$lib/core/scene.js";
-import { ui_proxy } from "$lib/ui/ui.svelte.ts";
+import { create_signal } from "#lib/core/signal.js";
+import { Scenes } from "#lib/core/scene.js";
+import { ui_proxy } from "#lib/ui/ui.svelte.ts";
 
 // Random utilities
 export const sign = () => (Math.random() > 0.5 ? 1 : -1);

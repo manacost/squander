@@ -3,8 +3,8 @@
   import PixiRenderer from "./PixiRenderer.svelte";
   import { type Snippet } from "svelte";
 
-  import { initialize } from "$lib/core/index.js";
-  import { Scenes, type Scene } from "$lib/core/scene.js";
+  import { initialize } from "#lib/core/index.js";
+  import { Scenes, type Scene } from "#lib/core/scene.js";
   interface Props {
     children?: Snippet<any>;
     onStart: () => void;

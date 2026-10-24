@@ -17,3 +17,24 @@ test("documentation navigation loads the getting-started guide", async ({ page }
   await expect(page.getByRole("heading", { level: 1, name: "Getting Started" })).toBeVisible();
   await expect(page.getByText("npm i squander@latest svelte pixi.js")).toBeVisible();
 });
+
+for (const scene of ["pixi-demo", "camera", "ui-bridge"]) {
+  test(`${scene} initializes its rendering surface`, async ({ page }) => {
+    const page_errors: string[] = [];
+    page.on("pageerror", (error) => page_errors.push(error.message));
+    await page.goto(`/scenes/${scene}`);
+    const canvas = page.locator("canvas");
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0)).toBe(true);
+
+    if (scene === "ui-bridge") {
+      await expect(page.getByRole("heading", { name: "Hello from Scene" })).toBeVisible();
+      await page.getByRole("button", { name: "+", exact: true }).click();
+      await expect(page.getByRole("button", { name: "11", exact: true })).toBeVisible();
+    }
+
+    await page.getByRole("link", { name: "Back to root" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "squander" })).toBeVisible();
+    expect(page_errors).toEqual([]);
+  });
+}

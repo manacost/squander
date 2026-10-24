@@ -1,7 +1,7 @@
-import { Scenes } from "$lib/core/scene.js";
+import { Scenes } from "#lib/core/scene.js";
 import { Container, Assets, Sprite, Texture, Graphics, Text } from "pixi.js";
 import { app } from "../core/app.js";
-import { base } from "$app/paths";
+import { asset } from "$app/paths";
 
 type TileData = {
   x: number;
@@ -13,7 +13,7 @@ export default Scenes.create(async () => {
   const tile_size_x = 128;
   const tile_size_y = tile_size_x / 2;
   let texture = await Assets.load<Texture>("https://pixijs.com/assets/bunny.png");
-  let house = await Assets.load<Texture>(`${base}/isohouse.png`);
+  let house = await Assets.load<Texture>(asset("isohouse.png"));
   let tiles: TileData[] = [];
 
   const GRID_ROWS = 5;

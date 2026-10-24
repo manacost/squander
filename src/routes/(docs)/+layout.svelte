@@ -1,16 +1,16 @@
 <script lang="ts">
   import { afterNavigate } from "$app/navigation";
-  import { base } from "$app/paths";
-  import { getStores, navigating, page, updated } from "$app/stores";
+  import { asset, resolve } from "$app/paths";
+  import { page } from "$app/state";
   import type { LayoutData } from "./$types.js";
 
-  let pagePath = $derived($page.url.pathname);
+  let page_path = $derived(page.url.pathname);
 
-  let links: [label: string, link: string][] = [["about", "/"]];
+  const links = [["about", "/"]] as const;
 
-  let documentation: string[] = ["getting-started", "ui"];
+  const documentation = ["getting-started", "ui"] as const;
 
-  let scenes: string[] = ["pixi-demo", "test", "camera", "ui-test", "ui-bridge", "stack", "complex-example"];
+  const scenes = ["pixi-demo", "test", "camera", "ui-test", "ui-bridge", "stack", "complex-example"] as const;
   interface Props {
     data: LayoutData;
     children?: import("svelte").Snippet;
@@ -26,33 +26,33 @@
 </script>
 
 <svelte:head>
-  <link href={`${base}/fonts.css`} rel="stylesheet" />
-  <link href={`${base}/prism-hopscotch.css`} rel="stylesheet" />
+  <link href={asset("fonts.css")} rel="stylesheet" />
+  <link href={asset("prism-hopscotch.css")} rel="stylesheet" />
 </svelte:head>
 
 <div class="container content">
   <header class="sidebar subtitle">
     <div class="title-and-version">
-      <svelte:element this={pagePath === "/" ? "h1" : "h2"} class="title">squander</svelte:element>
-      <a href={`${base}/package`} class="version"><span class="tiny-v">v</span>{data.package.version}</a>
+      <svelte:element this={page_path === "/" ? "h1" : "h2"} class="title">squander</svelte:element>
+      <a href={resolve("/package")} class="version"><span class="tiny-v">v</span>{data.package.version}</a>
     </div>
 
     <nav class="list">
       {#each links as [label, link]}
-        <a class="link" class:active={link === pagePath} href={`${base}${link}`}>{label}</a>
+        <a class="link" class:active={link === page_path} href={resolve("/(docs)")}>{label}</a>
       {/each}
 
       <h5 class="sep subtitle">Docs</h5>
       {#each documentation as doc}
-        {@const link = `/docs/${doc}`}
-        <a class="link" class:active={link === pagePath} href={`${base}${link}`}>{doc}</a>
+        {@const link = `/docs/${doc}` as const}
+        <a class="link" class:active={link === page_path} href={resolve(`/(docs)/docs/${doc}`)}>{doc}</a>
       {/each}
 
       <h5 class="sep subtitle">Scenes</h5>
       <div data-sveltekit-reload>
         {#each scenes as scene}
-          {@const link = `/scenes/${scene}`}
-          <a class="link" class:active={link === pagePath} href={`${base}${link}`}>{scene}</a>
+          {@const link = `/scenes/${scene}` as const}
+          <a class="link" class:active={link === page_path} href={resolve(`/(game)/scenes/${scene}`)}>{scene}</a>
         {/each}
       </div>
     </nav>

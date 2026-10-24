@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { base } from "$app/paths";
+  import { resolve } from "$app/paths";
   interface Props {
     children?: import("svelte").Snippet;
   }
@@ -10,7 +10,7 @@
 {@render children?.()}
 
 <footer class="backlink" data-sveltekit-reload>
-  <a href={`${base}/`}>Back to root</a>
+  <a href={resolve("/(docs)")}>Back to root</a>
 </footer>
 
 <style>

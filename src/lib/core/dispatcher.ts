@@ -1,4 +1,4 @@
-import { assert } from "$lib/core/assert.js";
+import { assert } from "#lib/core/assert.js";
 
 type Unsubscriber = () => void;
 

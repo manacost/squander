@@ -6,7 +6,7 @@ This repository contains both the npm library and the SvelteKit application used
 
 ## Develop locally
 
-Use npm with the committed `package-lock.json`. The GitHub Pages workflow uses Node.js 20; the repository does not declare a Node version in `engines` or a version-manager file.
+Use npm with the committed `package-lock.json`. Node.js 22.17 or newer is required; the GitHub Pages workflow uses Node.js 24. SvelteKit 3 configuration lives in `vite.config.ts`; local library imports use the `#lib` package import mapping.
 
 ```sh
 npm ci
@@ -28,10 +28,10 @@ Useful routes:
 
 ## Use the library
 
-In a TypeScript-enabled Svelte application, install the package and its peer dependencies. This checkout declares Svelte `^5.2.4` and PixiJS `^8.5.1` as peers.
+In a TypeScript-enabled Svelte application, install the package and its peer dependencies. This checkout declares Svelte `^5.57.1` and PixiJS `^8.5.1` as peers.
 
 ```sh
-npm install squander svelte@^5.2.4 pixi.js@^8.5.1
+npm install squander svelte@^5.57.1 pixi.js@^8.5.1
 ```
 
 A minimal Svelte component:
@@ -97,7 +97,7 @@ The application, scene manager, and UI root are shared singletons. Keep that in 
 | `tests/`                     | Playwright browser tests.                                                           |
 | `.github/workflows/`         | Static-site build and GitHub Pages deployment.                                      |
 
-`$lib` resolves to `src/lib`. Files in `src/lib` are the packaging input, including demos; a file's presence there does not mean it is exported from the package root. Check `src/lib/index.ts` and the `exports` map in `package.json` when changing the consumer-facing API.
+`#lib/*` resolves to `src/lib/*` through the package import map. Files in `src/lib` are the packaging input, including demos; a file's presence there does not mean it is exported from the package root. Check `src/lib/index.ts` and the `exports` map in `package.json` when changing the consumer-facing API.
 
 `dist/` (library), `build/` (static site), and `.svelte-kit/` (SvelteKit-generated files) are generated output and ignored by git. Edit source files rather than these directories.
 

@@ -1,12 +1,12 @@
-import { Scenes, use } from "$lib/core/scene.js";
+import { Scenes, use } from "#lib/core/scene.js";
 import { Container, Assets, Sprite, Texture } from "pixi.js";
 
-import { create_input_map } from "$lib/core/input.js";
-import { mount_all } from "$lib/core/observable/utils.js";
-import { create_ui } from "$lib/ui/ui.svelte.js";
+import { create_input_map } from "#lib/core/input.js";
+import { mount_all } from "#lib/core/observable/utils.js";
+import { create_ui } from "#lib/ui/ui.svelte.js";
 import Camera from "./Camera.svelte";
-import { as_draggable, create_viewport } from "$lib/create_viewport.js";
-import { app } from "$lib/core/app.js";
+import { as_draggable, create_viewport } from "#lib/create_viewport.js";
+import { app } from "#lib/core/app.js";
 
 export default Scenes.create(async () => {
   const container = new Container();

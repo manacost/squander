@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Game from "$lib/ui/Game.svelte";
-  import complex_example from "$lib/scenes/complex-ui/battle_test.js";
-  import { Scenes } from "$lib/index.js";
+  import Game from "#lib/ui/Game.svelte";
+  import complex_example from "#lib/scenes/complex-ui/battle_test.js";
+  import { Scenes } from "#lib/index.js";
 
   async function initialize() {
     Scenes.switch(complex_example);

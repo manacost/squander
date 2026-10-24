@@ -1,5 +1,5 @@
-import { Scenes } from "$lib/core/scene.js";
-import { create_ui } from "$lib/ui/ui.svelte.js";
+import { Scenes } from "#lib/core/scene.js";
+import { create_ui } from "#lib/ui/ui.svelte.js";
 
 import Bridge from "./Bridge.svelte";
 
