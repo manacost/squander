@@ -16,6 +16,8 @@ This draft does not claim implementation or verification.
 - Draw textures or atlas regions with tint, opacity, rotation, scale, and flipping.
 - Preserve call order across sprites, shapes, and text; batching must preserve the visible result.
 - Use positive X right and positive Y down. Default sprite origin to top-left; a normalized origin applies relative to the selected region.
+- Express rotation in radians, with positive angles rotating clockwise in the positive-Y-down coordinate system.
+- Provide `degrees(value)` to convert degrees to radians; `degrees(90)` is a clockwise quarter-turn.
 - The origin anchors positioning, scaling, and rotation. Explicit draw options do not leak into subsequent calls.
 
 ## Scenarios
@@ -23,6 +25,11 @@ This draft does not claim implementation or verification.
 ### Centered atlas sprite
 
 A selected atlas region uses origin (0.5, 0.5). Rotating/scaling keeps its center at the specified position without using the full atlas size.
+
+### Clockwise quarter-turn
+
+A point to the right of the sprite origin rotates below it after a positive quarter-turn.
+Passing `degrees(90)` produces the same transform as passing `Math.PI / 2`.
 
 ### Mixed overlap
 
@@ -33,11 +40,13 @@ A sprite, a translucent shape, and text overlap. Their visible composition follo
 - Render a distinctly colored atlas fixture and verify the selected region, flipping, and origin placement under scale/rotation.
 - Render overlapping primitives in two call orders and verify the expected compositing difference.
 - Draw a tinted/transformed sprite then an unstyled sprite; the second uses defaults.
+- Verify `degrees(0)`, `degrees(90)`, `degrees(-90)`, and `degrees(360)` against expected radian values with numeric tolerance.
+- Verify positive quarter-turn rotation maps an origin-relative point (1, 0) to (0, 1), and a negative quarter-turn maps it to (0, -1).
 - Check CPU transform calculations against independent expected points, not a duplicate of the renderer algorithm.
 
 ## Usage description
 
-Illustrative: draw.sprite(hero, { x: 100, y: 80, origin: { x: 0.5, y: 0.5 } }). Draw later items after earlier ones to place them above.
+Illustrative: draw.sprite(hero, { x: 100, y: 80, origin: { x: 0.5, y: 0.5 }, rotation: degrees(90) }). Draw later items after earlier ones to place them above.
 
 ## Test references
 
@@ -50,7 +59,8 @@ Use `[sprite-drawing]` in relevant suite names and add actual file/suite links a
 
 ## Notes
 
-AD-008 and AD-014. Open: rotation units/direction (radians were proposed, not confirmed), alpha/color representation, atlas descriptor, and flip/origin interaction.
+AD-008, AD-014, and AD-022. Open: alpha/color representation, atlas descriptor, and flip/origin interaction.
+The angle convention and helper are agreed; the illustrative draw-option spelling and any branded angle type remain API design details.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

@@ -309,6 +309,15 @@ Capture baseline failures and verify diagnostics, build/package, tests, and demo
 Report existing strict-lint debt separately instead of confusing it with migration
 regressions or weakening the baseline to hide it.
 
+## AD-022: Rotation units and degrees helper
+
+Express drawing rotation in radians. Positive angles rotate clockwise in the
+agreed positive-Y-down coordinate system. Provide `degrees(value)` to convert
+degrees to radians, so `degrees(90)` expresses a clockwise quarter-turn. The helper
+belongs in Phase 2 alongside rotation; the broader safe-math capability remains
+a future candidate. This decision does not settle branded angle types or camera
+rotation semantics.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

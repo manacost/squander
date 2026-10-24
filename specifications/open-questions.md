@@ -23,7 +23,7 @@ log when architectural. No fixed implementation values below are implied.
 
 ## Rendering
 
-- `sprite-drawing`: angle units/direction, color/alpha representation, atlas metadata,
+- `sprite-drawing`: color/alpha representation, atlas metadata,
   and how explicit flips interact with origins.
 - `shape-drawing`: anchors, stroke alignment, fixed cap/join behavior, degenerates,
   antialiasing, and stroke width under transforms.
@@ -64,3 +64,9 @@ agreed in AD-021. The coordinated Svelte/SvelteKit toolchain upgrade is complete
 
 The lifecycle/timing and maintenance questionnaire is complete. Continue with the
 remaining capability contracts above before their dependent implementation slices.
+
+## Rendering questionnaire progress
+
+Question 1 of 6 is resolved: radians, positive clockwise, with a `degrees()` helper
+(AD-022). Six is the estimate for this rendering block, not all remaining project
+decisions. Continue with flip/origin behavior before the remaining rendering contracts.
