@@ -437,6 +437,26 @@ so animations can shrink to zero without special handling. For example,
 from (70, 60) to (100, 80). Reusable polygon/path validation and transformation
 pivot behavior remain separate contracts.
 
+## AD-033: Editable commands and explicit path geometry updates
+
+Construct reusable paths from declarative typed command arrays, using helpers
+such as `move_to`, `line_to`, curve commands, and `close`. The command array is
+ordinary editable application data; the created route is an opaque geometry
+handle, not an indexable array. Creation snapshots command values, so later
+array or command edits cannot silently change prepared geometry.
+
+Provide an explicit operation to submit revised commands to the same handle.
+Snapshot and validate the proposed commands before changing the active geometry.
+Invalid input throws and preserves the previous geometry. Successful updates keep
+the handle stable, so existing users of that handle draw the updated geometry.
+Ordinary placement changes use draw transforms; geometry updates happen outside
+`draw` to make rebuilding work explicit.
+
+The operation name is unresolved: `replace` was illustrative and is not the
+preferred committed verb. Exact signatures, command shapes, rebuild scheduling,
+and resource ownership/disposal remain open. This decision establishes path
+behavior; equivalent polygon editing ergonomics still need a contract.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

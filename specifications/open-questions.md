@@ -27,7 +27,8 @@ log when architectural. No fixed implementation values below are implied.
   atlas metadata, and negative-scale policy.
 - `shape-drawing`: transformation pivots, the exact miter limit, very wide strokes,
   antialiasing, and nonuniform object-scale behavior.
-- `paths-and-polygons`: path syntax, tessellation tolerance, winding, invalid inputs,
+- `paths-and-polygons`: exact command shapes, update-operation name (revisit `replace`),
+  polygon editing ergonomics, rebuild scheduling, subpath semantics, tessellation tolerance, winding, invalid inputs,
   and reusable geometry ownership/disposal.
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
@@ -91,5 +92,10 @@ The five-question geometry block is complete:
 
 Future alignment, constant screen thickness, and configurable/rounded styles are
 recorded in the candidate log. This block does not resolve all geometry contracts.
-The next block covers reusable geometry, with an initial estimate of four questions,
-starting with path construction ergonomics.
+
+## Reusable geometry questionnaire progress
+
+Question 1 of 4 is resolved: editable declarative command arrays, snapshotted by
+opaque path handles, with explicit validated updates preserving handle identity
+(AD-033). Revisit the update verb; `replace` was not accepted as final naming.
+Continue with multiple subpaths. Four is an estimate for this block.

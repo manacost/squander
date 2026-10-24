@@ -25,6 +25,9 @@ This draft does not claim implementation or verification.
 - Center strokes on path centerlines and polygon boundaries, with half the width on each side (AD-029). Inside/outside alignment is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 - Support stroke-only paths with straight segments, quadratic and cubic Bézier curves, and explicit closure.
 - Create reusable geometry and draw it repeatedly with explicit transforms/styles. Rebuild when shape data changes.
+- Construct paths from declarative typed command arrays; snapshot their values at creation. The resulting handle is opaque, not an editable/indexable command array (AD-033).
+- Permit explicit path updates using revised commands, snapshotting and validating them before changing active geometry. Invalid updates throw and preserve the previous geometry; successful updates retain the handle identity.
+- Update path geometry outside `draw`; use per-draw transforms for ordinary placement changes. The update operation's name remains open.
 - Filled curved paths, holes, and fill rules are Phase 3 candidates.
 
 ## Scenarios
@@ -36,6 +39,12 @@ A game creates an L-shaped polygon once and draws it at several locations; its c
 ### Curved route
 
 A reusable path combines straight and curved segments. Repeated drawing changes its placement without changing the path shape.
+
+### Editing a route
+
+An application edits its command array after creating a route. Drawing the route
+still uses its original snapshot until an explicit update succeeds. An invalid
+update throws and the original route remains drawable through the same handle.
 
 ## Acceptance criteria
 
@@ -51,11 +60,25 @@ A reusable path combines straight and curved segments. Repeated drawing changes 
 - Render a concave polygon and test known inside/outside points, including its notch.
 - Render quadratic/cubic curves and closure with approved visual tolerances; curves meet specified endpoints.
 - Draw one geometry with distinct transforms and styles; neither draw mutates the reusable definition.
+- Verify edits to the source array or its command data do not alter the path after creation or a successful update.
+- Verify a valid explicit update changes rendered geometry without changing handle identity, and an invalid update preserves the previous rendered result.
+- Include type tests rejecting indexed assignment to the opaque path handle while allowing edits to application-owned command arrays.
 - Verify shape changes rebuild geometry while unchanged repeated draws reuse preparation; do not prescribe an exact triangulation algorithm.
 
 ## Usage description
 
 Create geometry independently of the draw callback, then submit it with per-draw options. Use polygons for filled custom forms and paths for curved strokes.
+
+Illustrative construction:
+
+```ts
+const commands = [move_to(0, 0), line_to(100, 0)];
+const route = create_path(commands);
+commands[1] = line_to(120, 20); // Does not change route by itself.
+```
+
+Submit revised commands through an explicit update operation outside `draw`.
+The operation name is intentionally undecided; `replace` is not an accepted API name.
 
 ## Test references
 
@@ -68,7 +91,7 @@ Use `[paths-and-polygons]` in relevant suite names and add actual file/suite lin
 
 ## Notes
 
-AD-015. Open: command format, tessellation tolerance under zoom, geometry ownership/disposal, winding rules, and behavior for unsupported/degenerate inputs.
+AD-015 and AD-033. Open: exact command shapes and update-operation name, polygon editing ergonomics, rebuild scheduling, tessellation tolerance under zoom, geometry ownership/disposal, winding rules, and behavior for unsupported/degenerate inputs.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
