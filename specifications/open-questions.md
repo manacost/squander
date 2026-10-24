@@ -25,7 +25,7 @@ log when architectural. No fixed implementation values below are implied.
 
 - `sprite-drawing`: color helper signatures/ranges and error types, color/alpha encoding and invalid per-draw opacity handling,
   atlas metadata, and negative-scale policy.
-- `shape-drawing`: transformation pivots, the exact miter limit, degenerates,
+- `shape-drawing`: transformation pivots, the exact miter limit, very wide strokes,
   antialiasing, and nonuniform object-scale behavior.
 - `paths-and-polygons`: path syntax, tessellation tolerance, winding, invalid inputs,
   and reusable geometry ownership/disposal.
@@ -81,10 +81,15 @@ internal encodings remain open.
 
 ## Geometry questionnaire progress
 
-Questions 1–4 of 5 are resolved: top-left rectangle anchors, center-based circles,
-explicit line endpoints (AD-028), centered strokes (AD-029), world-unit stroke
-widths (AD-030), and flat caps with limited sharp joins (AD-031). The exact miter
-limit remains open. Inside/outside alignment, constant screen thickness, and
-configurable/rounded styles are recorded in the future-capability log. Continue
-with invalid and zero-size geometry. Five is the estimate for this block, not all
-remaining geometry contracts.
+The five-question geometry block is complete:
+
+- Rectangle starting corners with signed dimensions, circle centers, and line endpoints (AD-028, refined by AD-032).
+- Centered strokes (AD-029).
+- World-unit stroke widths (AD-030).
+- Flat caps and limited sharp joins (AD-031); the exact miter limit remains open.
+- Invalid basic geometry throws; valid zero-size geometry draws nothing (AD-032).
+
+Future alignment, constant screen thickness, and configurable/rounded styles are
+recorded in the candidate log. This block does not resolve all geometry contracts.
+The next block covers reusable geometry, with an initial estimate of four questions,
+starting with path construction ergonomics.

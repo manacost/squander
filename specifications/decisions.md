@@ -377,7 +377,8 @@ implementation contracts to resolve and verify.
 
 ## AD-028: Basic shape anchors
 
-Place rectangles by their top-left `(x, y)` with width and height. Place circles
+Originally, rectangles used top-left `(x, y)` with positive width and height;
+AD-032 refines this to a starting corner with signed dimensions. Place circles
 by their center `(x, y)` with radius. Define lines by two explicit endpoints.
 These conventions apply to the underlying geometry of filled and outlined forms;
 stroke alignment is a separate decision. Basic placement does not require an
@@ -416,6 +417,25 @@ same policy to lines, outlined shapes, and stroked paths/polygons where applicab
 The exact miter-limit value and ratio definition remain to be specified before
 implementation. Rounded ends/corners and configurable cap/join styles remain
 future options recorded in the candidate log; Phase 2 exposes fixed defaults.
+
+## AD-032: Signed rectangles and invalid basic geometry
+
+Allow finite signed rectangle width and height. `(x, y)` is the starting corner;
+negative width extends left and negative height extends up. Normalize the bounds
+internally. This refines AD-028’s rectangle anchor wording; positive dimensions
+still start at the top-left. Signed dimensions define geometry, not texture flips.
+
+Throw for negative radii, negative stroke widths, and nonfinite basic geometry
+values, including positions. Negative finite positions remain valid. For otherwise
+valid inputs, draw nothing for zero-area rectangles (either dimension zero),
+zero-radius circles, zero-width strokes, and lines with coincident endpoints.
+Zero stroke width suppresses the stroke, not a separately requested fill.
+
+Apply rectangle/circle zero-size behavior to filled and outlined forms alike,
+so animations can shrink to zero without special handling. For example,
+`{ x: 100, y: 80, width: -30, height: -20 }` has normalized geometric bounds
+from (70, 60) to (100, 80). Reusable polygon/path validation and transformation
+pivot behavior remain separate contracts.
 
 ## Implementation readiness
 

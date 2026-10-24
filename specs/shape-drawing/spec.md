@@ -25,7 +25,9 @@ This draft does not claim implementation or verification.
 - Color helpers validate at construction and throw for invalid inputs, including nonfinite numbers and alpha outside 0–1; finite hue wraps around a full turn (AD-025).
 
 - Support lines and filled or outlined rectangles and circles, with explicit color and stroke width.
-- Place rectangles by their top-left `(x, y)` with width and height, circles by their center `(x, y)` with radius, and lines by two explicit endpoints (AD-028).
+- Place rectangles by a starting corner `(x, y)` with finite signed width and height; normalize their bounds internally. Negative width extends left, negative height extends up. Circles use their center and radius; lines use two explicit endpoints (AD-028, refined by AD-032).
+- Throw for negative radii, negative stroke widths, and nonfinite geometry values. Negative finite positions are valid (AD-032).
+- For otherwise valid inputs, draw nothing for zero-area rectangles, zero-radius circles, zero-width strokes, and zero-length lines. Zero-size rectangle/circle behavior applies to outlines as well as fills; zero stroke width does not suppress a separately requested fill.
 - Represent squares as rectangles with equal dimensions.
 - Use explicit options and preserve global call order.
 - Center strokes on the geometric boundary or line centerline, with half the width on each side (AD-029).
@@ -42,6 +44,13 @@ The game draws a stroked rectangle around a sprite; its interior stays transpare
 A rectangle at (10, 20) with width 30 and height 40 has geometric bounds from
 (10, 20) to (40, 60). A circle centered at (50, 60) with radius 10 has geometric
 bounds from (40, 50) to (60, 70). Stroke extent is governed separately by alignment.
+
+### Drawing backwards and shrinking to zero
+
+A selection rectangle starts at (100, 80) and extends by (-30, -20), covering the
+same bounds as a rectangle at (70, 60) with dimensions (30, 20). Either dimension
+can reach zero during dragging; the zero-area rectangle draws nothing. A negative
+circle radius instead throws, as does an infinite coordinate.
 
 ### Centered circle outline
 
@@ -68,12 +77,15 @@ A filled circle is drawn over a rectangle and a line crosses both, with output f
 - Render filled and outlined forms; verify interior/exterior sample points and stroke appearance under the documented width convention.
 - Verify rectangle and circle placement against the stated geometric bounds, and line geometry against both supplied endpoints, independently of stroke extent.
 - Verify the radius-10, width-4 circle outline against inner/outer radii 8 and 12, and verify straight stroke edges lie half a width from the centerline.
+- Verify all four rectangle dimension-sign combinations against equivalent positive-dimension bounds for both filled and outlined draws.
+- Verify invalid geometry throws, including nonfinite positions and negative radii/stroke widths; invalid inputs do not become acceptable merely because another dimension is zero.
+- Verify valid zero-size shapes, zero-width strokes, and coincident-endpoint lines leave existing output unchanged. Verify a zero-width stroke does not suppress a separately requested fill.
 - Render equal-dimension rectangles and verify square geometry.
 - Verify one shape’s style does not change the next and shape/sprite overlaps obey call order.
 
 ## Usage description
 
-Supply a rectangle’s top-left position and dimensions, a circle’s center and radius, or a line’s two endpoints. No origin option is needed for basic placement. Exact function signatures and transformation pivots remain open.
+Supply a rectangle’s starting corner and signed dimensions, a circle’s center and radius, or a line’s two endpoints. No origin option is needed for basic placement. Exact function signatures and transformation pivots remain open.
 
 ## Test references
 
@@ -86,7 +98,7 @@ Use `[shape-drawing]` in relevant suite names and add actual file/suite links as
 
 ## Notes
 
-AD-015, AD-028, and AD-029. Open: transformation pivots, the exact miter limit, antialiasing, degenerate geometry, and nonuniform object scaling.
+AD-015 and AD-028 through AD-032. Open: transformation pivots, the exact miter limit, antialiasing, very wide strokes, and nonuniform object scaling. Reusable polygon/path validation is defined separately.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
