@@ -21,6 +21,7 @@ This draft does not claim implementation or verification.
 - Color helpers validate at construction and throw for invalid inputs, including nonfinite numbers and alpha outside 0–1; finite hue wraps around a full turn (AD-025).
 
 - Support lines and filled or outlined rectangles and circles, with explicit color and stroke width.
+- Place rectangles by their top-left `(x, y)` with width and height, circles by their center `(x, y)` with radius, and lines by two explicit endpoints (AD-028).
 - Represent squares as rectangles with equal dimensions.
 - Use explicit options and preserve global call order.
 - Defer dashed strokes and configurable line caps/joins.
@@ -30,6 +31,12 @@ This draft does not claim implementation or verification.
 ### Outlined marker
 
 The game draws a stroked rectangle around a sprite; its interior stays transparent.
+
+### Predictable placement
+
+A rectangle at (10, 20) with width 30 and height 40 has geometric bounds from
+(10, 20) to (40, 60). A circle centered at (50, 60) with radius 10 has geometric
+bounds from (40, 50) to (60, 70). Stroke extent is governed separately by alignment.
 
 ### Mixed primitives
 
@@ -45,12 +52,13 @@ A filled circle is drawn over a rectangle and a line crosses both, with output f
 - Verify color construction rejects invalid alpha and nonfinite channels with informative errors, accepts alpha endpoints, and treats hue values separated by a full turn as equivalent.
 
 - Render filled and outlined forms; verify interior/exterior sample points and stroke appearance under the documented width convention.
+- Verify rectangle and circle placement against the stated geometric bounds, and line geometry against both supplied endpoints, independently of stroke extent.
 - Render equal-dimension rectangles and verify square geometry.
 - Verify one shape’s style does not change the next and shape/sprite overlaps obey call order.
 
 ## Usage description
 
-Use line endpoints, rectangle dimensions, and a circle radius. Exact function signatures and coordinate anchors remain illustrative until specified.
+Supply a rectangle’s top-left position and dimensions, a circle’s center and radius, or a line’s two endpoints. No origin option is needed for basic placement. Exact function signatures and transformation pivots remain open.
 
 ## Test references
 
@@ -63,7 +71,7 @@ Use `[shape-drawing]` in relevant suite names and add actual file/suite links as
 
 ## Notes
 
-AD-015. Open: circle/rectangle anchors, stroke alignment, default fixed cap/join behavior, antialiasing, degenerate geometry, and width units under camera scaling.
+AD-015 and AD-028. Open: transformation pivots, stroke alignment, default fixed cap/join behavior, antialiasing, degenerate geometry, and width units under camera scaling.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

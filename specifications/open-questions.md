@@ -25,7 +25,7 @@ log when architectural. No fixed implementation values below are implied.
 
 - `sprite-drawing`: color helper signatures/ranges and error types, color/alpha encoding and invalid per-draw opacity handling,
   atlas metadata, and negative-scale policy.
-- `shape-drawing`: anchors, stroke alignment, fixed cap/join behavior, degenerates,
+- `shape-drawing`: transformation pivots, stroke alignment, fixed cap/join behavior, degenerates,
   antialiasing, and stroke width under transforms.
 - `paths-and-polygons`: path syntax, tessellation tolerance, winding, invalid inputs,
   and reusable geometry ownership/disposal.
@@ -77,5 +77,10 @@ The six-question rendering block is complete:
 - Phase 2 uses normal source-over blending; additional modes are Phase 3 candidates (AD-027).
 
 This completes the block, not all rendering contracts. Exact helper contracts and
-internal encodings remain open. The next block covers geometry contracts, starting
-with shape anchors; its initial estimate is five questions.
+internal encodings remain open.
+
+## Geometry questionnaire progress
+
+Question 1 of 5 is resolved: top-left rectangle anchors, center-based circles,
+and explicit line endpoints (AD-028). Continue with stroke alignment. Five is the
+estimate for this block, not all remaining geometry contracts.

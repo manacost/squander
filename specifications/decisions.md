@@ -375,6 +375,14 @@ additive and multiply blending, are Phase 3 candidates rather than committed
 implementation scope. Internal alpha encoding and color-space handling remain
 implementation contracts to resolve and verify.
 
+## AD-028: Basic shape anchors
+
+Place rectangles by their top-left `(x, y)` with width and height. Place circles
+by their center `(x, y)` with radius. Define lines by two explicit endpoints.
+These conventions apply to the underlying geometry of filled and outlined forms;
+stroke alignment is a separate decision. Basic placement does not require an
+origin option. Transformation pivot semantics and exact signatures remain open.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft
