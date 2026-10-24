@@ -23,7 +23,7 @@ log when architectural. No fixed implementation values below are implied.
 
 ## Rendering
 
-- `sprite-drawing`: color helper signatures/ranges and validation, color encoding/alpha composition,
+- `sprite-drawing`: color helper signatures/ranges and error types, color encoding/alpha composition,
   atlas metadata, and negative-scale policy.
 - `shape-drawing`: anchors, stroke alignment, fixed cap/join behavior, degenerates,
   antialiasing, and stroke width under transforms.
@@ -67,8 +67,9 @@ remaining capability contracts above before their dependent implementation slice
 
 ## Rendering questionnaire progress
 
-Questions 1–3 of 6 have established radians with a `degrees()` helper (AD-022),
-image flips that preserve geometry and origins (AD-023), and equal color helpers
-returning a shared readonly `Color` (AD-024). Color validation and exact helper
-contracts remain open. Six is the estimate for this rendering block, not all
-remaining project decisions. Continue with invalid color inputs.
+Questions 1–4 of 6 have established radians with a `degrees()` helper (AD-022),
+image flips that preserve geometry and origins (AD-023), equal color helpers
+returning a shared readonly `Color` (AD-024), and construction-time errors for
+invalid colors with finite hue wrapping (AD-025). Exact helper contracts remain
+open. Six is the estimate for this rendering block, not all remaining project
+decisions. Continue with alpha composition.

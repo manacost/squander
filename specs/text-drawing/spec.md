@@ -14,6 +14,7 @@ This draft does not claim implementation or verification.
 ## Requirements
 
 - Accept the shared readonly `Color` type, constructed through equally supported HSL/HSLA, RGB/RGBA, and hex helpers (AD-024).
+- Color helpers validate at construction and throw for invalid inputs, including nonfinite numbers and alpha outside 0–1; finite hue wraps around a full turn (AD-025).
 
 - Accept bundled font URLs, including npm/Fontsource-style bundler URL imports; core loading remains independent of Vite.
 - Permit Canvas 2D during font preparation; all world text presentation uses WebGPU.
@@ -40,6 +41,7 @@ Font loading fails during required setup; preparation must not silently bake a f
 ## Acceptance criteria
 
 - Verify equivalent helper-created colors produce equivalent drawing results; examples need not prefer one helper family.
+- Verify color construction rejects invalid alpha and nonfinite channels with informative errors, accepts alpha endpoints, and treats hue values separated by a full turn as equivalent.
 
 - Load a bundled font and render labels at specified locations/colors with the camera applied.
 - Observe glyph preparation/upload counts while changing prepared-digit strings: no new glyph texture work occurs.

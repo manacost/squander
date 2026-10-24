@@ -14,6 +14,7 @@ This draft does not claim implementation or verification.
 ## Requirements
 
 - Accept the shared readonly `Color` type, constructed through equally supported HSL/HSLA, RGB/RGBA, and hex helpers (AD-024).
+- Color helpers validate at construction and throw for invalid inputs, including nonfinite numbers and alpha outside 0–1; finite hue wraps around a full turn (AD-025).
 
 - Draw textures or atlas regions with tint, opacity, rotation, scale, and flipping.
 - Preserve call order across sprites, shapes, and text; batching must preserve the visible result.
@@ -47,6 +48,7 @@ A sprite, a translucent shape, and text overlap. Their visible composition follo
 ## Acceptance criteria
 
 - Verify equivalent helper-created colors produce equivalent drawing results; examples need not prefer one helper family.
+- Verify color construction rejects invalid alpha and nonfinite channels with informative errors, accepts alpha endpoints, and treats hue values separated by a full turn as equivalent.
 
 - Render a distinctly colored atlas fixture and verify the selected region, flipping, and origin placement under scale/rotation.
 - With an asymmetric atlas fixture and an off-center origin, verify horizontal, vertical, and combined flips reverse the image while preserving transformed bounds and the anchor.

@@ -14,6 +14,7 @@ This draft does not claim implementation or verification.
 ## Requirements
 
 - Accept the shared readonly `Color` type, constructed through equally supported HSL/HSLA, RGB/RGBA, and hex helpers (AD-024).
+- Color helpers validate at construction and throw for invalid inputs, including nonfinite numbers and alpha outside 0–1; finite hue wraps around a full turn (AD-025).
 
 - Support lines and filled or outlined rectangles and circles, with explicit color and stroke width.
 - Represent squares as rectangles with equal dimensions.
@@ -33,6 +34,7 @@ A filled circle is drawn over a rectangle and a line crosses both, with output f
 ## Acceptance criteria
 
 - Verify equivalent helper-created colors produce equivalent drawing results; examples need not prefer one helper family.
+- Verify color construction rejects invalid alpha and nonfinite channels with informative errors, accepts alpha endpoints, and treats hue values separated by a full turn as equivalent.
 
 - Render filled and outlined forms; verify interior/exterior sample points and stroke appearance under the documented width convention.
 - Render equal-dimension rectangles and verify square geometry.

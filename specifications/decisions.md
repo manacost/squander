@@ -335,9 +335,20 @@ makes an example clear. Convert authoring representations to a consistent RGB
 representation at construction rather than making each draw interpret HSL or hex.
 The renderer owns the required color-space conversions.
 
-Exact helper signatures/ranges, invalid-input policy, internal encoding, alpha
-composition, and blending policy still need explicit contracts. Supporting HSL
+Exact helper signatures/ranges, internal encoding, alpha composition, and
+blending policy still need explicit contracts. AD-025 defines invalid-input behavior. Supporting HSL
 does not imply HSL interpolation or a palette-manipulation API in Phase 2.
+
+## AD-025: Validate colors at construction
+
+Color helpers throw immediately for invalid input rather than silently clamping.
+Errors identify the offending channel or input and its allowed range or format.
+Reject NaN and infinity. Finite hue values intentionally wrap around a full turn;
+360 degrees and 0 degrees describe the same hue. Alpha outside 0–1 is invalid.
+
+Validate at construction so drawing consumes validated color values. Exact RGB
+and saturation/lightness input ranges, supported hex formats, error types, and
+how the type prevents unchecked construction remain API design details.
 
 ## Implementation readiness
 
