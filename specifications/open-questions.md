@@ -25,7 +25,7 @@ log when architectural. No fixed implementation values below are implied.
 
 - `sprite-drawing`: color helper signatures/ranges and error types, color/alpha encoding and invalid per-draw opacity handling,
   atlas metadata, and negative-scale policy.
-- `shape-drawing`: transformation pivots, stroke alignment, fixed cap/join behavior, degenerates,
+- `shape-drawing`: transformation pivots, fixed cap/join behavior, degenerates,
   antialiasing, and stroke width under transforms.
 - `paths-and-polygons`: path syntax, tessellation tolerance, winding, invalid inputs,
   and reusable geometry ownership/disposal.
@@ -81,6 +81,8 @@ internal encodings remain open.
 
 ## Geometry questionnaire progress
 
-Question 1 of 5 is resolved: top-left rectangle anchors, center-based circles,
-and explicit line endpoints (AD-028). Continue with stroke alignment. Five is the
-estimate for this block, not all remaining geometry contracts.
+Questions 1 and 2 of 5 are resolved: top-left rectangle anchors, center-based
+circles, explicit line endpoints (AD-028), and centered strokes (AD-029).
+Inside/outside alignment is recorded as a Phase 3 candidate. Continue with stroke
+width under scaling. Five is the estimate for this block, not all remaining
+geometry contracts.

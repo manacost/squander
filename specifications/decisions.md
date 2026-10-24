@@ -383,6 +383,18 @@ These conventions apply to the underlying geometry of filled and outlined forms;
 stroke alignment is a separate decision. Basic placement does not require an
 origin option. Transformation pivot semantics and exact signatures remain open.
 
+## AD-029: Centered strokes in Phase 2
+
+Center strokes on their geometric boundary or path centerline, placing half the
+stroke width on each side. Apply this convention to rectangles, circles, lines,
+paths, and polygon outlines. A circle of radius 10 with stroke width 4 has stroke
+radii 8 and 12. Join/cap behavior and very wide or degenerate strokes still need
+separate contracts.
+
+Inside/outside stroke alignment is a Phase 3 candidate, not Phase 2 scope. Keep
+future rendering extensions visible in the candidate log alongside their
+corresponding decisions and capability notes.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

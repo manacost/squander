@@ -40,7 +40,8 @@ Svelte/SvelteKit integration. The interview direction is consolidated into
   with normalized overrides relative to the selected region.
 - Lines, filled/outlined rectangles and circles, and reusable concave simple
   polygons are included. Stroke-only paths include straight, quadratic, and
-  cubic segments and explicit closure. No polygon holes or self-intersections.
+  cubic segments and explicit closure. Strokes are centered on their geometry;
+  inside/outside alignment is a Phase 3 candidate. No polygon holes or self-intersections.
 - Basic camera position/zoom/rotation applies to world content.
 - Support fixed-fit logical sizing with letterboxing and responsive sizing.
   Handle physical display density separately from logical units.

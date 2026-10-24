@@ -24,7 +24,8 @@ This draft does not claim implementation or verification.
 - Place rectangles by their top-left `(x, y)` with width and height, circles by their center `(x, y)` with radius, and lines by two explicit endpoints (AD-028).
 - Represent squares as rectangles with equal dimensions.
 - Use explicit options and preserve global call order.
-- Defer dashed strokes and configurable line caps/joins.
+- Center strokes on the geometric boundary or line centerline, with half the width on each side (AD-029).
+- Defer inside/outside alignment, dashed strokes, and configurable line caps/joins; see the [future-capability log](../../specifications/phase-3-candidates.md).
 
 ## Scenarios
 
@@ -37,6 +38,11 @@ The game draws a stroked rectangle around a sprite; its interior stays transpare
 A rectangle at (10, 20) with width 30 and height 40 has geometric bounds from
 (10, 20) to (40, 60). A circle centered at (50, 60) with radius 10 has geometric
 bounds from (40, 50) to (60, 70). Stroke extent is governed separately by alignment.
+
+### Centered circle outline
+
+A circle with radius 10 and stroke width 4 has an inner stroke radius of 8 and an
+outer radius of 12. Changing the stroke width does not move its centerline.
 
 ### Mixed primitives
 
@@ -53,6 +59,7 @@ A filled circle is drawn over a rectangle and a line crosses both, with output f
 
 - Render filled and outlined forms; verify interior/exterior sample points and stroke appearance under the documented width convention.
 - Verify rectangle and circle placement against the stated geometric bounds, and line geometry against both supplied endpoints, independently of stroke extent.
+- Verify the radius-10, width-4 circle outline against inner/outer radii 8 and 12, and verify straight stroke edges lie half a width from the centerline.
 - Render equal-dimension rectangles and verify square geometry.
 - Verify one shape’s style does not change the next and shape/sprite overlaps obey call order.
 
@@ -71,7 +78,7 @@ Use `[shape-drawing]` in relevant suite names and add actual file/suite links as
 
 ## Notes
 
-AD-015 and AD-028. Open: transformation pivots, stroke alignment, default fixed cap/join behavior, antialiasing, degenerate geometry, and width units under camera scaling.
+AD-015, AD-028, and AD-029. Open: transformation pivots, default fixed cap/join behavior, antialiasing, degenerate geometry, and width units under camera scaling.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

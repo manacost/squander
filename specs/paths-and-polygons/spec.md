@@ -18,6 +18,7 @@ This draft does not claim implementation or verification.
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
 - Support filled and outlined simple polygons, including concave polygons, without holes or self-intersections.
+- Center strokes on path centerlines and polygon boundaries, with half the width on each side (AD-029). Inside/outside alignment is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 - Support stroke-only paths with straight segments, quadratic and cubic Bézier curves, and explicit closure.
 - Create reusable geometry and draw it repeatedly with explicit transforms/styles. Rebuild when shape data changes.
 - Filled curved paths, holes, and fill rules are Phase 3 candidates.
@@ -38,6 +39,7 @@ A reusable path combines straight and curved segments. Repeated drawing changes 
 
 - Verify omitted opacity equals 1, zero opacity contributes no visible color, and color alpha 0.5 with opacity 0.5 yields effective source alpha 0.25 before coverage. Verify the next draw retains its own default opacity.
 
+- Verify straight portions of path and polygon strokes extend half a stroke width to either side of the geometry; test join/cap behavior separately once defined.
 - Render a concave polygon and test known inside/outside points, including its notch.
 - Render quadratic/cubic curves and closure with approved visual tolerances; curves meet specified endpoints.
 - Draw one geometry with distinct transforms and styles; neither draw mutates the reusable definition.
