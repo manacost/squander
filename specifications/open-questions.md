@@ -58,8 +58,9 @@ See [capability drafts](../specs/README.md) and [readiness guidance](implementat
 ## Approved project maintenance
 
 Strict type-aware ESLint, reasoned narrow suppressions, and consistent naming are
-agreed in AD-021. The coordinated Svelte/SvelteKit toolchain upgrade is in progress;
-verification must distinguish existing lint debt from migration regressions.
+agreed in AD-021. The coordinated Svelte/SvelteKit toolchain upgrade is complete; see
+[maintenance verification](toolchain-maintenance.md) and the remaining
+[lint debt](tooling-standards.md).
 
 The lifecycle/timing and maintenance questionnaire is complete. Continue with the
 remaining capability contracts above before their dependent implementation slices.

@@ -4,6 +4,11 @@ Squander is a TypeScript toolkit for browser games built with **PixiJS 8** and *
 
 This repository contains both the npm library and the SvelteKit application used for documentation and playable examples. The package version in this checkout is `1.0.0`.
 
+The replacement framework is planned in [the goals](specifications/goals.md),
+[Phase 1](specifications/phase-1.md), and [Phase 2](specifications/phase-2.md).
+Current tooling requirements and outstanding lint debt are recorded in
+[tooling standards](specifications/tooling-standards.md).
+
 ## Develop locally
 
 Use npm with the committed `package-lock.json`. Node.js 22.17 or newer is required; the GitHub Pages workflow uses Node.js 24. SvelteKit 3 configuration lives in `vite.config.ts`; local library imports use the `#lib` package import mapping.

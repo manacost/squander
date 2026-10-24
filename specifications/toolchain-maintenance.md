@@ -39,3 +39,6 @@ with the required local-server and browser permissions.
   also suggests declaring the existing license in package metadata.
 - `npm run test:integration`: all five tests pass. Browser verification covers documentation navigation, rendering surfaces in
   Pixi and camera demos, Svelte bridge interaction, and returning to the home page.
+
+Strict lint configuration and remaining legacy debt are documented in
+[tooling standards](tooling-standards.md).
