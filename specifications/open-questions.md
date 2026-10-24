@@ -25,7 +25,7 @@ log when architectural. No fixed implementation values below are implied.
 
 - `sprite-drawing`: color helper signatures/ranges and error types, color/alpha encoding and invalid per-draw opacity handling,
   atlas metadata, and negative-scale policy.
-- `shape-drawing`: transformation pivots, fixed cap/join behavior, degenerates,
+- `shape-drawing`: transformation pivots, the exact miter limit, degenerates,
   antialiasing, and nonuniform object-scale behavior.
 - `paths-and-polygons`: path syntax, tessellation tolerance, winding, invalid inputs,
   and reusable geometry ownership/disposal.
@@ -81,8 +81,10 @@ internal encodings remain open.
 
 ## Geometry questionnaire progress
 
-Questions 1–3 of 5 are resolved: top-left rectangle anchors, center-based circles,
-explicit line endpoints (AD-028), centered strokes (AD-029), and world-unit stroke
-widths that scale with the world (AD-030). Inside/outside alignment and constant
-screen thickness are Phase 3 candidates. Continue with fixed cap/join behavior.
-Five is the estimate for this block, not all remaining geometry contracts.
+Questions 1–4 of 5 are resolved: top-left rectangle anchors, center-based circles,
+explicit line endpoints (AD-028), centered strokes (AD-029), world-unit stroke
+widths (AD-030), and flat caps with limited sharp joins (AD-031). The exact miter
+limit remains open. Inside/outside alignment, constant screen thickness, and
+configurable/rounded styles are recorded in the future-capability log. Continue
+with invalid and zero-size geometry. Five is the estimate for this block, not all
+remaining geometry contracts.

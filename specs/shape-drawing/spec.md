@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Use flat ends for open strokes and sharp joins with a fixed limit and bevel fallback for excessive spikes (AD-031). The exact limit remains open; rounded/configurable styles are deferred.
+
 - Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
 
 - Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are outside Phase 2 (AD-027).
@@ -52,6 +54,8 @@ A filled circle is drawn over a rectangle and a line crosses both, with output f
 
 ## Acceptance criteria
 
+- Verify open strokes stop at their endpoints, rectangle outlines retain square corners, and sufficiently acute joins fall back to bevels. Add boundary fixtures once the miter limit is defined.
+
 - With fixed viewport scaling and display density, verify a width-2 stroke has twice the screen thickness at camera zoom 2 versus zoom 1, allowing the stated rasterization tolerance.
 
 - Verify overlapping translucent draws against independently calculated source-over results, including reversed order and mixed primitive types. Fully transparent draws leave earlier content unchanged.
@@ -82,7 +86,7 @@ Use `[shape-drawing]` in relevant suite names and add actual file/suite links as
 
 ## Notes
 
-AD-015, AD-028, and AD-029. Open: transformation pivots, default fixed cap/join behavior, antialiasing, degenerate geometry, and nonuniform object scaling.
+AD-015, AD-028, and AD-029. Open: transformation pivots, the exact miter limit, antialiasing, degenerate geometry, and nonuniform object scaling.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

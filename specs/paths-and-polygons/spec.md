@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Use flat ends for open strokes and sharp joins with a fixed limit and bevel fallback for excessive spikes (AD-031). The exact limit remains open; rounded/configurable styles are deferred.
+
 - Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
 
 - Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are outside Phase 2 (AD-027).
@@ -37,13 +39,15 @@ A reusable path combines straight and curved segments. Repeated drawing changes 
 
 ## Acceptance criteria
 
+- Verify open strokes stop at their endpoints, rectangle outlines retain square corners, and sufficiently acute joins fall back to bevels. Add boundary fixtures once the miter limit is defined.
+
 - With fixed viewport scaling and display density, verify a width-2 stroke has twice the screen thickness at camera zoom 2 versus zoom 1, allowing the stated rasterization tolerance.
 
 - Verify overlapping translucent draws against independently calculated source-over results, including reversed order and mixed primitive types. Fully transparent draws leave earlier content unchanged.
 
 - Verify omitted opacity equals 1, zero opacity contributes no visible color, and color alpha 0.5 with opacity 0.5 yields effective source alpha 0.25 before coverage. Verify the next draw retains its own default opacity.
 
-- Verify straight portions of path and polygon strokes extend half a stroke width to either side of the geometry; test join/cap behavior separately once defined.
+- Verify straight portions of path and polygon strokes extend half a stroke width to either side of the geometry; verify cap/join behavior using the separate endpoint and corner fixtures.
 - Render a concave polygon and test known inside/outside points, including its notch.
 - Render quadratic/cubic curves and closure with approved visual tolerances; curves meet specified endpoints.
 - Draw one geometry with distinct transforms and styles; neither draw mutates the reusable definition.

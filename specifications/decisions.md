@@ -388,8 +388,8 @@ origin option. Transformation pivot semantics and exact signatures remain open.
 Center strokes on their geometric boundary or path centerline, placing half the
 stroke width on each side. Apply this convention to rectangles, circles, lines,
 paths, and polygon outlines. A circle of radius 10 with stroke width 4 has stroke
-radii 8 and 12. Join/cap behavior and very wide or degenerate strokes still need
-separate contracts.
+radii 8 and 12. AD-031 defines cap/join direction. Very wide or degenerate
+strokes still need separate contracts.
 
 Inside/outside stroke alignment is a Phase 3 candidate, not Phase 2 scope. Keep
 future rendering extensions visible in the candidate log alongside their
@@ -404,6 +404,18 @@ world units are not a promise of a fixed physical pixel count.
 
 Constant screen-thickness strokes for selection outlines or debug overlays are
 Phase 3 candidates. Nonuniform object-scale behavior remains a separate contract.
+
+## AD-031: Fixed flat ends and limited sharp joins
+
+Use flat (butt) caps for open strokes: geometry ends at the supplied endpoint
+without extending beyond it along the tangent. Use sharp (miter) joins with a
+fixed limit, preserving square rectangle corners and falling back to a cut-off
+(bevel) join when an acute corner would produce an excessive spike. Apply the
+same policy to lines, outlined shapes, and stroked paths/polygons where applicable.
+
+The exact miter-limit value and ratio definition remain to be specified before
+implementation. Rounded ends/corners and configurable cap/join styles remain
+future options recorded in the candidate log; Phase 2 exposes fixed defaults.
 
 ## Implementation readiness
 

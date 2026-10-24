@@ -49,7 +49,9 @@ were planning labels only. Lists replace the earlier tables for readability.
 - Build-time font atlas generation.
 - Automatic restoration after GPU device loss.
 - Fixed-fill viewport cropping and integer-only viewport scaling.
-- Dashed strokes and configurable line caps/joins.
+- Dashed strokes.
+- Configurable line caps/joins, including rounded ends and corners, beyond Phase
+  2’s fixed flat caps and limited sharp joins (AD-031).
 
 These are recorded so they are not lost; their phase placement has not been agreed.
 
