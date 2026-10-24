@@ -318,6 +318,14 @@ belongs in Phase 2 alongside rotation; the broader safe-math capability remains
 a future candidate. This decision does not settle branded angle types or camera
 rotation semantics.
 
+## AD-023: Sprite flips preserve geometry
+
+Explicit sprite flips mirror the image horizontally or vertically within its
+existing bounds. Preserve the sprite’s position, origin, and transformed geometry,
+including for off-center origins. Atlas flips operate within the selected region.
+This keeps facing-direction changes from shifting the sprite rectangle. It does
+not settle whether negative scale is supported or how it would behave.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

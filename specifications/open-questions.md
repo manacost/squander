@@ -23,8 +23,7 @@ log when architectural. No fixed implementation values below are implied.
 
 ## Rendering
 
-- `sprite-drawing`: color/alpha representation, atlas metadata,
-  and how explicit flips interact with origins.
+- `sprite-drawing`: color/alpha representation, atlas metadata, and negative-scale policy.
 - `shape-drawing`: anchors, stroke alignment, fixed cap/join behavior, degenerates,
   antialiasing, and stroke width under transforms.
 - `paths-and-polygons`: path syntax, tessellation tolerance, winding, invalid inputs,
@@ -67,6 +66,7 @@ remaining capability contracts above before their dependent implementation slice
 
 ## Rendering questionnaire progress
 
-Question 1 of 6 is resolved: radians, positive clockwise, with a `degrees()` helper
-(AD-022). Six is the estimate for this rendering block, not all remaining project
-decisions. Continue with flip/origin behavior before the remaining rendering contracts.
+Questions 1 and 2 of 6 are resolved: radians, positive clockwise, with a `degrees()`
+helper (AD-022), and image flips that preserve geometry and origins (AD-023).
+Six is the estimate for this rendering block, not all remaining project decisions.
+Continue with color representation before the remaining rendering contracts.
