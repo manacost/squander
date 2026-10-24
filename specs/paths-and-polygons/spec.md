@@ -24,6 +24,7 @@ This draft does not claim implementation or verification.
 - Support filled and outlined simple polygons, including concave polygons, without holes or self-intersections.
 - Center strokes on path centerlines and polygon boundaries, with half the width on each side (AD-029). Inside/outside alignment is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 - Support stroke-only paths with straight segments, quadratic and cubic Bézier curves, and explicit closure.
+- Allow multiple disconnected subpaths per handle: `move_to` starts a new section without a connecting segment, and `close()` connects only the current section to its own start. Subpaths share the draw style and transforms (AD-034).
 - Create reusable geometry and draw it repeatedly with explicit transforms/styles. Rebuild when shape data changes.
 - Construct paths from declarative typed command arrays; snapshot their values at creation. The resulting handle is opaque, not an editable/indexable command array (AD-033).
 - Permit explicit path updates using revised commands, snapshotting and validating them before changing active geometry. Invalid updates throw and preserve the previous geometry; successful updates retain the handle identity.
@@ -39,6 +40,12 @@ A game creates an L-shaped polygon once and draws it at several locations; its c
 ### Curved route
 
 A reusable path combines straight and curved segments. Repeated drawing changes its placement without changing the path shape.
+
+### Disconnected sections
+
+A path draws from (0, 0) to (100, 0), then moves to (0, 20) and draws to (100, 20).
+The result is two separate lines with no diagonal connector. Closing a later
+subpath connects to its own start, not the first subpath's start.
 
 ### Editing a route
 
@@ -60,6 +67,7 @@ update throws and the original route remains drawable through the same handle.
 - Render a concave polygon and test known inside/outside points, including its notch.
 - Render quadratic/cubic curves and closure with approved visual tolerances; curves meet specified endpoints.
 - Draw one geometry with distinct transforms and styles; neither draw mutates the reusable definition.
+- Render separated subpaths and verify both sections appear without a connecting segment. Verify closure targets the current subpath’s start and that draw transforms/styles apply to all sections.
 - Verify edits to the source array or its command data do not alter the path after creation or a successful update.
 - Verify a valid explicit update changes rendered geometry without changing handle identity, and an invalid update preserves the previous rendered result.
 - Include type tests rejecting indexed assignment to the opaque path handle while allowing edits to application-owned command arrays.
@@ -91,7 +99,7 @@ Use `[paths-and-polygons]` in relevant suite names and add actual file/suite lin
 
 ## Notes
 
-AD-015 and AD-033. Open: exact command shapes and update-operation name, polygon editing ergonomics, rebuild scheduling, tessellation tolerance under zoom, geometry ownership/disposal, winding rules, and behavior for unsupported/degenerate inputs.
+AD-015, AD-033, and AD-034. Open: command sequencing after closure and empty subpaths, exact command shapes and update-operation name, polygon editing ergonomics, rebuild scheduling, tessellation tolerance under zoom, geometry ownership/disposal, winding rules, and behavior for unsupported/degenerate inputs.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

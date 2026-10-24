@@ -457,6 +457,17 @@ preferred committed verb. Exact signatures, command shapes, rebuild scheduling,
 and resource ownership/disposal remain open. This decision establishes path
 behavior; equivalent polygon editing ergonomics still need a contract.
 
+## AD-034: Multiple disconnected path subpaths
+
+A single path handle can contain multiple disconnected subpaths. Each `move_to`
+starts a new subpath without connecting to the previous one. `close()` connects
+only the current subpath back to its own starting point. All subpaths share the
+style and transforms of the draw call. This does not add filled paths or holes
+to Phase 2; paths remain stroke-only.
+
+Command sequencing after closure, empty subpaths, and malformed sequences remain
+validation details to resolve before implementation.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft
