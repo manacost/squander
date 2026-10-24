@@ -23,7 +23,8 @@ log when architectural. No fixed implementation values below are implied.
 
 ## Rendering
 
-- `sprite-drawing`: color/alpha representation, atlas metadata, and negative-scale policy.
+- `sprite-drawing`: color helper signatures/ranges and validation, color encoding/alpha composition,
+  atlas metadata, and negative-scale policy.
 - `shape-drawing`: anchors, stroke alignment, fixed cap/join behavior, degenerates,
   antialiasing, and stroke width under transforms.
 - `paths-and-polygons`: path syntax, tessellation tolerance, winding, invalid inputs,
@@ -66,7 +67,8 @@ remaining capability contracts above before their dependent implementation slice
 
 ## Rendering questionnaire progress
 
-Questions 1 and 2 of 6 are resolved: radians, positive clockwise, with a `degrees()`
-helper (AD-022), and image flips that preserve geometry and origins (AD-023).
-Six is the estimate for this rendering block, not all remaining project decisions.
-Continue with color representation before the remaining rendering contracts.
+Questions 1–3 of 6 have established radians with a `degrees()` helper (AD-022),
+image flips that preserve geometry and origins (AD-023), and equal color helpers
+returning a shared readonly `Color` (AD-024). Color validation and exact helper
+contracts remain open. Six is the estimate for this rendering block, not all
+remaining project decisions. Continue with invalid color inputs.

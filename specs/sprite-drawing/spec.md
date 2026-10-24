@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Accept the shared readonly `Color` type, constructed through equally supported HSL/HSLA, RGB/RGBA, and hex helpers (AD-024).
+
 - Draw textures or atlas regions with tint, opacity, rotation, scale, and flipping.
 - Preserve call order across sprites, shapes, and text; batching must preserve the visible result.
 - Use positive X right and positive Y down. Default sprite origin to top-left; a normalized origin applies relative to the selected region.
@@ -43,6 +45,8 @@ bounds. Atlas flips stay within the selected region.
 A sprite, a translucent shape, and text overlap. Their visible composition follows submission order even when the renderer batches work.
 
 ## Acceptance criteria
+
+- Verify equivalent helper-created colors produce equivalent drawing results; examples need not prefer one helper family.
 
 - Render a distinctly colored atlas fixture and verify the selected region, flipping, and origin placement under scale/rotation.
 - With an asymmetric atlas fixture and an off-center origin, verify horizontal, vertical, and combined flips reverse the image while preserving transformed bounds and the anchor.

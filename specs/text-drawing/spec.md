@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Accept the shared readonly `Color` type, constructed through equally supported HSL/HSLA, RGB/RGBA, and hex helpers (AD-024).
+
 - Accept bundled font URLs, including npm/Fontsource-style bundler URL imports; core loading remains independent of Vite.
 - Permit Canvas 2D during font preparation; all world text presentation uses WebGPU.
 - Prepare reusable glyph atlases during loading with a configurable character set and basic Latin default. Prepare additional supported glyphs automatically when needed.
@@ -36,6 +38,8 @@ A label introduces a supported glyph outside the prepared set. The cache adds it
 Font loading fails during required setup; preparation must not silently bake a fallback font.
 
 ## Acceptance criteria
+
+- Verify equivalent helper-created colors produce equivalent drawing results; examples need not prefer one helper family.
 
 - Load a bundled font and render labels at specified locations/colors with the camera applied.
 - Observe glyph preparation/upload counts while changing prepared-digit strings: no new glyph texture work occurs.

@@ -326,6 +326,19 @@ including for off-center origins. Atlas flips operate within the selected region
 This keeps facing-direction changes from shifting the sprite rectangle. It does
 not settle whether negative scale is supported or how it would behave.
 
+## AD-024: Shared color type with equal authoring helpers
+
+Provide one readonly `Color` type for sprite tint, shape color, and text color.
+Support HSL/HSLA, RGB/RGBA, and hex construction helpers as equal authoring options.
+No helper is the preferred style for documentation or examples; choose whichever
+makes an example clear. Convert authoring representations to a consistent RGB
+representation at construction rather than making each draw interpret HSL or hex.
+The renderer owns the required color-space conversions.
+
+Exact helper signatures/ranges, invalid-input policy, internal encoding, alpha
+composition, and blending policy still need explicit contracts. Supporting HSL
+does not imply HSL interpolation or a palette-manipulation API in Phase 2.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft
