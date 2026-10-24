@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
+
 - Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are outside Phase 2 (AD-027).
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
@@ -34,6 +36,8 @@ A game creates an L-shaped polygon once and draws it at several locations; its c
 A reusable path combines straight and curved segments. Repeated drawing changes its placement without changing the path shape.
 
 ## Acceptance criteria
+
+- With fixed viewport scaling and display density, verify a width-2 stroke has twice the screen thickness at camera zoom 2 versus zoom 1, allowing the stated rasterization tolerance.
 
 - Verify overlapping translucent draws against independently calculated source-over results, including reversed order and mixed primitive types. Fully transparent draws leave earlier content unchanged.
 

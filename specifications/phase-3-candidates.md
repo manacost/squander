@@ -26,6 +26,9 @@ were planning labels only. Lists replace the earlier tables for readability.
 - **Swappable cameras/projections:** a possible extension within the 2D commitment.
 - **Filled curved paths, polygon holes, and fill rules:** extensions beyond Phase
   2's stroked paths and simple concave polygons.
+- **Constant screen-thickness strokes:** optional stroke widths independent of
+  camera zoom, useful for selection outlines and debug overlays; define screen
+  units and viewport/display-density interaction before implementation (AD-030).
 - **Inside/outside stroke alignment:** selectable alignment beyond Phase 2’s
   centered strokes; define supported closed geometries and wide-stroke behavior
   before implementation (AD-029).

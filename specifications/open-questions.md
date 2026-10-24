@@ -26,7 +26,7 @@ log when architectural. No fixed implementation values below are implied.
 - `sprite-drawing`: color helper signatures/ranges and error types, color/alpha encoding and invalid per-draw opacity handling,
   atlas metadata, and negative-scale policy.
 - `shape-drawing`: transformation pivots, fixed cap/join behavior, degenerates,
-  antialiasing, and stroke width under transforms.
+  antialiasing, and nonuniform object-scale behavior.
 - `paths-and-polygons`: path syntax, tessellation tolerance, winding, invalid inputs,
   and reusable geometry ownership/disposal.
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
@@ -81,8 +81,8 @@ internal encodings remain open.
 
 ## Geometry questionnaire progress
 
-Questions 1 and 2 of 5 are resolved: top-left rectangle anchors, center-based
-circles, explicit line endpoints (AD-028), and centered strokes (AD-029).
-Inside/outside alignment is recorded as a Phase 3 candidate. Continue with stroke
-width under scaling. Five is the estimate for this block, not all remaining
-geometry contracts.
+Questions 1–3 of 5 are resolved: top-left rectangle anchors, center-based circles,
+explicit line endpoints (AD-028), centered strokes (AD-029), and world-unit stroke
+widths that scale with the world (AD-030). Inside/outside alignment and constant
+screen thickness are Phase 3 candidates. Continue with fixed cap/join behavior.
+Five is the estimate for this block, not all remaining geometry contracts.

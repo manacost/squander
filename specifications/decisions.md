@@ -395,6 +395,16 @@ Inside/outside stroke alignment is a Phase 3 candidate, not Phase 2 scope. Keep
 future rendering extensions visible in the candidate log alongside their
 corresponding decisions and capability notes.
 
+## AD-030: Stroke widths scale with the world
+
+Measure stroke widths in world units and scale them with their geometry. With
+other transforms unchanged, a width-2 stroke appears twice as thick at camera
+zoom 2 as at zoom 1. Viewport scaling and physical display density still apply;
+world units are not a promise of a fixed physical pixel count.
+
+Constant screen-thickness strokes for selection outlines or debug overlays are
+Phase 3 candidates. Nonuniform object-scale behavior remains a separate contract.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft
