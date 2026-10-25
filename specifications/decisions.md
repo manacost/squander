@@ -455,7 +455,7 @@ Ordinary placement changes use draw transforms; geometry updates happen outside
 The operation name is unresolved: `replace` was illustrative and is not the
 preferred committed verb. Exact signatures, command shapes, rebuild scheduling,
 and resource ownership/disposal remain open. This decision establishes path
-behavior; equivalent polygon editing ergonomics still need a contract.
+behavior; AD-035 extends the editing contract to polygons.
 
 ## AD-034: Multiple disconnected path subpaths
 
@@ -467,6 +467,22 @@ to Phase 2; paths remain stroke-only.
 
 Command sequencing after closure, empty subpaths, and malformed sequences remain
 validation details to resolve before implementation.
+
+## AD-035: Point-array polygons with explicit updates
+
+Construct reusable polygons from ordered arrays of `{ x, y }` points. Connect
+the last vertex to the first implicitly; callers do not need a repeated endpoint
+or a path `close()` command. This remains the simple, potentially concave polygon
+scope already agreed, without holes or self-intersections.
+
+Use the same editing contract as paths: snapshot input point values, return an
+opaque stable handle, and accept revised points through an explicit validated
+update outside `draw`. Mutating application-owned points does not silently alter
+prepared geometry. Invalid updates throw and leave the previous geometry usable.
+The update operation's name remains unresolved for both paths and polygons.
+
+Winding, duplicate vertices, repeated closing points, and degenerate polygon
+validation remain separate contract decisions.
 
 ## Implementation readiness
 

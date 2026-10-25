@@ -28,7 +28,7 @@ log when architectural. No fixed implementation values below are implied.
 - `shape-drawing`: transformation pivots, the exact miter limit, very wide strokes,
   antialiasing, and nonuniform object-scale behavior.
 - `paths-and-polygons`: exact command shapes, update-operation name (revisit `replace`),
-  polygon editing ergonomics, rebuild scheduling, command sequencing/empty subpaths, tessellation tolerance, winding, invalid inputs,
+  duplicate/repeated closing vertices, rebuild scheduling, command sequencing/empty subpaths, tessellation tolerance, winding, invalid inputs,
   and reusable geometry ownership/disposal.
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
@@ -95,8 +95,8 @@ recorded in the candidate log. This block does not resolve all geometry contract
 
 ## Reusable geometry questionnaire progress
 
-Questions 1 and 2 of 4 are resolved: editable declarative command arrays,
-snapshotted by opaque path handles with explicit validated updates (AD-033), and
-multiple disconnected subpaths sharing draw style/transforms (AD-034). Revisit
-the update verb; `replace` was not accepted as final naming. Continue with polygon
-construction/editing ergonomics. Four is an estimate for this block.
+Questions 1–3 of 4 are resolved: editable declarative command arrays with explicit
+validated updates (AD-033), disconnected subpaths (AD-034), and implicitly closed
+point-array polygons sharing the same editing contract (AD-035). Revisit the update
+verb; `replace` was not accepted as final naming. Continue with polygon validation.
+Four is an estimate for this block.

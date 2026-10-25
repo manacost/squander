@@ -22,6 +22,8 @@ This draft does not claim implementation or verification.
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
 - Support filled and outlined simple polygons, including concave polygons, without holes or self-intersections.
+- Construct polygons from ordered point arrays, connecting the last vertex to the first implicitly. No repeated endpoint or `close()` command is required (AD-035).
+- Snapshot polygon point values at creation and explicit updates. Return an opaque stable handle; invalid updates throw and preserve previous geometry, just as for paths. Polygon updates happen outside `draw`; the update verb remains open.
 - Center strokes on path centerlines and polygon boundaries, with half the width on each side (AD-029). Inside/outside alignment is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 - Support stroke-only paths with straight segments, quadratic and cubic Bézier curves, and explicit closure.
 - Allow multiple disconnected subpaths per handle: `move_to` starts a new section without a connecting segment, and `close()` connects only the current section to its own start. Subpaths share the draw style and transforms (AD-034).
@@ -36,6 +38,13 @@ This draft does not claim implementation or verification.
 ### Concave marker
 
 A game creates an L-shaped polygon once and draws it at several locations; its concavity stays empty.
+
+### Editing a polygon
+
+A triangle is created from three points with an implicit closing edge. Editing a
+source point alone does not change the drawn triangle. Submitting revised points
+through the explicit update operation changes the same handle only if validation
+succeeds; an invalid update leaves the previous triangle drawable.
 
 ### Curved route
 
@@ -64,6 +73,8 @@ update throws and the original route remains drawable through the same handle.
 - Verify omitted opacity equals 1, zero opacity contributes no visible color, and color alpha 0.5 with opacity 0.5 yields effective source alpha 0.25 before coverage. Verify the next draw retains its own default opacity.
 
 - Verify straight portions of path and polygon strokes extend half a stroke width to either side of the geometry; verify cap/join behavior using the separate endpoint and corner fixtures.
+- Verify a three-point polygon produces a closed triangle for both fill and outline without repeating the first point.
+- Verify source array/point mutations cannot change prepared polygon geometry, valid explicit updates preserve handle identity, and invalid updates preserve the previous rendered result. Include type tests rejecting indexed handle assignment.
 - Render a concave polygon and test known inside/outside points, including its notch.
 - Render quadratic/cubic curves and closure with approved visual tolerances; curves meet specified endpoints.
 - Draw one geometry with distinct transforms and styles; neither draw mutates the reusable definition.
@@ -85,7 +96,18 @@ const route = create_path(commands);
 commands[1] = line_to(120, 20); // Does not change route by itself.
 ```
 
-Submit revised commands through an explicit update operation outside `draw`.
+Illustrative polygon construction:
+
+```ts
+const points = [
+  { x: 0, y: 0 },
+  { x: 40, y: 0 },
+  { x: 20, y: 30 },
+];
+const marker = create_polygon(points);
+```
+
+Submit revised commands or polygon points through an explicit update operation outside `draw`.
 The operation name is intentionally undecided; `replace` is not an accepted API name.
 
 ## Test references
@@ -99,7 +121,7 @@ Use `[paths-and-polygons]` in relevant suite names and add actual file/suite lin
 
 ## Notes
 
-AD-015, AD-033, and AD-034. Open: command sequencing after closure and empty subpaths, exact command shapes and update-operation name, polygon editing ergonomics, rebuild scheduling, tessellation tolerance under zoom, geometry ownership/disposal, winding rules, and behavior for unsupported/degenerate inputs.
+AD-015 and AD-033 through AD-035. Open: command sequencing after closure and empty subpaths, exact command shapes and update-operation name, duplicate/repeated closing vertices, rebuild scheduling, tessellation tolerance under zoom, geometry ownership/disposal, winding rules, and behavior for unsupported/degenerate inputs.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
