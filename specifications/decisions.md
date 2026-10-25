@@ -551,6 +551,18 @@ instance. The cross-game check is a misuse boundary, not a reason to introduce
 cross-game resource sharing, transfer APIs, or multiple-game orchestration.
 Basic shape draw calls remain frame-local and need no geometry handles or release.
 
+## AD-040: Camera position is the view center
+
+Camera `(x, y)` identifies the world point displayed at the center of the logical
+viewport. Setting it to a character’s position centers that character without
+requiring viewport-size or zoom calculations. Zooming keeps this focus point
+stationary at the viewport center. Viewport fitting/letterboxing and physical
+resolution remain separate from camera positioning.
+
+Prioritize intuitive camera ergonomics. This decision defines position semantics,
+not automatic follow behavior. Default initial position, zoom bounds, rotation
+convention, and camera-binding API remain open.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

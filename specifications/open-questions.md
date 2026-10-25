@@ -34,7 +34,7 @@ log when architectural. No fixed implementation values below are implied.
   and the exact geometry release API (ownership is agreed in AD-039).
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
-- `camera-2d`: default mapping, position meaning, application scope, and zoom limits.
+- `camera-2d`: default initial view, application scope, rotation convention, and zoom limits.
 - `texture-filtering`: descriptor names, sampler changes, and font sampling defaults.
 
 ## Text and integration
@@ -117,5 +117,10 @@ The three-question geometry lifetime block is complete:
 - Game-owned prepared geometry, early release, and game-disposal cleanup (AD-039).
 
 Single-game use is the primary ergonomic target. Cross-game rejection is a guard,
-not a request for cross-game sharing features. Continue with camera/view contracts;
-the next block initially estimates four questions, starting with position meaning.
+not a request for cross-game sharing features.
+
+## Camera questionnaire progress
+
+Question 1 of 4 is resolved: camera position identifies the world point at the
+logical viewport center, with zoom preserving that focus (AD-040). Ergonomics and
+intuitive positioning are priorities. Continue with the initial default view.

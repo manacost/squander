@@ -13,6 +13,7 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Interpret camera `(x, y)` as the world point shown at the logical viewport center; zoom preserves that centered focus point (AD-040).
 - Apply the basic camera consistently to world sprites, shapes, paths, polygons, and labels.
 - Keep camera transforms separate from viewport fitting and physical resolution.
 - Permit camera changes to be visible while gameplay is explicitly paused.
@@ -23,6 +24,8 @@ This draft does not claim implementation or verification.
 ### Follow with labels
 
 A sprite and its world label remain aligned while the camera translates and zooms.
+Setting the camera position to the sprite’s world position centers it without
+application-side viewport or zoom offsets.
 
 ### Inspect while paused
 
@@ -30,13 +33,14 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 
 ## Acceptance criteria
 
+- Verify the camera’s world position maps to the logical viewport center across viewport sizes and zoom levels, including a letterboxed viewport; keep physical display scaling separate.
 - Compare transformed world landmarks across primitive types after translation, zoom, and rotation.
 - Verify camera changes do not mutate world coordinates or viewport policy.
 - Verify camera updates remain visible during explicit pause.
 
 ## Usage description
 
-Configure a basic camera and apply it to world drawing. The exact camera-binding API is still to be designed.
+Configure the camera position to the world point you want centered, then apply it to world drawing. The exact camera-binding API is still to be designed.
 
 ## Test references
 
@@ -49,7 +53,7 @@ Use `[camera-2d]` in relevant suite names and add actual file/suite links as tes
 
 ## Notes
 
-AD-006 and AD-014. Open: camera position meaning, default origin/view, transform application API, angle convention, and zoom limits.
+AD-006, AD-014, and AD-040. Open: default origin/view, transform application API, angle convention, and zoom limits.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
