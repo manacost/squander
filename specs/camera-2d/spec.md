@@ -28,6 +28,7 @@ This draft does not claim implementation or verification.
 - Apply the basic camera consistently to world sprites, shapes, paths, polygons, and labels.
 - Outside camera scopes, use logical screen coordinates with origin at the content viewport’s top-left, excluding letterbox bars, positive X right and positive Y down (AD-047).
 - Keep camera transforms separate from viewport fitting and physical resolution.
+- Configure camera state in initialization, `update`, or external controls before drawing. Draw callbacks consume that state and should not mutate the camera inside its scope; snapshot mechanics are internal (AD-051).
 - Permit camera changes to be visible while gameplay is explicitly paused.
 - Swappable projections and advanced camera behaviors are deferred.
 
@@ -86,7 +87,7 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 - Verify known visible stroke extents are not rejected when included in supplied bounds. Use independent reference fixtures to detect false negatives; conservative false positives are allowed.
 - Verify foreground occluders do not affect the bounds-query result and calling the query changes neither draw submission nor simulation scheduling.
 - Verify camera changes do not mutate world coordinates or viewport policy.
-- Verify camera updates remain visible during explicit pause.
+- Verify camera changes made before drawing are reflected by the next scope’s rendering and visibility checks, including external controls during explicit pause. Examples must keep camera mutation outside draw scopes.
 
 ## Usage description
 
@@ -103,7 +104,7 @@ Use `[camera-2d]` in relevant suite names and add actual file/suite links as tes
 
 ## Notes
 
-AD-006, AD-014, and AD-040 through AD-050. Open: exported bounds type name, numerical visibility tolerances, query snapshot timing, synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+AD-006, AD-014, and AD-040 through AD-051. Open: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, camera lifetime, optional enforcement of in-scope mutation, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

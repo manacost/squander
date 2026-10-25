@@ -34,8 +34,7 @@ log when architectural. No fixed implementation values below are implied.
   and the exact geometry release API (ownership is agreed in AD-039).
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
-- `camera-2d`: exported bounds type name, numerical visibility tolerances, query snapshot
-  timing, synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and extreme-value numerical behavior.
+- `camera-2d`: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, camera lifetime, optional in-scope mutation enforcement, position/rotation value validation, and extreme-value numerical behavior.
 - `texture-filtering`: descriptor names, sampler changes, and font sampling defaults.
 
 ## Text and integration
@@ -141,7 +140,7 @@ The three-question camera integration block is complete:
 - Inner scopes replace and restore outer cameras; nesting is secondary (AD-046).
 - Unscoped screen coordinates start at the logical content viewport’s top-left (AD-047).
 
-Camera lifetime, snapshot timing, and numerical edge cases remain open.
+Camera lifetime and numerical edge cases remain open; AD-051 keeps snapshot mechanics internal.
 
 ## Visibility checkpoint
 
@@ -152,5 +151,9 @@ Both visibility questions are resolved: world-axis-aligned rectangle bounds
 (AD-049), signed-dimension normalization, inclusive touching, point/line queries,
 and nonfinite-input rejection (AD-050).
 
-Next resolve camera consistency and lifetime, initially estimated at three
-questions, starting with state snapshot timing inside scopes.
+## Camera lifecycle questionnaire progress
+
+Question 1 of 3 is resolved: configure cameras before drawing; draw consumes
+camera state, and snapshot mechanics stay internal (AD-051). The previously
+proposed public snapshot contract was not adopted. Continue with camera lifetime
+and cleanup expectations.

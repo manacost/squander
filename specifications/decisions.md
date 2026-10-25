@@ -686,6 +686,21 @@ from zero-size basic drawing: a location can be in view without producing pixels
 Numerical tolerances and overflow from finite extreme inputs remain implementation
 contracts to resolve without introducing false-negative visibility results.
 
+## AD-051: Configure cameras before drawing
+
+Camera movement and configuration belong in `update`, initialization, or external
+control/event handlers before drawing. Draw callbacks consume camera state;
+applications should not mutate a camera inside its draw scope. External controls
+may still adjust the camera while simulation is paused, with the next draw using
+the changed state.
+
+Keep snapshot mechanics out of the public API. The earlier proposal to promise
+scope-entry snapshots and context-dependent query snapshots was not adopted as a
+public contract. Internal snapshots may support consistent rendering, but whether
+in-scope mutation throws or affects a later scope remains an implementation detail
+to resolve if stronger misuse guarantees are needed. Examples should demonstrate
+the intended update/draw separation, not mutation during drawing.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft
