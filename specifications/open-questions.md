@@ -34,7 +34,7 @@ log when architectural. No fixed implementation values below are implied.
   and the exact geometry release API (ownership is agreed in AD-039).
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
-- `camera-2d`: scope API and nesting/restoration, camera lifetime, snapshot timing, screen-coordinate
+- `camera-2d`: synchronous-callback enforcement and nesting semantics, camera lifetime, snapshot timing, screen-coordinate
   origin, position/rotation value validation, and extreme-value numerical behavior.
 - `texture-filtering`: descriptor names, sampler changes, and font sampling defaults.
 
@@ -135,8 +135,7 @@ with how the camera is applied to drawing.
 
 ## Camera integration questionnaire progress
 
-Question 1 of 3 is in progress. Explicit reusable cameras and scoped world drawing
-with unscoped screen drawing are agreed (AD-044). Choose between paired
-`begin()`/`end()` and a synchronous callback scope; consider callback allocation
-without assuming a measured performance cost. The implicit main-camera proposal
-was not adopted.
+Question 1 of 3 is resolved: explicit reusable cameras (AD-044) use synchronous
+`camera.draw(callback)` with exception-safe restoration (AD-045). Manual scope
+pairing is a future candidate. Continue with nested-camera behavior; snapshot
+timing, screen-coordinate origin, and camera lifetime remain open.

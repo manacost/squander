@@ -40,6 +40,9 @@ were planning labels only. Lists replace the earlier tables for readability.
 
 ## Exploratory possibilities
 
+- Manual camera `begin()`/`end()` scopes if a concrete need emerges beyond the
+  synchronous, exception-safe `camera.draw(callback)` API (AD-045).
+
 - Custom shaders, render targets, and advanced rendering effects.
 - Generated asset manifests.
 - Advanced text layout, complex-script shaping, and richer font capabilities.

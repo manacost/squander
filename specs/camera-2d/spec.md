@@ -13,6 +13,7 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Use synchronous `camera.draw(callback)` scopes; restore previous drawing state on normal completion or exceptions and propagate callback errors. Accept reusable or inline functions; do not extend scopes across asynchronous work (AD-045).
 - Create reusable cameras and apply them through explicit scopes inside `draw`. Scoped drawing uses world coordinates; unscoped drawing uses screen coordinates. Cameras are not implicitly applied to all draws (AD-044).
 
 - Interpret camera `(x, y)` as the world point shown at the logical viewport center; zoom preserves that centered focus point (AD-040).
@@ -56,6 +57,7 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 
 ## Acceptance criteria
 
+- Verify normal and throwing callbacks restore prior drawing state, errors propagate, and subsequent draws do not inherit the completed camera scope. Verify both inline and reused callbacks work.
 - Verify camera transforms affect scoped draws only, across sprites, shapes, and labels; unscoped content is unaffected and the same camera can be reused across frames.
 - Verify the camera’s world position maps to the logical viewport center across viewport sizes and zoom levels, including a letterboxed viewport; keep physical display scaling separate.
 - Verify default camera values and landmark offsets at multiple viewport sizes: world (0, 0) maps to the center and world (10, 0) maps ten logical units to its right.
@@ -68,7 +70,7 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 
 ## Usage description
 
-Configure the camera position to the world point you want centered, then apply it to world drawing. Create a reusable camera and explicitly scope the world draws it affects. Unscoped draws use screen coordinates. Paired `begin()`/`end()` and `camera.draw(callback)` are candidate APIs; neither has been finalized.
+Configure the camera position to the world point you want centered, then apply it to world drawing. Create a reusable camera and explicitly scope the world draws it affects. Unscoped draws use screen coordinates. Use synchronous `camera.draw(callback)`; a reusable callback can be defined outside the frame loop. Manual `begin()`/`end()` is deferred.
 
 ## Test references
 
@@ -81,7 +83,7 @@ Use `[camera-2d]` in relevant suite names and add actual file/suite links as tes
 
 ## Notes
 
-AD-006, AD-014, and AD-040 through AD-044. Open: scope API, nesting/restoration, camera lifetime, snapshot timing, screen-coordinate origin, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+AD-006, AD-014, and AD-040 through AD-045. Open: synchronous-callback enforcement, nesting semantics, camera lifetime, snapshot timing, screen-coordinate origin, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

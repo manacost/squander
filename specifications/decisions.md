@@ -602,12 +602,27 @@ drawing outside any scope uses screen coordinates. A camera need not be applied
 every frame. The defaults and transform semantics of AD-040 through AD-043 apply
 when a camera scope is active, not to unscoped drawing.
 
-The proposed implicit main camera was not adopted. Scope API ergonomics remain
-under discussion: paired `begin()`/`end()` or a synchronous `camera.draw(callback)`
-wrapper. Exact signatures, nesting/restoration, camera ownership/release, snapshot
-timing, and the screen-coordinate origin remain open. Creating a reusable camera
+The proposed implicit main camera was not adopted. AD-045 selects a synchronous
+`camera.draw(callback)` scope. Exact callback typing, nesting semantics, camera
+ownership/release, snapshot timing, and the screen-coordinate origin remain open. Creating a reusable camera
 does not yet prescribe a dedicated GPU allocation. Svelte remains the UI solution;
 explicit screen-space GPU drawing is also available in Phase 2.
+
+## AD-045: Synchronous camera callback scopes
+
+Use `camera.draw(callback)` for Phase 2 camera scopes. Execute the callback
+synchronously under the camera transform and restore the previous drawing state
+when it exits, including when it throws, using exception-safe cleanup. Errors
+propagate to the existing draw/game failure policy; scope cleanup does not swallow
+them. The scope must not remain active across asynchronous work.
+
+Support both inline callbacks and reusable functions, allowing applications to
+avoid creating a new callback each frame without changing the API. Do not promise
+a performance difference without measurement. Exact typing/runtime enforcement
+of synchronous callbacks and nested-camera semantics remain open.
+
+Manual `begin()`/`end()` is a future candidate only if a concrete need emerges;
+record it in the candidate log rather than exposing it in Phase 2.
 
 ## Implementation readiness
 
