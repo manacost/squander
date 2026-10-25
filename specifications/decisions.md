@@ -603,8 +603,7 @@ every frame. The defaults and transform semantics of AD-040 through AD-043 apply
 when a camera scope is active, not to unscoped drawing.
 
 The proposed implicit main camera was not adopted. AD-045 selects a synchronous
-`camera.draw(callback)` scope. Exact callback typing, nesting semantics, camera
-ownership/release, snapshot timing, and the screen-coordinate origin remain open. Creating a reusable camera
+`camera.draw(callback)` scope. Exact callback typing, camera ownership/release, snapshot timing, and the screen-coordinate origin remain open. Creating a reusable camera
 does not yet prescribe a dedicated GPU allocation. Svelte remains the UI solution;
 explicit screen-space GPU drawing is also available in Phase 2.
 
@@ -619,10 +618,20 @@ them. The scope must not remain active across asynchronous work.
 Support both inline callbacks and reusable functions, allowing applications to
 avoid creating a new callback each frame without changing the API. Do not promise
 a performance difference without measurement. Exact typing/runtime enforcement
-of synchronous callbacks and nested-camera semantics remain open.
+of synchronous callbacks remains open; AD-046 defines nested-camera semantics.
 
 Manual `begin()`/`end()` is a future candidate only if a concrete need emerges;
 record it in the candidate log rather than exposing it in Phase 2.
+
+## AD-046: Nested cameras replace rather than compose
+
+If camera scopes nest, the innermost camera temporarily replaces the outer camera
+transform. Do not multiply the two camera transforms. On exit, restore the prior
+camera, including during exception unwinding, consistently with AD-045.
+
+Nesting is expected to be uncommon. Keep a single camera scope as the primary
+workflow; define and test nesting predictably without introducing camera trees,
+transform inheritance, or a prominent nested-camera API.
 
 ## Implementation readiness
 
