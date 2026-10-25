@@ -34,7 +34,7 @@ log when architectural. No fixed implementation values below are implied.
   and the exact geometry release API (ownership is agreed in AD-039).
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
-- `camera-2d`: exported bounds type name, signed/zero extents, edge-touching/invalid-input policy, query snapshot
+- `camera-2d`: exported bounds type name, numerical visibility tolerances, query snapshot
   timing, synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and extreme-value numerical behavior.
 - `texture-filtering`: descriptor names, sampler changes, and font sampling defaults.
 
@@ -148,5 +148,9 @@ Camera lifetime, snapshot timing, and numerical edge cases remain open.
 The scope split is agreed (AD-048): Phase 2 includes conservative
 `camera.is_in_view(bounds)`; automatic offscreen and occlusion culling are Phase 3
 candidates. Rendering culling must not automatically suppress gameplay updates.
-Question 1 of 2 is resolved: plain world-axis-aligned rectangle bounds (AD-049).
-Continue with signed/zero extents, boundary touching, and invalid values.
+Both visibility questions are resolved: world-axis-aligned rectangle bounds
+(AD-049), signed-dimension normalization, inclusive touching, point/line queries,
+and nonfinite-input rejection (AD-050).
+
+Next resolve camera consistency and lifetime, initially estimated at three
+questions, starting with state snapshot timing inside scopes.

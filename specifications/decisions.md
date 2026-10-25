@@ -658,8 +658,8 @@ investigate. Require output equivalence, preservation of draw order/transparency
 and measured benefit before adopting an optimization. Do not couple rendering
 culling to simulation/update scheduling.
 
-AD-049 defines the bounds representation. Edge-touching/invalid-input policy and
-query snapshot timing remain open. Letterboxing continues to belong to viewport sizing, not the camera.
+AD-049 defines the bounds representation and AD-050 defines boundary/input
+behavior. Query snapshot timing remains open. Letterboxing continues to belong to viewport sizing, not the camera.
 
 ## AD-049: World-axis-aligned visibility rectangles
 
@@ -670,8 +670,21 @@ geometry without passing entity objects or GPU resource handles to the query.
 
 For example, a circle centered at `(x, y)` with radius `r` has bounds
 `{ x: x - r, y: y - r, width: 2 * r, height: 2 * r }`, expanded further if its
-stroke extends outside that radius. Exact exported type naming and signed/zero
-extent, boundary-touching, and invalid-value behavior remain to be settled.
+stroke extends outside that radius. Exact exported type naming remains open;
+AD-050 defines signed/zero extents, boundary touching, and invalid values.
+
+## AD-050: Conservative visibility boundaries
+
+Normalize signed visibility rectangle dimensions using the same starting-corner
+convention as basic rectangles. Bounds touching the viewport edge count as
+potentially visible. Zero width or height produces a line or point visibility
+query, not an automatic false result. A point or line inside or touching the view
+returns true; clearly outside bounds return false under the conservative contract.
+
+Throw for NaN or infinite coordinates/dimensions. This query contract differs
+from zero-size basic drawing: a location can be in view without producing pixels.
+Numerical tolerances and overflow from finite extreme inputs remain implementation
+contracts to resolve without introducing false-negative visibility results.
 
 ## Implementation readiness
 
