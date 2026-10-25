@@ -561,7 +561,7 @@ resolution remain separate from camera positioning.
 
 Prioritize intuitive camera ergonomics. This decision defines position semantics,
 not automatic follow behavior. AD-041 defines the initial view and AD-042 defines
-zoom semantics. Rotation convention and camera-binding API remain open.
+zoom semantics. AD-043 defines rotation; the camera-binding API remains open.
 
 ## AD-041: Default camera centers the world origin
 
@@ -580,6 +580,19 @@ minimum or maximum; applications can define their own zoom limits. Numerical
 precision/representability at extreme values still needs implementation guidance.
 
 Cursor-anchored zoom is a Phase 3 convenience candidate, not Phase 2 behavior.
+
+## AD-043: Camera rotation is world orientation
+
+Express camera rotation in radians, accepting the shared `degrees()` helper.
+Positive angles orient the camera clockwise in the positive-Y-down world. Apply
+the inverse camera rotation to the view, so world content appears to rotate
+counterclockwise about the logical viewport center while the camera focus stays
+centered. At camera rotation `degrees(90)`, a world point directly right of the
+camera appears above the viewport center.
+
+Matching a sprite’s orientation to the camera’s orientation cancels their relative
+rotation on screen. This is transform behavior, not automatic follow/rotation
+tracking. Camera-binding and value-validation details remain separate contracts.
 
 ## Implementation readiness
 
