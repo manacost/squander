@@ -658,8 +658,20 @@ investigate. Require output equivalence, preservation of draw order/transparency
 and measured benefit before adopting an optimization. Do not couple rendering
 culling to simulation/update scheduling.
 
-Exact bounds types, edge-touching/invalid-input policy, and query snapshot timing
-remain open. Letterboxing continues to belong to viewport sizing, not the camera.
+AD-049 defines the bounds representation. Edge-touching/invalid-input policy and
+query snapshot timing remain open. Letterboxing continues to belong to viewport sizing, not the camera.
+
+## AD-049: World-axis-aligned visibility rectangles
+
+Accept plain `{ x, y, width, height }` world-space rectangles in
+`camera.is_in_view(bounds)`. Rectangle axes remain aligned with the world axes
+when the camera rotates. Callers can enclose sprites, circles, or prepared
+geometry without passing entity objects or GPU resource handles to the query.
+
+For example, a circle centered at `(x, y)` with radius `r` has bounds
+`{ x: x - r, y: y - r, width: 2 * r, height: 2 * r }`, expanded further if its
+stroke extends outside that radius. Exact exported type naming and signed/zero
+extent, boundary-touching, and invalid-value behavior remain to be settled.
 
 ## Implementation readiness
 

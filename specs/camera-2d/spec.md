@@ -22,6 +22,7 @@ This draft does not claim implementation or verification.
 - Treat zoom as a positive magnification factor: 2 doubles size, 0.5 halves it. Reject zero, negative, and nonfinite values; applications choose gameplay limits (AD-042).
 - Interpret rotation as camera orientation in world space, in radians with `degrees()` available. Positive camera rotation is clockwise; world content is transformed by the inverse rotation about the viewport center (AD-043).
 - Provide `camera.is_in_view(bounds)` for world-space bounds, accounting for camera position, zoom, rotation, and logical viewport size. False means definitely outside; true means partially or potentially visible, not unoccluded (AD-048).
+- Accept plain `{ x, y, width, height }` world-axis-aligned rectangles for visibility queries, independent of camera rotation. Do not require game entities or resource handles (AD-049).
 - Require caller-provided bounds to cover rendered content, including stroke extent. The visibility query does not itself skip draws or updates; automatic culling is deferred.
 - Apply the basic camera consistently to world sprites, shapes, paths, polygons, and labels.
 - Outside camera scopes, use logical screen coordinates with origin at the content viewport’s top-left, excluding letterbox bars, positive X right and positive Y down (AD-047).
@@ -79,6 +80,7 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 - Compare transformed world landmarks across primitive types after translation, zoom, and rotation.
 - Verify an unscoped screen-space marker at (0, 0) maps to the content viewport’s top-left across fitting, letterboxing, and DPR changes, independently of camera transforms.
 - Verify clearly outside bounds return false and intersecting/partially visible bounds return true across camera translation, rotation, zoom, and viewport sizes, including bounds containing the entire view.
+- Verify world-axis-aligned bounds retain their world meaning under camera rotation; include a circle-enclosing rectangle fixture and type tests accepting plain bounds without entity/resource dependencies.
 - Verify known visible stroke extents are not rejected when included in supplied bounds. Use independent reference fixtures to detect false negatives; conservative false positives are allowed.
 - Verify foreground occluders do not affect the bounds-query result and calling the query changes neither draw submission nor simulation scheduling.
 - Verify camera changes do not mutate world coordinates or viewport policy.
@@ -99,7 +101,7 @@ Use `[camera-2d]` in relevant suite names and add actual file/suite links as tes
 
 ## Notes
 
-AD-006, AD-014, and AD-040 through AD-048. Open: visibility bounds types, edge-touching/invalid-input policy, query snapshot timing, synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+AD-006, AD-014, and AD-040 through AD-049. Open: exported bounds type name, signed/zero extents, edge-touching/invalid-input policy, query snapshot timing, synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
