@@ -633,6 +633,14 @@ Nesting is expected to be uncommon. Keep a single camera scope as the primary
 workflow; define and test nesting predictably without introducing camera trees,
 transform inheritance, or a prominent nested-camera API.
 
+## AD-047: Screen coordinates use the logical content viewport
+
+Outside a camera scope, screen `(0, 0)` is the top-left of the logical content
+viewport, positive X right and positive Y down. Use logical units before viewport
+fitting and physical display scaling. Letterbox bars are outside this content
+coordinate system. The viewport sizing policy controls fitting/letterboxing;
+cameras transform world coordinates into that viewport, not the bars themselves.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

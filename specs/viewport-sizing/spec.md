@@ -15,6 +15,7 @@ This draft does not claim implementation or verification.
 
 - Support fixed logical dimensions uniformly fitted and centered with letterboxing.
 - Support responsive logical dimensions following available CSS size.
+- Control letterboxing through viewport sizing, independently of cameras. Unscoped screen coordinates start at the logical content viewport’s top-left and exclude the bars (AD-047).
 - Scale centrally in rendering and keep physical device pixel ratio separate from logical units.
 - Expose logical dimensions and viewport bounds needed by application layout and aligned Svelte UI.
 - Fixed-fill cropping and integer-only scaling are deferred.

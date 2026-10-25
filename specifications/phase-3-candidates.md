@@ -40,6 +40,10 @@ were planning labels only. Lists replace the earlier tables for readability.
 
 ## Exploratory possibilities
 
+- Visibility-based rendering optimizations: automatic offscreen bounds culling
+  and potentially occlusion culling. Requested for exploration; scope, conservative
+  correctness guarantees, and measured benefit remain unapproved.
+
 - Manual camera `begin()`/`end()` scopes if a concrete need emerges beyond the
   synchronous, exception-safe `camera.draw(callback)` API (AD-045).
 

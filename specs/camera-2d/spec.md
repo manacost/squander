@@ -22,6 +22,7 @@ This draft does not claim implementation or verification.
 - Treat zoom as a positive magnification factor: 2 doubles size, 0.5 halves it. Reject zero, negative, and nonfinite values; applications choose gameplay limits (AD-042).
 - Interpret rotation as camera orientation in world space, in radians with `degrees()` available. Positive camera rotation is clockwise; world content is transformed by the inverse rotation about the viewport center (AD-043).
 - Apply the basic camera consistently to world sprites, shapes, paths, polygons, and labels.
+- Outside camera scopes, use logical screen coordinates with origin at the content viewport’s top-left, excluding letterbox bars, positive X right and positive Y down (AD-047).
 - Keep camera transforms separate from viewport fitting and physical resolution.
 - Permit camera changes to be visible while gameplay is explicitly paused.
 - Swappable projections and advanced camera behaviors are deferred.
@@ -67,6 +68,7 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 - At zoom 1 and camera rotation `degrees(90)`, verify a point ten world units right of the focus maps ten logical units above center; verify the opposite result for `degrees(-90)` and unchanged placement of the focus.
 - Verify equal sprite and camera rotations cancel in screen orientation.
 - Compare transformed world landmarks across primitive types after translation, zoom, and rotation.
+- Verify an unscoped screen-space marker at (0, 0) maps to the content viewport’s top-left across fitting, letterboxing, and DPR changes, independently of camera transforms.
 - Verify camera changes do not mutate world coordinates or viewport policy.
 - Verify camera updates remain visible during explicit pause.
 
@@ -85,7 +87,7 @@ Use `[camera-2d]` in relevant suite names and add actual file/suite links as tes
 
 ## Notes
 
-AD-006, AD-014, and AD-040 through AD-046. Open: synchronous-callback enforcement, camera lifetime, snapshot timing, screen-coordinate origin, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+AD-006, AD-014, and AD-040 through AD-047. Open: synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
