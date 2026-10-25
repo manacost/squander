@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Prepared geometry belongs to its creating game and remains valid until explicit release or game disposal. Reject drawing/updating released handles or use through another game; reclaim prior uses safely under AD-038 (AD-039).
+
 - Use flat ends for open strokes and sharp joins with a fixed limit and bevel fallback for excessive spikes (AD-031). The exact limit remains open; rounded/configurable styles are deferred.
 
 - Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
@@ -70,6 +72,8 @@ still uses its original snapshot until an explicit update succeeds. An invalid
 update throws and the original route remains drawable through the same handle.
 
 ## Acceptance criteria
+
+- Verify explicit release and game disposal clean up prepared geometry, released handles reject drawing/updates, and foreign-game use fails. Verify the same source arrays can create independent handles without transferring ownership.
 
 - Verify open strokes stop at their endpoints, rectangle outlines retain square corners, and sufficiently acute joins fall back to bevels. Add boundary fixtures once the miter limit is defined.
 
@@ -130,7 +134,7 @@ Use `[paths-and-polygons]` in relevant suite names and add actual file/suite lin
 
 ## Notes
 
-AD-015 and AD-033 through AD-036. Open: command sequencing after closure and empty subpaths, exact command shapes and update-operation name, rebuild scheduling, tessellation tolerance under zoom, geometry ownership/disposal, numerical validation tolerances, and overlapping-edge/nonadjacent-touching-vertex behavior.
+AD-015, AD-033 through AD-036, and AD-039. Open: command sequencing after closure and empty subpaths, exact command shapes and update-operation name, rebuild scheduling, tessellation tolerance under zoom, exact geometry release API, numerical validation tolerances, and overlapping-edge/nonadjacent-touching-vertex behavior.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

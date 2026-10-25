@@ -15,6 +15,7 @@ This draft does not claim implementation or verification.
 
 - Separate frame-local drawing from persistent resource creation/loading. Draw APIs return no disposable resource; existing resources retain their own lifetime (AD-037).
 - Document ownership and required release for every resource-returning create/load API, including owner/game cleanup and release examples. Pure value helpers require no release.
+- Prepared paths/polygons belong to their creating game, permit early explicit release, and are cleaned up on game disposal. Reject released-handle updates and cross-game use; favor single-game ergonomics (AD-039).
 - Track explicit ownership independently of arbitrary JavaScript references.
 - Game ownership can outlive future scenes. After the final owner releases a resource, reclaim its underlying storage when prior accepted draws can safely finish (AD-038).
 - Releasing a handle immediately invalidates it for new draws, even if another owner keeps the resource alive. Repeated release is harmless.
@@ -53,6 +54,7 @@ A developer retains another variable pointing to A’s released handle. Drawing 
 - Exercise draw-then-release before GPU submission and while work is in flight: verify earlier commands render without released-resource errors, new draws fail, and storage is not destroyed or reused prematurely.
 - Attempt drawing through a released alias and assert an asset-identifying error; double release has no extra effect.
 - Disposing an owner releases its remaining acquisitions without invalidating another live owner.
+- Verify game disposal cleans up remaining prepared geometry, foreign-game drawing/updating fails, and independent geometry handles can be created from the same source data.
 - Type tests reject forged ordinary objects and wrong asset kinds; tests do not claim compile-time proof of lifetime safety.
 
 ## Usage description
@@ -70,7 +72,7 @@ Use `[resource-ownership]` in relevant suite names and add actual file/suite lin
 
 ## Notes
 
-AD-004, AD-013, AD-037, and AD-038. Open: exact release/scope API, internal completion/reclamation strategy, prepared-geometry ownership, and whether standalone custom scopes ship initially.
+AD-004, AD-013, and AD-037 through AD-039. Open: exact release/scope API, internal completion/reclamation strategy, whether standalone custom scopes ship initially.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

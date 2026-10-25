@@ -19,7 +19,7 @@ log when architectural. No fixed implementation values below are implied.
 - `asset-loading`: descriptor/cache identity and cancellation of one concurrent
   requester without disrupting others.
 - `dynamic-assets`: supported image encodings and size limits; duplicate-input policy.
-- `resource-ownership`: release/scope API, prepared-geometry ownership, and internal
+- `resource-ownership`: release/scope API and internal
   completion/reclamation strategy. AD-038 defines safe release semantics.
 
 ## Rendering
@@ -31,7 +31,7 @@ log when architectural. No fixed implementation values below are implied.
 - `paths-and-polygons`: exact command shapes, update-operation name (revisit `replace`),
   numerical validation tolerances and overlapping/touching edges, rebuild scheduling,
   command sequencing/empty subpaths, tessellation tolerance,
-  and reusable geometry ownership/disposal.
+  and the exact geometry release API (ownership is agreed in AD-039).
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
 - `camera-2d`: default mapping, position meaning, application scope, and zoom limits.
@@ -110,7 +110,12 @@ geometry resource lifetime.
 
 ## Geometry lifetime questionnaire progress
 
-Questions 1 and 2 of 3 are resolved: frame-local draws with documented creation/
-loading ownership (AD-037), and immediate handle invalidation while preserving
-resource validity for prior accepted draws (AD-038). Continue with prepared-geometry
-ownership and cross-game use.
+The three-question geometry lifetime block is complete:
+
+- Frame-local draws and documented create/load release obligations (AD-037).
+- Immediate handle invalidation with safe retention for prior accepted draws (AD-038).
+- Game-owned prepared geometry, early release, and game-disposal cleanup (AD-039).
+
+Single-game use is the primary ergonomic target. Cross-game rejection is a guard,
+not a request for cross-game sharing features. Continue with camera/view contracts;
+the next block initially estimates four questions, starting with position meaning.

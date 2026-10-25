@@ -521,7 +521,7 @@ Include this in API reference/editor-visible documentation and show cleanup in
 usage examples. Distinguish resource acquisition from pure value helpers such as
 colors and path commands, which do not require resource release.
 
-Exact prepared-geometry ownership remains open; AD-038 defines release safety.
+AD-039 defines prepared-geometry ownership; AD-038 defines release safety.
 This rule does not decide GPU allocation layout or promise zero internal allocations.
 
 ## AD-038: Immediate release with safe completion of prior draws
@@ -537,6 +537,19 @@ or pooled-storage reuse happens only when safe; no particular fence or allocatio
 strategy is prescribed. Repeated release remains harmless. This rule preserves
 resource validity for prior commands; it does not override existing game-failure,
 device-loss, or disposal behavior to guarantee presentation of a frame.
+
+## AD-039: Game-owned prepared geometry
+
+Each prepared path or polygon handle belongs to the game instance that created
+it. Retain it until explicit release or game disposal; disposing the game cleans
+up remaining geometry. Drawing or updating through a released handle, or using
+it through another game, throws. Safe reclamation of prior uses follows AD-038.
+Plain command and point arrays remain reusable to create separate handles.
+
+Optimize API ergonomics and documentation for the primary use case: one game
+instance. The cross-game check is a misuse boundary, not a reason to introduce
+cross-game resource sharing, transfer APIs, or multiple-game orchestration.
+Basic shape draw calls remain frame-local and need no geometry handles or release.
 
 ## Implementation readiness
 
