@@ -14,6 +14,7 @@ This draft does not claim implementation or verification.
 ## Requirements
 
 - Provide an organized documentation library with focused runnable demos and relevant automated tests for each individual feature.
+- Document ownership, required release, release method, and owner/game cleanup for every resource-returning create/load API, in both API/editor documentation and usage examples (AD-037). Explain that draw calls and pure value helpers do not return disposable resources.
 - Explain usage and limitations and connect capability specs to tests and demos.
 - Provide a final playground/kitchen-sink experience in addition to focused demos.
 - Demonstrate composition without making deferred scene/ECS/input systems prerequisites.
@@ -31,6 +32,7 @@ The playground combines geometry, sprites, labels, camera/viewport behavior, ass
 
 ## Acceptance criteria
 
+- Audit the resource-returning create/load API inventory for ownership/release documentation and examples that show cleanup; identify any missing lifecycle guidance.
 - Inventory every Phase 2 feature against a documentation entry, focused runnable demo, and relevant automated verification; identify missing entries explicitly.
 - Verify documentation routes and demo controls work in browser tests.
 - Exercise the combined playground’s loading, interaction, pause, disposal/recreation, and handled failure flows.

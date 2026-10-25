@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Basic shape draw APIs submit frame-local commands, capture input values at submission, return no disposable resource, and create no per-call textures (AD-037). Renderer-owned buffer management stays internal.
+
 - Use flat ends for open strokes and sharp joins with a fixed limit and bevel fallback for excessive spikes (AD-031). The exact limit remains open; rounded/configurable styles are deferred.
 
 - Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
@@ -62,6 +64,8 @@ outer radius of 12. Changing the stroke width does not move its centerline.
 A filled circle is drawn over a rectangle and a line crosses both, with output following call order.
 
 ## Acceptance criteria
+
+- Draw the same mutable circle-data object repeatedly with changed position/radius. Verify each draw uses its submitted values without requiring a persistent circle handle or creating a texture per call.
 
 - Verify open strokes stop at their endpoints, rectangle outlines retain square corners, and sufficiently acute joins fall back to bevels. Add boundary fixtures once the miter limit is defined.
 

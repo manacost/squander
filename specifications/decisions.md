@@ -500,6 +500,30 @@ Numerical tolerances and treatment of overlapping edges or nonadjacent touching
 vertices still require precise implementation contracts; this decision does not
 introduce holes, automatic shape repair, or automatic simplification.
 
+## AD-037: Frame-local draws and documented persistent resources
+
+All `draw_*` APIs submit commands for the current frame and return no disposable
+resource. Capture scalar/structured draw values at submission so subsequent
+application-data edits do not change an already submitted command. Drawing a
+basic circle, rectangle, or line requires no developer-owned geometry handle and
+creates no per-call texture. The renderer owns temporary buffers and their safe
+reuse; exact internal rendering/storage choices remain open.
+
+Persistent resources are obtained separately through creation/loading APIs.
+Drawing sprites, text, or prepared geometry references those existing resources;
+the draw itself does not create another developer-owned resource. Automatic
+preparation of previously unseen glyphs may grow the font-owned cache, as already
+agreed, without giving the text draw its own disposable lifetime.
+
+Every resource-returning create/load API must document ownership, the obligation
+and method to release the resource, and applicable owner/game-disposal cleanup.
+Include this in API reference/editor-visible documentation and show cleanup in
+usage examples. Distinguish resource acquisition from pure value helpers such as
+colors and path commands, which do not require resource release.
+
+Exact prepared-geometry ownership and safe destruction timing remain open; this
+rule does not decide GPU allocation layout or promise zero internal allocations.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

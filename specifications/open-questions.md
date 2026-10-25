@@ -105,4 +105,11 @@ The four-question reusable geometry block is complete:
 
 Revisit the update verb; `replace` was not accepted as final naming. Remaining
 numerical and path-sequencing details are listed above. The next block covers
-geometry resource lifetime, with an initial estimate of three questions.
+geometry resource lifetime.
+
+## Geometry lifetime questionnaire progress
+
+Question 1 of 3 is resolved: draw calls submit frame-local commands without
+returning disposable resources; resource-returning create/load APIs must explain
+ownership and release (AD-037). Geometry ownership and safe release timing remain
+open. Continue with release timing relative to already submitted draws.
