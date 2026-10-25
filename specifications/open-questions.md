@@ -153,7 +153,7 @@ and nonfinite-input rejection (AD-050).
 
 ## Camera lifecycle questionnaire progress
 
-Question 1 of 3 is resolved: configure cameras before drawing; draw consumes
-camera state, and snapshot mechanics stay internal (AD-051). The previously
-proposed public snapshot contract was not adopted. Continue with camera lifetime
-and cleanup expectations.
+Questions 1 and 2 of 3 are resolved: camera configuration remains outside draw
+scopes (AD-051), and cameras are lightweight CPU-side values with no manual
+release (AD-052). Renderer-owned camera caching is an internal optimization.
+Continue with any remaining camera consistency and lifetime edge cases.
