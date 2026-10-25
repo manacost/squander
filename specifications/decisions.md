@@ -560,8 +560,16 @@ stationary at the viewport center. Viewport fitting/letterboxing and physical
 resolution remain separate from camera positioning.
 
 Prioritize intuitive camera ergonomics. This decision defines position semantics,
-not automatic follow behavior. Default initial position, zoom bounds, rotation
-convention, and camera-binding API remain open.
+not automatic follow behavior. AD-041 defines the initial view; zoom bounds,
+rotation convention, and camera-binding API remain open.
+
+## AD-041: Default camera centers the world origin
+
+Initialize the camera at `(0, 0)` with zoom 1 and rotation 0. World `(0, 0)`
+appears at the logical viewport center, with positive X right and positive Y down.
+At zoom 1, before viewport fitting/display-density scaling, one world unit maps
+to one logical viewport unit. The default position does not depend on viewport
+dimensions; there is no automatic half-viewport position offset.
 
 ## Implementation readiness
 
