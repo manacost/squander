@@ -19,7 +19,8 @@ log when architectural. No fixed implementation values below are implied.
 - `asset-loading`: descriptor/cache identity and cancellation of one concurrent
   requester without disrupting others.
 - `dynamic-assets`: supported image encodings and size limits; duplicate-input policy.
-- `resource-ownership`: release/scope API and safe GPU destruction timing.
+- `resource-ownership`: release/scope API, prepared-geometry ownership, and internal
+  completion/reclamation strategy. AD-038 defines safe release semantics.
 
 ## Rendering
 
@@ -109,7 +110,7 @@ geometry resource lifetime.
 
 ## Geometry lifetime questionnaire progress
 
-Question 1 of 3 is resolved: draw calls submit frame-local commands without
-returning disposable resources; resource-returning create/load APIs must explain
-ownership and release (AD-037). Geometry ownership and safe release timing remain
-open. Continue with release timing relative to already submitted draws.
+Questions 1 and 2 of 3 are resolved: frame-local draws with documented creation/
+loading ownership (AD-037), and immediate handle invalidation while preserving
+resource validity for prior accepted draws (AD-038). Continue with prepared-geometry
+ownership and cross-game use.

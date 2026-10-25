@@ -521,8 +521,22 @@ Include this in API reference/editor-visible documentation and show cleanup in
 usage examples. Distinguish resource acquisition from pure value helpers such as
 colors and path commands, which do not require resource release.
 
-Exact prepared-geometry ownership and safe destruction timing remain open; this
-rule does not decide GPU allocation layout or promise zero internal allocations.
+Exact prepared-geometry ownership remains open; AD-038 defines release safety.
+This rule does not decide GPU allocation layout or promise zero internal allocations.
+
+## AD-038: Immediate release with safe completion of prior draws
+
+Releasing a resource handle immediately invalidates it for new draws. Commands
+already accepted by the drawing API remain valid, including commands buffered
+by the renderer before GPU submission. The renderer retains the necessary
+underlying storage until these uses are safe, even after the final application
+owner releases its handle.
+
+Developers do not wait for the GPU before releasing a resource. Actual destruction
+or pooled-storage reuse happens only when safe; no particular fence or allocation
+strategy is prescribed. Repeated release remains harmless. This rule preserves
+resource validity for prior commands; it does not override existing game-failure,
+device-loss, or disposal behavior to guarantee presentation of a frame.
 
 ## Implementation readiness
 
