@@ -481,8 +481,24 @@ update outside `draw`. Mutating application-owned points does not silently alter
 prepared geometry. Invalid updates throw and leave the previous geometry usable.
 The update operation's name remains unresolved for both paths and polygons.
 
-Winding, duplicate vertices, repeated closing points, and degenerate polygon
-validation remain separate contract decisions.
+AD-036 defines winding, duplicate-point cleanup, and polygon validation.
+
+## AD-036: Polygon normalization and validation
+
+Validate polygons when creating or explicitly updating geometry. Accept either
+clockwise or counterclockwise vertex order. Remove consecutive duplicate points
+and an optional repeated closing point from the internal snapshot without
+mutating application-owned input.
+
+Throw for nonfinite coordinates, self-intersections, fewer than three distinct
+vertices after cleanup, or zero-area polygons. Invalid updates preserve the
+previous geometry. These rules apply to filled and outlined polygons; malformed
+polygon input is an error rather than the zero-size no-op permitted for basic
+shapes in AD-032.
+
+Numerical tolerances and treatment of overlapping edges or nonadjacent touching
+vertices still require precise implementation contracts; this decision does not
+introduce holes, automatic shape repair, or automatic simplification.
 
 ## Implementation readiness
 

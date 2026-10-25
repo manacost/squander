@@ -28,7 +28,8 @@ log when architectural. No fixed implementation values below are implied.
 - `shape-drawing`: transformation pivots, the exact miter limit, very wide strokes,
   antialiasing, and nonuniform object-scale behavior.
 - `paths-and-polygons`: exact command shapes, update-operation name (revisit `replace`),
-  duplicate/repeated closing vertices, rebuild scheduling, command sequencing/empty subpaths, tessellation tolerance, winding, invalid inputs,
+  numerical validation tolerances and overlapping/touching edges, rebuild scheduling,
+  command sequencing/empty subpaths, tessellation tolerance,
   and reusable geometry ownership/disposal.
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
@@ -95,8 +96,13 @@ recorded in the candidate log. This block does not resolve all geometry contract
 
 ## Reusable geometry questionnaire progress
 
-Questions 1–3 of 4 are resolved: editable declarative command arrays with explicit
-validated updates (AD-033), disconnected subpaths (AD-034), and implicitly closed
-point-array polygons sharing the same editing contract (AD-035). Revisit the update
-verb; `replace` was not accepted as final naming. Continue with polygon validation.
-Four is an estimate for this block.
+The four-question reusable geometry block is complete:
+
+- Editable declarative command arrays with explicit validated updates (AD-033).
+- Multiple disconnected subpaths (AD-034).
+- Implicitly closed point-array polygons with the same editing contract (AD-035).
+- Either winding, duplicate-point cleanup, and strict polygon validation (AD-036).
+
+Revisit the update verb; `replace` was not accepted as final naming. Remaining
+numerical and path-sequencing details are listed above. The next block covers
+geometry resource lifetime, with an initial estimate of three questions.
