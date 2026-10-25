@@ -34,7 +34,8 @@ log when architectural. No fixed implementation values below are implied.
   and the exact geometry release API (ownership is agreed in AD-039).
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
-- `camera-2d`: synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and extreme-value numerical behavior.
+- `camera-2d`: visibility bounds types, edge-touching/invalid-input policy, query snapshot
+  timing, synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and extreme-value numerical behavior.
 - `texture-filtering`: descriptor names, sampler changes, and font sampling defaults.
 
 ## Text and integration
@@ -140,7 +141,12 @@ The three-question camera integration block is complete:
 - Inner scopes replace and restore outer cameras; nesting is secondary (AD-046).
 - Unscoped screen coordinates start at the logical content viewport’s top-left (AD-047).
 
-Camera lifetime, snapshot timing, and numerical edge cases remain open. The user
-has raised a checkpoint on viewport responsibility, an `is_in_view` helper, and
-culling. Viewport responsibility is established; helper/culling scope and precise
-visibility guarantees still need agreement.
+Camera lifetime, snapshot timing, and numerical edge cases remain open.
+
+## Visibility checkpoint
+
+The scope split is agreed (AD-048): Phase 2 includes conservative
+`camera.is_in_view(bounds)`; automatic offscreen and occlusion culling are Phase 3
+candidates. Rendering culling must not automatically suppress gameplay updates.
+Next resolve the helper’s bounds representation and boundary/invalid-input policy;
+the initial estimate is two questions.

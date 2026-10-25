@@ -46,6 +46,8 @@ Svelte/SvelteKit integration. The interview direction is consolidated into
 - Reusable cameras apply position/zoom/rotation to explicitly scoped world draws.
   Use synchronous `camera.draw(callback)` with automatic scope restoration, including
   on exceptions. Unscoped draws use screen coordinates.
+- Provide conservative `camera.is_in_view(bounds)` queries for world bounds,
+  including partial visibility and camera rotation. Automatic culling is deferred.
 - Support fixed-fit logical sizing with letterboxing and responsive sizing.
   Handle physical display density separately from logical units.
 - Texture filtering defaults to linear, with independent up/downscaling controls

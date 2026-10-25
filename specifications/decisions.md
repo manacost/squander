@@ -641,6 +641,26 @@ fitting and physical display scaling. Letterbox bars are outside this content
 coordinate system. The viewport sizing policy controls fitting/letterboxing;
 cameras transform world coordinates into that viewport, not the bars themselves.
 
+## AD-048: Visibility query now, automatic culling later
+
+Include `camera.is_in_view(bounds)` in Phase 2. Query caller-supplied world-space
+bounds using camera position, zoom, rotation, and logical viewport dimensions.
+Return false only when the supplied bounds are definitely outside the view;
+return true for partially visible or potentially visible bounds. This is a
+conservative intersection query, not proof of pixel visibility or lack of
+occlusion. Callers must supply bounds covering the rendered content, including
+stroke extent and other relevant expansion.
+
+The query does not automatically skip drawing or change gameplay updates.
+Automatic offscreen bounds culling and more advanced occlusion culling are Phase
+3 candidates, with automatic offscreen culling the initial optimization to
+investigate. Require output equivalence, preservation of draw order/transparency,
+and measured benefit before adopting an optimization. Do not couple rendering
+culling to simulation/update scheduling.
+
+Exact bounds types, edge-touching/invalid-input policy, and query snapshot timing
+remain open. Letterboxing continues to belong to viewport sizing, not the camera.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

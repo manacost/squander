@@ -21,6 +21,8 @@ This draft does not claim implementation or verification.
 - Default to position `(0, 0)`, zoom 1, and rotation 0, centering the world origin independently of viewport dimensions (AD-041). At zoom 1, one world unit maps to one logical viewport unit before viewport/display scaling.
 - Treat zoom as a positive magnification factor: 2 doubles size, 0.5 halves it. Reject zero, negative, and nonfinite values; applications choose gameplay limits (AD-042).
 - Interpret rotation as camera orientation in world space, in radians with `degrees()` available. Positive camera rotation is clockwise; world content is transformed by the inverse rotation about the viewport center (AD-043).
+- Provide `camera.is_in_view(bounds)` for world-space bounds, accounting for camera position, zoom, rotation, and logical viewport size. False means definitely outside; true means partially or potentially visible, not unoccluded (AD-048).
+- Require caller-provided bounds to cover rendered content, including stroke extent. The visibility query does not itself skip draws or updates; automatic culling is deferred.
 - Apply the basic camera consistently to world sprites, shapes, paths, polygons, and labels.
 - Outside camera scopes, use logical screen coordinates with origin at the content viewport’s top-left, excluding letterbox bars, positive X right and positive Y down (AD-047).
 - Keep camera transforms separate from viewport fitting and physical resolution.
@@ -53,6 +55,13 @@ With camera rotation `degrees(90)`, a landmark ten world units to the right of
 the camera appears above the viewport center. A sprite rotated by the same angle
 as the camera retains its unrotated screen orientation.
 
+### Optional visibility check
+
+An application queries an enemy’s world bounds before drawing it. Partially
+visible bounds return true, including under a rotated camera. A fully obscured
+enemy may still return true because the query does not inspect occluding content.
+The query does not change whether the enemy’s gameplay update runs.
+
 ### Inspect while paused
 
 A Svelte control rotates the camera while updates are paused; rendering reflects the change.
@@ -69,12 +78,15 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 - Verify equal sprite and camera rotations cancel in screen orientation.
 - Compare transformed world landmarks across primitive types after translation, zoom, and rotation.
 - Verify an unscoped screen-space marker at (0, 0) maps to the content viewport’s top-left across fitting, letterboxing, and DPR changes, independently of camera transforms.
+- Verify clearly outside bounds return false and intersecting/partially visible bounds return true across camera translation, rotation, zoom, and viewport sizes, including bounds containing the entire view.
+- Verify known visible stroke extents are not rejected when included in supplied bounds. Use independent reference fixtures to detect false negatives; conservative false positives are allowed.
+- Verify foreground occluders do not affect the bounds-query result and calling the query changes neither draw submission nor simulation scheduling.
 - Verify camera changes do not mutate world coordinates or viewport policy.
 - Verify camera updates remain visible during explicit pause.
 
 ## Usage description
 
-Configure the camera position to the world point you want centered, then apply it to world drawing. Create a reusable camera and explicitly scope the world draws it affects. Unscoped draws use screen coordinates. Use synchronous `camera.draw(callback)`; a reusable callback can be defined outside the frame loop. Manual `begin()`/`end()` is deferred.
+Configure the camera position to the world point you want centered, then apply it to world drawing. Create a reusable camera and explicitly scope the world draws it affects. Unscoped draws use screen coordinates. Use synchronous `camera.draw(callback)`; a reusable callback can be defined outside the frame loop. Manual `begin()`/`end()` is deferred. Use `camera.is_in_view(world_bounds)` when the application wants to skip work for definitely offscreen bounds; a true result does not prove actual pixel visibility.
 
 ## Test references
 
@@ -87,7 +99,7 @@ Use `[camera-2d]` in relevant suite names and add actual file/suite links as tes
 
 ## Notes
 
-AD-006, AD-014, and AD-040 through AD-047. Open: synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+AD-006, AD-014, and AD-040 through AD-048. Open: visibility bounds types, edge-touching/invalid-input policy, query snapshot timing, synchronous-callback enforcement, camera lifetime, snapshot timing, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

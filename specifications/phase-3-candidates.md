@@ -38,11 +38,14 @@ were planning labels only. Lists replace the earlier tables for readability.
 - **Additional blend modes:** additive and multiply blending, beyond Phase 2’s
   normal source-over alpha blending (AD-027).
 
-## Exploratory possibilities
+- **Automatic offscreen culling:** skip rendering work for definitely offscreen
+  bounds, building on Phase 2’s explicit `is_in_view` helper. Preserve visible
+  results and validate measured benefit; do not skip gameplay updates (AD-048).
+- **Occlusion culling:** investigate skipping fully hidden content while respecting
+  transparency and draw order. More advanced than offscreen checks; require
+  correctness evidence and measured benefit before implementation (AD-048).
 
-- Visibility-based rendering optimizations: automatic offscreen bounds culling
-  and potentially occlusion culling. Requested for exploration; scope, conservative
-  correctness guarantees, and measured benefit remain unapproved.
+## Exploratory possibilities
 
 - Manual camera `begin()`/`end()` scopes if a concrete need emerges beyond the
   synchronous, exception-safe `camera.draw(callback)` API (AD-045).
