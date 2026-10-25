@@ -21,6 +21,7 @@ This draft does not claim implementation or verification.
 - Interpret camera `(x, y)` as the world point shown at the logical viewport center; zoom preserves that centered focus point (AD-040).
 - Default to position `(0, 0)`, zoom 1, and rotation 0, centering the world origin independently of viewport dimensions (AD-041). At zoom 1, one world unit maps to one logical viewport unit before viewport/display scaling.
 - Treat zoom as a positive magnification factor: 2 doubles size, 0.5 halves it. Reject zero, negative, and nonfinite values; applications choose gameplay limits (AD-042).
+- Reject NaN and infinite camera position components and rotation; accept any finite values, including negative positions and rotations beyond one turn. Do not impose arbitrary coordinate or angle limits (AD-053).
 - Interpret rotation as camera orientation in world space, in radians with `degrees()` available. Positive camera rotation is clockwise; world content is transformed by the inverse rotation about the viewport center (AD-043).
 - Provide `camera.is_in_view(bounds)` for world-space bounds, accounting for camera position, zoom, rotation, and logical viewport size. False means definitely outside; true means partially or potentially visible, not unoccluded (AD-048).
 - Accept plain `{ x, y, width, height }` world-axis-aligned rectangles for visibility queries, independent of camera rotation. Do not require game entities or resource handles (AD-049).
@@ -77,6 +78,7 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 - Verify camera transforms affect scoped draws only, across sprites, shapes, and labels; unscoped content is unaffected and the same camera can be reused across frames.
 - Verify the camera’s world position maps to the logical viewport center across viewport sizes and zoom levels, including a letterboxed viewport; keep physical display scaling separate.
 - Verify default camera values and landmark offsets at multiple viewport sizes: world (0, 0) maps to the center and world (10, 0) maps ten logical units to its right.
+- Verify finite extreme/negative camera positions and rotations are accepted, while NaN/infinite values throw; angles beyond one full turn remain valid.
 - Verify magnification at zoom 0.5, 1, and 2 while the focus remains centered. Verify zero, negative, NaN, and infinite zoom values throw.
 - At zoom 1 and camera rotation `degrees(90)`, verify a point ten world units right of the focus maps ten logical units above center; verify the opposite result for `degrees(-90)` and unchanged placement of the focus.
 - Verify equal sprite and camera rotations cancel in screen orientation.
@@ -106,7 +108,7 @@ Use `[camera-2d]` in relevant suite names and add actual file/suite links as tes
 
 ## Notes
 
-AD-006, AD-014, and AD-040 through AD-052. Open: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, optional enforcement of in-scope mutation, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+AD-006, AD-014, and AD-040 through AD-053. Open: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, optional enforcement of in-scope mutation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

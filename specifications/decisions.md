@@ -713,6 +713,17 @@ This keeps camera lifetime distinct from textures, fonts, and prepared geometry,
 which are explicit resources. Optimize camera GPU representation later only when
 profiling shows a need.
 
+## AD-053: Finite camera position and rotation
+
+Reject NaN and infinity in camera position components and rotation. Accept any
+finite position and any finite rotation, including negative values and angles
+larger than one full turn. Do not impose arbitrary world-coordinate or angle
+limits; normalizing equivalent angles is an internal option, not a public
+restriction.
+
+Camera zoom keeps the stricter positive-finite rules of AD-042. Bounds queries
+keep AD-050’s nonfinite-input rejection.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft
