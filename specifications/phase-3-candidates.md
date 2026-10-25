@@ -23,6 +23,9 @@ were planning labels only. Lists replace the earlier tables for readability.
   controls need separate scoping.
 - **Safe file storage and safe math utilities:** the meaning of safety and initial
   supported operations remain undecided.
+- **Cursor-anchored zoom:** a convenience that keeps the world point under the
+  cursor stationary while zoom changes; Phase 2 zoom stays centered on the camera
+  position (AD-042).
 - **Swappable cameras/projections:** a possible extension within the 2D commitment.
 - **Filled curved paths, polygon holes, and fill rules:** extensions beyond Phase
   2's stroked paths and simple concave polygons.

@@ -560,8 +560,8 @@ stationary at the viewport center. Viewport fitting/letterboxing and physical
 resolution remain separate from camera positioning.
 
 Prioritize intuitive camera ergonomics. This decision defines position semantics,
-not automatic follow behavior. AD-041 defines the initial view; zoom bounds,
-rotation convention, and camera-binding API remain open.
+not automatic follow behavior. AD-041 defines the initial view and AD-042 defines
+zoom semantics. Rotation convention and camera-binding API remain open.
 
 ## AD-041: Default camera centers the world origin
 
@@ -570,6 +570,16 @@ appears at the logical viewport center, with positive X right and positive Y dow
 At zoom 1, before viewport fitting/display-density scaling, one world unit maps
 to one logical viewport unit. The default position does not depend on viewport
 dimensions; there is no automatic half-viewport position offset.
+
+## AD-042: Positive camera magnification
+
+Camera zoom is a positive magnification factor: 2 doubles apparent size and 0.5
+halves it, with the camera’s world focus remaining at the viewport center. Reject
+zero, negative values, NaN, and infinity. Do not impose an arbitrary gameplay
+minimum or maximum; applications can define their own zoom limits. Numerical
+precision/representability at extreme values still needs implementation guidance.
+
+Cursor-anchored zoom is a Phase 3 convenience candidate, not Phase 2 behavior.
 
 ## Implementation readiness
 

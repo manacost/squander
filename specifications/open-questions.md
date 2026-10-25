@@ -34,7 +34,7 @@ log when architectural. No fixed implementation values below are implied.
   and the exact geometry release API (ownership is agreed in AD-039).
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
-- `camera-2d`: application scope, rotation convention, and zoom limits.
+- `camera-2d`: application scope, rotation convention, and extreme-value numerical behavior.
 - `texture-filtering`: descriptor names, sampler changes, and font sampling defaults.
 
 ## Text and integration
@@ -121,7 +121,7 @@ not a request for cross-game sharing features.
 
 ## Camera questionnaire progress
 
-Questions 1 and 2 of 4 are resolved: camera position is the centered world focus
-(AD-040), and initial position (0, 0), zoom 1, rotation 0 centers the world origin
-(AD-041). Ergonomics and intuitive positioning are priorities. Continue with zoom
-semantics and invalid values.
+Questions 1–3 of 4 are resolved: centered world focus (AD-040), origin-centered
+defaults (AD-041), and positive magnification with invalid zoom values rejected
+(AD-042). Cursor-anchored zoom is recorded as a Phase 3 candidate. Continue with
+camera rotation semantics; the camera-binding API remains open.
