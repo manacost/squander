@@ -43,7 +43,8 @@ Svelte/SvelteKit integration. The interview direction is consolidated into
   cubic segments and explicit closure. Stroke widths use world units and scale
   with the geometry and camera zoom. Strokes are centered on their geometry;
   inside/outside alignment is a Phase 3 candidate. No polygon holes or self-intersections.
-- Basic camera position/zoom/rotation applies to world content.
+- Reusable cameras apply position/zoom/rotation to explicitly scoped world draws.
+  Unscoped draws use screen coordinates; exact scope API remains open.
 - Support fixed-fit logical sizing with letterboxing and responsive sizing.
   Handle physical display density separately from logical units.
 - Texture filtering defaults to linear, with independent up/downscaling controls

@@ -594,6 +594,21 @@ Matching a sprite’s orientation to the camera’s orientation cancels their re
 rotation on screen. This is transform behavior, not automatic follow/rotation
 tracking. Camera-binding and value-validation details remain separate contracts.
 
+## AD-044: Explicit reusable camera scopes
+
+Create reusable cameras through a `create_camera()`-style API and apply them
+explicitly within `draw`. Drawing inside a camera scope uses world coordinates;
+drawing outside any scope uses screen coordinates. A camera need not be applied
+every frame. The defaults and transform semantics of AD-040 through AD-043 apply
+when a camera scope is active, not to unscoped drawing.
+
+The proposed implicit main camera was not adopted. Scope API ergonomics remain
+under discussion: paired `begin()`/`end()` or a synchronous `camera.draw(callback)`
+wrapper. Exact signatures, nesting/restoration, camera ownership/release, snapshot
+timing, and the screen-coordinate origin remain open. Creating a reusable camera
+does not yet prescribe a dedicated GPU allocation. Svelte remains the UI solution;
+explicit screen-space GPU drawing is also available in Phase 2.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

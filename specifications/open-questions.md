@@ -34,7 +34,8 @@ log when architectural. No fixed implementation values below are implied.
   and the exact geometry release API (ownership is agreed in AD-039).
 - `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
   whether policy changes require recreation.
-- `camera-2d`: application scope, position/rotation value validation, and extreme-value numerical behavior.
+- `camera-2d`: scope API and nesting/restoration, camera lifetime, snapshot timing, screen-coordinate
+  origin, position/rotation value validation, and extreme-value numerical behavior.
 - `texture-filtering`: descriptor names, sampler changes, and font sampling defaults.
 
 ## Text and integration
@@ -131,3 +132,11 @@ The four-question camera semantics block is complete:
 Cursor-anchored zoom remains a Phase 3 candidate. Continue with camera integration
 and viewport behavior; the next block initially estimates three questions, starting
 with how the camera is applied to drawing.
+
+## Camera integration questionnaire progress
+
+Question 1 of 3 is in progress. Explicit reusable cameras and scoped world drawing
+with unscoped screen drawing are agreed (AD-044). Choose between paired
+`begin()`/`end()` and a synchronous callback scope; consider callback allocation
+without assuming a measured performance cost. The implicit main-camera proposal
+was not adopted.

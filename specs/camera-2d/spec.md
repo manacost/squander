@@ -13,6 +13,8 @@ This draft does not claim implementation or verification.
 
 ## Requirements
 
+- Create reusable cameras and apply them through explicit scopes inside `draw`. Scoped drawing uses world coordinates; unscoped drawing uses screen coordinates. Cameras are not implicitly applied to all draws (AD-044).
+
 - Interpret camera `(x, y)` as the world point shown at the logical viewport center; zoom preserves that centered focus point (AD-040).
 - Default to position `(0, 0)`, zoom 1, and rotation 0, centering the world origin independently of viewport dimensions (AD-041). At zoom 1, one world unit maps to one logical viewport unit before viewport/display scaling.
 - Treat zoom as a positive magnification factor: 2 doubles size, 0.5 halves it. Reject zero, negative, and nonfinite values; applications choose gameplay limits (AD-042).
@@ -26,9 +28,15 @@ This draft does not claim implementation or verification.
 
 ### Initial view
 
-Without camera overrides, world (0, 0) appears at the logical viewport center.
+Inside a camera scope using default values, world (0, 0) appears at the logical viewport center.
 A point ten world units to its right appears ten logical viewport units to its
 right before viewport fitting and physical display scaling.
+
+### World and screen drawing
+
+An application draws game content inside a camera scope, then draws a marker
+outside it. Camera position, zoom, and rotation affect the world content but not
+the screen-space marker. The camera can be reused on subsequent frames.
 
 ### Follow with labels
 
@@ -48,6 +56,7 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 
 ## Acceptance criteria
 
+- Verify camera transforms affect scoped draws only, across sprites, shapes, and labels; unscoped content is unaffected and the same camera can be reused across frames.
 - Verify the camera’s world position maps to the logical viewport center across viewport sizes and zoom levels, including a letterboxed viewport; keep physical display scaling separate.
 - Verify default camera values and landmark offsets at multiple viewport sizes: world (0, 0) maps to the center and world (10, 0) maps ten logical units to its right.
 - Verify magnification at zoom 0.5, 1, and 2 while the focus remains centered. Verify zero, negative, NaN, and infinite zoom values throw.
@@ -59,7 +68,7 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 
 ## Usage description
 
-Configure the camera position to the world point you want centered, then apply it to world drawing. The exact camera-binding API is still to be designed.
+Configure the camera position to the world point you want centered, then apply it to world drawing. Create a reusable camera and explicitly scope the world draws it affects. Unscoped draws use screen coordinates. Paired `begin()`/`end()` and `camera.draw(callback)` are candidate APIs; neither has been finalized.
 
 ## Test references
 
@@ -72,7 +81,7 @@ Use `[camera-2d]` in relevant suite names and add actual file/suite links as tes
 
 ## Notes
 
-AD-006, AD-014, and AD-040 through AD-043. Open: transform application API, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+AD-006, AD-014, and AD-040 through AD-044. Open: scope API, nesting/restoration, camera lifetime, snapshot timing, screen-coordinate origin, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
