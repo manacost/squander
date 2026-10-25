@@ -15,6 +15,7 @@ This draft does not claim implementation or verification.
 
 - Use synchronous `camera.draw(callback)` scopes; restore previous drawing state on normal completion or exceptions and propagate callback errors. Accept reusable or inline functions; do not extend scopes across asynchronous work (AD-045).
 - If scopes nest, the inner camera replaces the outer transform without composition; restore the outer camera on normal or exceptional exit. Nesting is supported but secondary to single-scope usage (AD-046).
+- Treat cameras as lightweight CPU-side state with no manual release requirement; any renderer-owned caching is internal and reclaimed with renderer/game teardown (AD-052).
 - Create reusable cameras and apply them through explicit scopes inside `draw`. Scoped drawing uses world coordinates; unscoped drawing uses screen coordinates. Cameras are not implicitly applied to all draws (AD-044).
 
 - Interpret camera `(x, y)` as the world point shown at the logical viewport center; zoom preserves that centered focus point (AD-040).
@@ -87,6 +88,7 @@ A Svelte control rotates the camera while updates are paused; rendering reflects
 - Verify known visible stroke extents are not rejected when included in supplied bounds. Use independent reference fixtures to detect false negatives; conservative false positives are allowed.
 - Verify foreground occluders do not affect the bounds-query result and calling the query changes neither draw submission nor simulation scheduling.
 - Verify camera changes do not mutate world coordinates or viewport policy.
+- Verify camera creation and disposal require no resource-release call, and repeated camera creation does not expose texture/geometry ownership semantics.
 - Verify camera changes made before drawing are reflected by the next scope’s rendering and visibility checks, including external controls during explicit pause. Examples must keep camera mutation outside draw scopes.
 
 ## Usage description
@@ -104,7 +106,7 @@ Use `[camera-2d]` in relevant suite names and add actual file/suite links as tes
 
 ## Notes
 
-AD-006, AD-014, and AD-040 through AD-051. Open: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, camera lifetime, optional enforcement of in-scope mutation, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+AD-006, AD-014, and AD-040 through AD-052. Open: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, optional enforcement of in-scope mutation, position/rotation value validation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

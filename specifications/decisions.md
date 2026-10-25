@@ -701,6 +701,18 @@ in-scope mutation throws or affects a later scope remains an implementation deta
 to resolve if stronger misuse guarantees are needed. Examples should demonstrate
 the intended update/draw separation, not mutation during drawing.
 
+## AD-052: Cameras are lightweight, non-owning values
+
+A camera created by `create_camera()` is primarily CPU-side transform state. It
+has no developer-managed GPU allocation and does not require `release()`. Discarding
+an unused camera is sufficient; game disposal does not need a camera cleanup pass.
+The renderer may cache or allocate internal GPU state as an optimization, but that
+is invisible to the camera API and must be reclaimed by renderer/game teardown.
+
+This keeps camera lifetime distinct from textures, fonts, and prepared geometry,
+which are explicit resources. Optimize camera GPU representation later only when
+profiling shows a need.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft
