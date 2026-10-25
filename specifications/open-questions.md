@@ -1,114 +1,163 @@
-# camera-2d
+# Remaining contract decisions
 
-## Goal
+The numbered interview established direction, not every API detail. These are
+implementation-readiness questions, not reopened decisions. Resolve the relevant
+ones before a dependent slice starts; record outcomes in its spec and the decision
+log when architectural. No fixed implementation values below are implied.
 
-View the 2D world through a basic position, zoom, and rotation transform.
+## Lifecycle and runtime
 
-## Status
+- `game-lifecycle`: factory/setup/cleanup signatures, typed errors,
+  and how external custom setup cleanup cooperates with cancellation.
+- `game-timing`: the timing fields, cap, first/resume delta, snapshot lifetime, and
+  synchronous callback scheduling are agreed (AD-019 and AD-020).
+- `webgpu-runtime`: supported Chromium/OS baseline, GPU limits, unavailable-adapter
+  handling, and intentional teardown versus unexpected device loss.
 
-Draft. Target: Phase 2.
+## Assets
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+- `asset-loading`: descriptor/cache identity and cancellation of one concurrent
+  requester without disrupting others.
+- `dynamic-assets`: supported image encodings and size limits; duplicate-input policy.
+- `resource-ownership`: release/scope API and internal
+  completion/reclamation strategy. AD-038 defines safe release semantics.
 
-## Requirements
+## Rendering
 
-- Use synchronous `camera.draw(callback)` scopes; restore previous drawing state on normal completion or exceptions and propagate callback errors. Accept reusable or inline functions; do not extend scopes across asynchronous work (AD-045).
-- If scopes nest, the inner camera replaces the outer transform without composition; restore the outer camera on normal or exceptional exit. Nesting is supported but secondary to single-scope usage (AD-046).
-- Treat cameras as lightweight CPU-side state with no manual release requirement; any renderer-owned caching is internal and reclaimed with renderer/game teardown (AD-052).
-- Create reusable cameras and apply them through explicit scopes inside `draw`. Scoped drawing uses world coordinates; unscoped drawing uses screen coordinates. Cameras are not implicitly applied to all draws (AD-044).
+- `sprite-drawing`: color helper signatures/ranges and error types, color/alpha encoding and invalid per-draw opacity handling,
+  atlas metadata, and negative-scale policy.
+- `shape-drawing`: transformation pivots, the exact miter limit, very wide strokes,
+  antialiasing, and nonuniform object-scale behavior.
+- `paths-and-polygons`: exact command shapes, update-operation name (revisit `replace`),
+  numerical validation tolerances and overlapping/touching edges, rebuild scheduling,
+  command sequencing/empty subpaths, tessellation tolerance,
+  and the exact geometry release API (ownership is agreed in AD-039).
+- `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
+  whether policy changes require recreation.
+- `camera-2d`: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, camera lifetime, optional in-scope mutation enforcement, position/rotation value validation, and extreme-value numerical behavior.
+- `texture-filtering`: descriptor names, sampler changes, and font sampling defaults.
 
-- Interpret camera `(x, y)` as the world point shown at the logical viewport center; zoom preserves that centered focus point (AD-040).
-- Default to position `(0, 0)`, zoom 1, and rotation 0, centering the world origin independently of viewport dimensions (AD-041). At zoom 1, one world unit maps to one logical viewport unit before viewport/display scaling.
-- Treat zoom as a positive magnification factor: 2 doubles size, 0.5 halves it. Reject zero, negative, and nonfinite values; applications choose gameplay limits (AD-042).
-- Reject NaN and infinite camera position components and rotation; accept any finite values, including negative positions and rotations beyond one turn. Do not impose arbitrary coordinate or angle limits (AD-053).
-- Interpret rotation as camera orientation in world space, in radians with `degrees()` available. Positive camera rotation is clockwise; world content is transformed by the inverse rotation about the viewport center (AD-043).
-- Provide `camera.is_in_view(bounds)` for world-space bounds, accounting for camera position, zoom, rotation, and logical viewport size. False means definitely outside; true means partially or potentially visible, not unoccluded (AD-048).
-- Accept plain `{ x, y, width, height }` world-axis-aligned rectangles for visibility queries, independent of camera rotation. Do not require game entities or resource handles (AD-049).
-- Normalize signed bounds dimensions, count edge touching as potentially visible, and interpret zero-size bounds as point/line queries. Throw for nonfinite bounds coordinates/dimensions (AD-050).
-- Require caller-provided bounds to cover rendered content, including stroke extent. The visibility query does not itself skip draws or updates; automatic culling is deferred.
-- Apply the basic camera consistently to world sprites, shapes, paths, polygons, and labels.
-- Outside camera scopes, use logical screen coordinates with origin at the content viewport’s top-left, excluding letterbox bars, positive X right and positive Y down (AD-047).
-- Keep camera transforms separate from viewport fitting and physical resolution.
-- Configure camera state in initialization, `update`, or external controls before drawing. Draw callbacks consume that state and should not mutate the camera inside its scope; snapshot mechanics are internal (AD-051).
-- Permit camera changes to be visible while gameplay is explicitly paused.
-- Swappable projections and advanced camera behaviors are deferred.
+## Text and integration
 
-## Scenarios
+- `text-drawing`: atlas resolution/capacity/eviction, first-use glyph readiness,
+  fonts/variants and language scope, missing-glyph behavior, and supplied-atlas import.
+  Browser-font loading was accepted; BMFont JSON import was only proposed.
+- `svelte-bridge`: exact read-only subscription and command types, runtime alias
+  protection, SSR boundary, notification scheduling, and commands after disposal.
+- `feature-documentation`: feature route inventory, demo organization, and the
+  playground's composition flows. Feature-specific tests and demos are required.
 
-### Initial view
+## Verification and migration
 
-Inside a camera scope using default values, world (0, 0) appears at the logical viewport center.
-A point ten world units to its right appears ten logical viewport units to its
-right before viewport fitting and physical display scaling.
+- Select real GPU test infrastructure, visual tolerances, type-test runner, and
+  coverage instrumentation/merging. The four greater-than-90% metrics and runtime
+  scope are already agreed.
+- Identify which legacy demos can be adapted and which are removed or archived;
+  preserve unrelated work and avoid a broad unreviewed deletion.
+- Resolve package entry points so plain TypeScript consumers do not require Svelte.
 
-### World and screen drawing
+See [capability drafts](../specs/README.md) and [readiness guidance](implementation-readiness.md).
 
-An application draws game content inside a camera scope, then draws a marker
-outside it. Camera position, zoom, and rotation affect the world content but not
-the screen-space marker. The camera can be reused on subsequent frames.
+## Approved project maintenance
 
-### Follow with labels
+Strict type-aware ESLint, reasoned narrow suppressions, and consistent naming are
+agreed in AD-021. The coordinated Svelte/SvelteKit toolchain upgrade is complete; see
+[maintenance verification](toolchain-maintenance.md) and the remaining
+[lint debt](tooling-standards.md).
 
-A sprite and its world label remain aligned while the camera translates and zooms.
-Setting the camera position to the sprite’s world position centers it without
-application-side viewport or zoom offsets.
+The lifecycle/timing and maintenance questionnaire is complete. Continue with the
+remaining capability contracts above before their dependent implementation slices.
 
-### Quarter-turn camera
+## Rendering questionnaire progress
 
-With camera rotation `degrees(90)`, a landmark ten world units to the right of
-the camera appears above the viewport center. A sprite rotated by the same angle
-as the camera retains its unrotated screen orientation.
+The six-question rendering block is complete:
 
-### Optional visibility check
+- Radians with a `degrees()` helper (AD-022).
+- Image flips preserve geometry and origins (AD-023).
+- Equal color helpers return a shared readonly `Color` (AD-024).
+- Invalid colors throw at construction; finite hue wraps (AD-025).
+- Per-draw opacity multiplies alpha (AD-026).
+- Phase 2 uses normal source-over blending; additional modes are Phase 3 candidates (AD-027).
 
-An application queries an enemy’s world bounds before drawing it. Partially
-visible bounds return true, including under a rotated camera. A fully obscured
-enemy may still return true because the query does not inspect occluding content.
-The query does not change whether the enemy’s gameplay update runs.
+This completes the block, not all rendering contracts. Exact helper contracts and
+internal encodings remain open.
 
-### Inspect while paused
+## Geometry questionnaire progress
 
-A Svelte control rotates the camera while updates are paused; rendering reflects the change.
+The five-question geometry block is complete:
 
-## Acceptance criteria
+- Rectangle starting corners with signed dimensions, circle centers, and line endpoints (AD-028, refined by AD-032).
+- Centered strokes (AD-029).
+- World-unit stroke widths (AD-030).
+- Flat caps and limited sharp joins (AD-031); the exact miter limit remains open.
+- Invalid basic geometry throws; valid zero-size geometry draws nothing (AD-032).
 
-- Verify normal and throwing callbacks restore prior drawing state, errors propagate, and subsequent draws do not inherit the completed camera scope. Verify both inline and reused callbacks work.
-- Verify draws before/inside/after a nested scope use outer/inner/outer transforms, with no multiplied transform; verify exception unwinding restores the prior scope at each level.
-- Verify camera transforms affect scoped draws only, across sprites, shapes, and labels; unscoped content is unaffected and the same camera can be reused across frames.
-- Verify the camera’s world position maps to the logical viewport center across viewport sizes and zoom levels, including a letterboxed viewport; keep physical display scaling separate.
-- Verify default camera values and landmark offsets at multiple viewport sizes: world (0, 0) maps to the center and world (10, 0) maps ten logical units to its right.
-- Verify finite extreme/negative camera positions and rotations are accepted, while NaN/infinite values throw; angles beyond one full turn remain valid.
-- Verify magnification at zoom 0.5, 1, and 2 while the focus remains centered. Verify zero, negative, NaN, and infinite zoom values throw.
-- At zoom 1 and camera rotation `degrees(90)`, verify a point ten world units right of the focus maps ten logical units above center; verify the opposite result for `degrees(-90)` and unchanged placement of the focus.
-- Verify equal sprite and camera rotations cancel in screen orientation.
-- Compare transformed world landmarks across primitive types after translation, zoom, and rotation.
-- Verify an unscoped screen-space marker at (0, 0) maps to the content viewport’s top-left across fitting, letterboxing, and DPR changes, independently of camera transforms.
-- Verify clearly outside bounds return false and intersecting/partially visible bounds return true across camera translation, rotation, zoom, and viewport sizes, including bounds containing the entire view.
-- Verify world-axis-aligned bounds retain their world meaning under camera rotation; include a circle-enclosing rectangle fixture and type tests accepting plain bounds without entity/resource dependencies.
-- Verify signed bounds match normalized equivalents; test edge/corner contact and point/line bounds inside, touching, and clearly outside both rotated and unrotated views. Verify NaN/infinite inputs throw.
-- Verify known visible stroke extents are not rejected when included in supplied bounds. Use independent reference fixtures to detect false negatives; conservative false positives are allowed.
-- Verify foreground occluders do not affect the bounds-query result and calling the query changes neither draw submission nor simulation scheduling.
-- Verify camera changes do not mutate world coordinates or viewport policy.
-- Verify camera creation and disposal require no resource-release call, and repeated camera creation does not expose texture/geometry ownership semantics.
-- Verify camera changes made before drawing are reflected by the next scope’s rendering and visibility checks, including external controls during explicit pause. Examples must keep camera mutation outside draw scopes.
+Future alignment, constant screen thickness, and configurable/rounded styles are
+recorded in the candidate log. This block does not resolve all geometry contracts.
 
-## Usage description
+## Reusable geometry questionnaire progress
 
-Configure the camera position to the world point you want centered, then apply it to world drawing. Create a reusable camera and explicitly scope the world draws it affects. Unscoped draws use screen coordinates. Use synchronous `camera.draw(callback)`; a reusable callback can be defined outside the frame loop. Manual `begin()`/`end()` is deferred. Use `camera.is_in_view(world_bounds)` when the application wants to skip work for definitely offscreen bounds; a true result does not prove actual pixel visibility.
+The four-question reusable geometry block is complete:
 
-## Test references
+- Editable declarative command arrays with explicit validated updates (AD-033).
+- Multiple disconnected subpaths (AD-034).
+- Implicitly closed point-array polygons with the same editing contract (AD-035).
+- Either winding, duplicate-point cleanup, and strict polygon validation (AD-036).
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Revisit the update verb; `replace` was not accepted as final naming. Remaining
+numerical and path-sequencing details are listed above. The next block covers
+geometry resource lifetime.
 
-Independent transform/round-trip tests where conversion is exposed; real mixed-primitive camera fixture.
+## Geometry lifetime questionnaire progress
 
-Use `[camera-2d]` in relevant suite names and add actual file/suite links as tests land.
+The three-question geometry lifetime block is complete:
 
-## Notes
+- Frame-local draws and documented create/load release obligations (AD-037).
+- Immediate handle invalidation with safe retention for prior accepted draws (AD-038).
+- Game-owned prepared geometry, early release, and game-disposal cleanup (AD-039).
 
-AD-006, AD-014, and AD-040 through AD-053. Open: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, optional enforcement of in-scope mutation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+Single-game use is the primary ergonomic target. Cross-game rejection is a guard,
+not a request for cross-game sharing features.
 
-See the [decision log](../../specifications/decisions.md) and
-[implementation readiness guidance](../../specifications/implementation-readiness.md).
+## Camera questionnaire progress
+
+The four-question camera semantics block is complete:
+
+- Centered world focus (AD-040).
+- Origin-centered defaults (AD-041).
+- Positive magnification and rejected invalid zoom values (AD-042).
+- Clockwise world orientation with inverse view rotation (AD-043).
+
+Cursor-anchored zoom remains a Phase 3 candidate. Continue with camera integration
+and viewport behavior; the next block initially estimates three questions, starting
+with how the camera is applied to drawing.
+
+## Camera integration questionnaire progress
+
+The three-question camera integration block is complete:
+
+- Reusable cameras with synchronous callback scopes (AD-044/045).
+- Inner scopes replace and restore outer cameras; nesting is secondary (AD-046).
+- Unscoped screen coordinates start at the logical content viewport’s top-left (AD-047).
+
+Camera lifetime and numerical edge cases remain open; AD-051 keeps snapshot mechanics internal.
+
+## Visibility checkpoint
+
+The scope split is agreed (AD-048): Phase 2 includes conservative
+`camera.is_in_view(bounds)`; automatic offscreen and occlusion culling are Phase 3
+candidates. Rendering culling must not automatically suppress gameplay updates.
+Both visibility questions are resolved: world-axis-aligned rectangle bounds
+(AD-049), signed-dimension normalization, inclusive touching, point/line queries,
+and nonfinite-input rejection (AD-050).
+
+## Camera lifecycle questionnaire progress
+
+The three-question camera lifecycle block is complete:
+
+- Configure cameras outside draw scopes; snapshot mechanics stay internal (AD-051).
+- Cameras are lightweight CPU-side values with no manual release (AD-052).
+- Position and rotation reject nonfinite values but accept any finite values (AD-053).
+
+Renderer-owned camera caching is an internal optimization. Camera semantics are
+now sufficiently specified for dependent implementation planning.
