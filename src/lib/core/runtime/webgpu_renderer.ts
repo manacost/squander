@@ -1,7 +1,16 @@
 import { resolve_texture_filtering, type TextureFilteringOptions } from "./texture_filtering.js";
 import { create_resource_owner, type ResourceHandle, type ResourceOwner } from "./resource_ownership.js";
 import type { Color } from "./colors.js";
-import { has_drawable_area, normalize_rectangle, validate_circle, type Circle, type Rectangle } from "./shapes.js";
+import {
+  has_drawable_area,
+  normalize_rectangle,
+  validate_circle,
+  validate_line,
+  validate_stroke_width,
+  type Circle,
+  type Line,
+  type Rectangle,
+} from "./shapes.js";
 
 export type ClearColor = Readonly<{ red: number; green: number; blue: number; alpha: number }>;
 
@@ -38,9 +47,13 @@ export type TextureDraw = Readonly<{ texture: WebGpuTexture; options?: TextureDr
 
 export type RectangleDraw = Readonly<{ rectangle: Rectangle; color: Color; opacity?: number }>;
 export type CircleDraw = Readonly<{ circle: Circle; color: Color; opacity?: number }>;
+export type LineDraw = Readonly<{ line: Line; color: Color; stroke_width: number; opacity?: number }>;
 
 export type RenderCommand = Readonly<
-  { kind: "texture"; draw: TextureDraw } | { kind: "rectangle"; draw: RectangleDraw } | { kind: "circle"; draw: CircleDraw }
+  | { kind: "texture"; draw: TextureDraw }
+  | { kind: "rectangle"; draw: RectangleDraw }
+  | { kind: "circle"; draw: CircleDraw }
+  | { kind: "line"; draw: LineDraw }
 >;
 
 export type WebGpuRenderer = Readonly<{
@@ -287,6 +300,33 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
             tint: command.draw.color,
             opacity: command.draw.opacity,
             shape_kind: 1,
+          },
+        };
+      }
+      if (command.kind === "line") {
+        const line = validate_line(command.draw.line);
+        const stroke_width = validate_stroke_width(command.draw.stroke_width);
+        const delta_x = line.to.x - line.from.x;
+        const delta_y = line.to.y - line.from.y;
+        const length = Math.hypot(delta_x, delta_y);
+        if (length === 0 || stroke_width === 0) {
+          return {
+            texture: ensure_solid_texture(),
+            options: { x: 0, y: 0, width: 0.000001, height: 0.000001, opacity: 0 },
+          };
+        }
+        return {
+          texture: ensure_solid_texture(),
+          options: {
+            x: line.from.x,
+            y: line.from.y,
+            width: length,
+            height: stroke_width,
+            origin: { x: 0, y: 0.5 },
+            rotation: Math.atan2(delta_y, delta_x),
+            tint: command.draw.color,
+            opacity: command.draw.opacity,
+            shape_kind: 0,
           },
         };
       }

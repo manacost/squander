@@ -1,6 +1,6 @@
-# Phase 2 filled rectangle and circle checkpoint
+# Phase 2 filled primitive checkpoint
 
-Status: **Filled rectangle and circle GPU ordering verified; shape-drawing remains Draft**.
+Status: **Filled rectangle, circle, and line GPU ordering verified; shape-drawing remains Draft**.
 
 ## Pre-slice contract checkpoint
 
@@ -17,13 +17,15 @@ Status: **Filled rectangle and circle GPU ordering verified; shape-drawing remai
 - Normalized signed rectangle bounds into a transformed sprite-style quad.
 - Added a filled circle command using center/radius geometry and shader-side
   circular coverage.
+- Added a flat-ended line command using explicit endpoints and centered stroke
+  width.
 - Added mixed sprite/rectangle source-over readback coverage.
 
 ## Evidence
 
 - Focused real WebGPU run: `npx playwright test --config=playwright.webgpu.config.ts verification/webgpu-renderer.spec.ts -g 'shape-drawing'` passed (1 test).
 - The full real WebGPU run `npm run test:webgpu` passed 10 tests, including the
-  mixed rectangle and filled-circle fixtures.
+- 11 tests, including the mixed rectangle, filled-circle, and line fixtures.
 - The fixture independently expects red at effective alpha 0.5 followed by green
   at effective alpha 0.5 to produce `[64, 128, 0, 255]` over the opaque clear.
 - `npm run test:unit`: passed, 17 files and 48 tests.
@@ -39,6 +41,6 @@ independent pixel assertion.
 
 ## Known gaps and gate
 
-- Lines, outlines, stroke joins/caps, antialiasing, and the final public shape
-  API remain unimplemented.
+- Outlines, configurable stroke joins/caps, antialiasing, and the final public
+  shape API remain unimplemented.
 - Go/no-go: **continue shape work, but do not promote `shape-drawing`.**
