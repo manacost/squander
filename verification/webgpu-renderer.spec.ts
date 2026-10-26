@@ -138,3 +138,27 @@ test("[sprite-drawing] preserves submission order for multiple sprites", async (
   expect(result.covered).toEqual([0, 0, 255, 255]);
   expect(result.preserved).toEqual([255, 0, 0, 255]);
 });
+
+test("[sprite-drawing] combines horizontal and vertical flips within the same bounds", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 2, height: 2 });
+    const texture = renderer.create_texture(new Uint8Array([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255]), 2, 2);
+    const pixels = await renderer.draw_texture(texture, { width: 2, height: 2, flip_x: true, flip_y: true });
+    texture.release();
+    renderer.dispose();
+    const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return { top_left: pixel_at(0, 0), top_right: pixel_at(1, 0), bottom_left: pixel_at(0, 1), bottom_right: pixel_at(1, 1) };
+  });
+
+  expect(result).toEqual({
+    top_left: [255, 255, 255, 255],
+    top_right: [0, 0, 255, 255],
+    bottom_left: [0, 255, 0, 255],
+    bottom_right: [255, 0, 0, 255],
+  });
+});

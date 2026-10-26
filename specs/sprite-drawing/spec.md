@@ -81,9 +81,9 @@ Current verification:
   release, and deterministic pixel readback in the `[sprite-drawing]` suites.
 
 Real GPU coverage now includes placement, origin anchoring, horizontal flipping,
-rotation-path execution, ordered sprite overlap, and source-over composition.
-Vertical/combined flip fixtures, mixed primitive ordering, and the public color
-helper remain unimplemented.
+rotation-path execution, ordered sprite overlap, combined flipping, and
+source-over composition. Mixed primitive ordering and the public color helper
+remain unimplemented.
 
 ## Notes
 

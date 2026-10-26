@@ -20,6 +20,8 @@ Status: **Placement, origin, flip, ordered submission, and source-over sprite co
   retain submission order.
 - Added source-over color and alpha blending to the WebGPU pipeline and a
   two-layer translucent readback fixture.
+- Added an asymmetric 2×2 combined horizontal/vertical flip fixture that checks
+  all four independently expected output pixels.
 - Kept atlas UV selection independent from geometry transforms and acquired one
   resource lease per submitted texture.
 
@@ -50,7 +52,7 @@ exact current-texture copy → mapped readback → independent pixel assertions.
 
 ## Known gaps and gate
 
-- The complete sprite contract still lacks vertical and combined flip fixtures,
-  mixed primitive ordering, and public color helper behavior.
+- The complete sprite contract still lacks mixed primitive ordering and public
+  color helper behavior.
 - Go/no-go: **go to the next focused sprite contract work only after the final
   full suite and lint/check results are recorded; do not promote `sprite-drawing`.**
