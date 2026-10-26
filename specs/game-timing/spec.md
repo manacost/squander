@@ -65,7 +65,9 @@ integration and the complete game lifecycle remain unimplemented.
 
 ## Notes
 
-AD-007, AD-012, and AD-019. Open before implementation: exact configuration names and invalid-cap validation; snapshot fields and scheduling are agreed.
+AD-007, AD-012, AD-019, and AD-055. The current kernel uses
+`max_delta_seconds` and rejects nonfinite or nonpositive caps. Browser
+visibility and resize integration remain open.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

@@ -46,15 +46,21 @@ Current verification:
 
 - [`src/lib/core/runtime/frame_loop.test.ts`](../../src/lib/core/runtime/frame_loop.test.ts)
   covers update-before-draw ordering, callback failure stop, pause/resume,
-  visibility suspension, and idempotent disposal in the `[game-lifecycle] frame
-loop` suite.
+  visibility suspension, and idempotent disposal in the
+  `[game-lifecycle] frame loop` suite.
+- [`src/lib/core/runtime/game.test.ts`](../../src/lib/core/runtime/game.test.ts)
+  covers setup gating, disposal during setup, initialization errors, and
+  runtime errors in the `[game-lifecycle] game setup` suite.
 
-This is only the scheduler sub-slice. Asynchronous setup, typed failures,
-resource cleanup, and browser host disposal remain unimplemented.
+The current kernel contract is a synchronous game controller with a `ready`
+promise. Setup receives an abort signal and resource owner; the loop starts only
+after setup resolves. Browser host disposal and GPU-backed cleanup remain
+unimplemented.
 
 ## Notes
 
-AD-011 and AD-012. Open: final factory API, typed error union, user cleanup hooks, and access to disposal while asynchronous setup is pending.
+AD-011, AD-012, and AD-055. User cleanup hooks and browser host integration
+remain open for later slices.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

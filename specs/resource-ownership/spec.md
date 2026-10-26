@@ -63,16 +63,21 @@ Acquire resources through an owner and release each acquired handle or dispose i
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Ownership and stale-handle unit tests; one real shared-resource rendering fixture; type misuse tests.
+- [`src/lib/core/runtime/resource_ownership.test.ts`](../../src/lib/core/runtime/resource_ownership.test.ts)
+  covers shared handles, stale-handle rejection, draw leases, final-owner
+  destruction, and idempotent owner disposal in the
+  `[resource-ownership] explicit handles` suite.
 
-Use `[resource-ownership]` in relevant suite names and add actual file/suite links as tests land.
+The current kernel is renderer-independent. GPU-backed resource fixtures,
+cross-game checks, and public handle type tests remain unimplemented.
 
 ## Notes
 
-AD-004, AD-013, and AD-037 through AD-039. Open: exact release/scope API, internal completion/reclamation strategy, whether standalone custom scopes ship initially.
+AD-004, AD-013, AD-037 through AD-039, and AD-056. The current owner exposes
+`acquire`, handle `share`, handle `release`, and draw `acquire_lease`; renderer
+integration will determine how leases map to submitted GPU work.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
