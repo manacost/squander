@@ -496,10 +496,12 @@ the handle stable, so existing users of that handle draw the updated geometry.
 Ordinary placement changes use draw transforms; geometry updates happen outside
 `draw` to make rebuilding work explicit.
 
-The operation name is unresolved: `replace` was illustrative and is not the
-preferred committed verb. Exact signatures, command shapes, rebuild scheduling,
-and resource ownership/disposal remain open. This decision establishes path
-behavior; AD-035 extends the editing contract to polygons.
+For the current CPU command snapshot slice, the operation is exposed as
+`update(commands)` on the opaque handle, and commands are represented by the
+typed `move`, `line`, `quadratic`, `cubic`, and `close` variants. This resolves
+the preparation seam without claiming the final package-level factory, rebuild
+scheduling, or resource ownership/disposal surface. This decision establishes
+path behavior; AD-035 extends the editing contract to polygons.
 
 ## AD-034: Multiple disconnected path subpaths
 
