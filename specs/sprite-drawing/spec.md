@@ -77,13 +77,13 @@ Current verification:
 - [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
   verifies persistent texture upload, full-canvas sampling, atlas-region UV
   selection, tint, opacity, placement, normalized origins, horizontal flipping,
-  ordered multi-draw submission, ownership release, and deterministic pixel
-  readback in the `[sprite-drawing]` suites.
+  ordered multi-draw submission, source-over alpha composition, ownership
+  release, and deterministic pixel readback in the `[sprite-drawing]` suites.
 
 Real GPU coverage now includes placement, origin anchoring, horizontal flipping,
-rotation-path execution, and ordered sprite overlap. Vertical/combined flip
-fixtures, source-over transparency, mixed primitive ordering, and the public
-color helper remain unimplemented.
+rotation-path execution, ordered sprite overlap, and source-over composition.
+Vertical/combined flip fixtures, mixed primitive ordering, and the public color
+helper remain unimplemented.
 
 ## Notes
 

@@ -59,7 +59,30 @@ test("[sprite-drawing] samples an atlas region with tint and opacity", async ({ 
     return Array.from(pixels.slice(0, 4));
   });
 
-  expect(result).toEqual([0, 0, 255, 128]);
+  expect(result).toEqual([0, 0, 128, 255]);
+});
+
+test("[sprite-drawing] composites translucent sprites in submission order", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
+    const red = renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1);
+    const blue = renderer.create_texture(new Uint8Array([0, 0, 255, 255]), 1, 1);
+    const pixels = await renderer.draw_textures([
+      { texture: red, options: { opacity: 0.5 } },
+      { texture: blue, options: { opacity: 0.5 } },
+    ]);
+    red.release();
+    blue.release();
+    renderer.dispose();
+    return Array.from(pixels.slice(0, 4));
+  });
+
+  expect(result).toEqual([64, 0, 128, 255]);
 });
 
 test("[sprite-drawing] places, flips, and rotates a sprite around a normalized origin", async ({ page }) => {
