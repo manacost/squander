@@ -101,7 +101,9 @@ Current verification:
   `[shape-drawing] primitive validation` suite.
 
 CPU validation is implemented; geometry buffers, stroke rules, mixed draw order,
-and real GPU fixtures remain unimplemented.
+and real GPU fixtures remain unimplemented. Shared color construction is covered
+independently by [`src/lib/core/runtime/colors.test.ts`](../../src/lib/core/runtime/colors.test.ts),
+but shape rendering does not yet consume the color type.
 
 ## Notes
 

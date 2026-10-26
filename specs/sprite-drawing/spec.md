@@ -79,11 +79,16 @@ Current verification:
   selection, tint, opacity, placement, normalized origins, horizontal flipping,
   ordered multi-draw submission, source-over alpha composition, ownership
   release, and deterministic pixel readback in the `[sprite-drawing]` suites.
+- [`src/lib/core/runtime/colors.test.ts`](../../src/lib/core/runtime/colors.test.ts)
+  verifies the shared color helper contract used by sprite tinting, including
+  RGB/HSL/hex equivalence, shorthand hex, readonly values, and construction
+  validation.
 
 Real GPU coverage now includes placement, origin anchoring, horizontal flipping,
 rotation-path execution, ordered sprite overlap, combined flipping, and
-source-over composition. Mixed primitive ordering and the public color helper
-remain unimplemented.
+source-over composition. Mixed primitive ordering remains unimplemented; shared
+color construction is covered at its CPU seam but is not yet consumed by the
+renderer.
 
 ## Notes
 

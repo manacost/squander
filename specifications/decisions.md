@@ -377,6 +377,13 @@ AD-027 defines Phase 2 blending scope. AD-025 defines invalid-input behavior; AD
 composition. Supporting HSL
 does not imply HSL interpolation or a palette-manipulation API in Phase 2.
 
+The Phase 2 helper contract uses normalized RGB/RGBA channels in the inclusive
+range 0–1, degree-based HSL/HSLA hue with saturation/lightness in 0–1, and
+`#RGB`, `#RGBA`, `#RRGGBB`, or `#RRGGBBAA` hex strings. Helpers return one
+readonly RGB/alpha value; hex alpha bytes are divided by 255. These choices are
+the current capability contract, not a claim that the final package exports are
+already migrated.
+
 ## AD-025: Validate colors at construction
 
 Color helpers throw immediately for invalid input rather than silently clamping.
