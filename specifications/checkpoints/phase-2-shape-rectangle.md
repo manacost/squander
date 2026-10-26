@@ -45,5 +45,6 @@ independent pixel assertion.
 ## Known gaps and gate
 
 - Configurable stroke joins/caps, antialiasing, and the final public shape API
-  remain unimplemented.
+  remain unimplemented; broader width and degenerate-stroke behavior is covered
+  by a separate checkpoint.
 - Go/no-go: **continue shape work, but do not promote `shape-drawing`.**

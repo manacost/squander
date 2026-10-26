@@ -104,7 +104,8 @@ Current verification:
   `[shape-drawing]` suite.
 
 CPU validation and filled rectangle/circle/line plus rectangle- and
-circle-outline GPU command paths are implemented; remaining stroke rules and
+circle-outline GPU command paths are implemented. Width scaling and degenerate
+stroke behavior have focused GPU evidence; remaining cap/join rules and
 complete shape promotion remain unimplemented.
 Shared color construction is covered independently by
 [`src/lib/core/runtime/colors.test.ts`](../../src/lib/core/runtime/colors.test.ts),

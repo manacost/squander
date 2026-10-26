@@ -33,7 +33,7 @@ exact readback → independent edge/interior assertions.
 
 ## Known gaps and gate
 
-- Broader stroke behavior, caps/joins, antialiasing, and the final public shape
-  API remain unimplemented.
+- Caps/joins, antialiasing, and the final public shape API remain unimplemented;
+  broader width and degenerate-stroke behavior is covered by the next checkpoint.
 - Go/no-go: **continue to the separate broader-stroke slice; do not promote
   `shape-drawing`.**
