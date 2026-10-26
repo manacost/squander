@@ -1,7 +1,7 @@
 import { resolve_texture_filtering, type TextureFilteringOptions } from "./texture_filtering.js";
 import { create_resource_owner, type ResourceHandle, type ResourceOwner } from "./resource_ownership.js";
 import type { Color } from "./colors.js";
-import { has_drawable_area, normalize_rectangle, type Rectangle } from "./shapes.js";
+import { has_drawable_area, normalize_rectangle, validate_circle, type Circle, type Rectangle } from "./shapes.js";
 
 export type ClearColor = Readonly<{ red: number; green: number; blue: number; alpha: number }>;
 
@@ -31,13 +31,17 @@ export type TextureDrawOptions = Readonly<{
   flip_y?: boolean;
   tint?: Color;
   opacity?: number;
+  shape_kind?: number;
 }>;
 
 export type TextureDraw = Readonly<{ texture: WebGpuTexture; options?: TextureDrawOptions }>;
 
 export type RectangleDraw = Readonly<{ rectangle: Rectangle; color: Color; opacity?: number }>;
+export type CircleDraw = Readonly<{ circle: Circle; color: Color; opacity?: number }>;
 
-export type RenderCommand = Readonly<{ kind: "texture"; draw: TextureDraw } | { kind: "rectangle"; draw: RectangleDraw }>;
+export type RenderCommand = Readonly<
+  { kind: "texture"; draw: TextureDraw } | { kind: "rectangle"; draw: RectangleDraw } | { kind: "circle"; draw: CircleDraw }
+>;
 
 export type WebGpuRenderer = Readonly<{
   clear: (color: ClearColor) => Promise<Uint8Array>;
@@ -85,11 +89,18 @@ struct DrawUniforms {
   uv_origin: vec2f,
   uv_size: vec2f,
   tint: vec4f,
+  shape: vec4f,
 };
 @group(0) @binding(2) var<uniform> draw_uniforms: DrawUniforms;
 
 @fragment
 fn fragment_main(input: VertexOutput) -> @location(0) vec4f {
+  if (draw_uniforms.shape.x > 0.5) {
+    let centered = input.uv - vec2f(0.5, 0.5);
+    if (dot(centered, centered) > 0.25) {
+      discard;
+    }
+  }
   return textureSample(texture_data, texture_sampler, draw_uniforms.uv_origin + input.uv * draw_uniforms.uv_size) * draw_uniforms.tint;
 }
 `;
@@ -258,6 +269,27 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       if (command.kind === "texture") {
         return command.draw;
       }
+      if (command.kind === "circle") {
+        const circle = validate_circle(command.draw.circle);
+        if (circle.radius === 0) {
+          return {
+            texture: ensure_solid_texture(),
+            options: { x: 0, y: 0, width: 0.000001, height: 0.000001, opacity: 0 },
+          };
+        }
+        return {
+          texture: ensure_solid_texture(),
+          options: {
+            x: circle.x - circle.radius,
+            y: circle.y - circle.radius,
+            width: circle.radius * 2,
+            height: circle.radius * 2,
+            tint: command.draw.color,
+            opacity: command.draw.opacity,
+            shape_kind: 1,
+          },
+        };
+      }
       const normalized = normalize_rectangle(command.draw.rectangle);
       if (!has_drawable_area(normalized)) {
         return {
@@ -274,6 +306,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           height: normalized.height,
           tint: command.draw.color,
           opacity: command.draw.opacity,
+          shape_kind: 0,
         },
       };
     });
@@ -351,7 +384,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         flipped_uvs[6],
         flipped_uvs[7],
       ]);
-      return { texture, tint, opacity, vertex_data, region };
+      return { texture, tint, opacity, vertex_data, region, shape_kind: options.shape_kind ?? 0 };
     });
     const leases = encoded_draws.map(({ texture }) => texture.resource.acquire_lease());
     const buffers = encoded_draws.map(({ vertex_data }) => {
@@ -365,8 +398,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
       return sampler;
     });
-    const uniforms = encoded_draws.map(({ tint, opacity, region, texture }) => {
-      const uniform = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    const uniforms = encoded_draws.map(({ tint, opacity, region, texture, shape_kind }) => {
+      const uniform = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       device.queue.writeBuffer(
         uniform,
         0,
@@ -379,6 +412,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           tint.green,
           tint.blue,
           tint.alpha * opacity,
+          shape_kind,
+          0,
+          0,
+          0,
         ]),
       );
       return uniform;
