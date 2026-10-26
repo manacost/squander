@@ -2,7 +2,7 @@ import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
   testDir: "verification",
-  testMatch: /webgpu\.spec\.[jt]s/,
+  testMatch: /webgpu.*\.spec\.[jt]s/,
   use: {
     browserName: "chromium",
     baseURL: "http://127.0.0.1:5173",

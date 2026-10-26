@@ -41,16 +41,24 @@ The game factory initializes the GPU runtime during setup. Applications handle t
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Real Chromium/WebGPU integration, isolated device-loss handling tests, and package-consumer checks.
+- [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+  verifies secure-context and WebGPU availability, real adapter/device-backed
+  canvas clearing, and deterministic RGBA readback in the
+  `[webgpu-runtime] clears and reads back a real canvas texture` suite.
+- [`verification/webgpu.spec.ts`](../../verification/webgpu.spec.ts) retains the
+  independent low-level adapter/device probe.
 
-Use `[webgpu-runtime]` in relevant suite names and add actual file/suite links as tests land.
+Device-loss transitions, independent game devices, and final package-consumer
+checks remain unimplemented.
 
 ## Notes
 
-AD-001, AD-002, and AD-012. Open: supported browser/OS baseline, unavailable-adapter error, device limits, intentional device destruction semantics, and GPU test environment.
+AD-001, AD-002, and AD-012. The current renderer rejects insecure contexts,
+missing WebGPU, missing adapters, and missing canvas contexts with a typed
+availability error. The test baseline is trusted local Chromium on the Apple
+M1/Metal host. Device-loss transitions and final package checks remain open.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
