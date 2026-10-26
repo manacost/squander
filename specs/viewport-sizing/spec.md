@@ -43,16 +43,21 @@ Choose fixed dimensions or responsive sizing when creating the game. Use exposed
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Pure sizing tests with numerical expectations; browser resizing, DPR, letterbox, and overlay fixtures.
+- [`src/lib/core/runtime/viewport_sizing.test.ts`](../../src/lib/core/runtime/viewport_sizing.test.ts)
+  covers fixed-fit centering, responsive logical dimensions, DPR scaling, and
+  invalid dimensions in the `[viewport-sizing] logical viewport math` suite.
 
-Use `[viewport-sizing]` in relevant suite names and add actual file/suite links as tests land.
+Browser resize, letterbox rendering, and DOM overlay alignment remain
+unimplemented.
 
 ## Notes
 
-AD-009. Open: physical-pixel rounding, DPR limits, zero-size containers, letterbox color, and runtime policy changes.
+AD-009. The current pure helper rounds physical dimensions with `Math.round`,
+rejects negative CSS dimensions and nonpositive DPR, and permits zero-size CSS
+containers. Canvas integration, letterbox color, and runtime policy changes
+remain open.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

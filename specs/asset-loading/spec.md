@@ -42,16 +42,20 @@ Illustrative: declare hero: texture(url), then await game.assets.load("hero"). M
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Type tests; controlled concurrent-load/failure tests; browser decode/upload test.
+- [`src/lib/core/runtime/asset_loading.test.ts`](../../src/lib/core/runtime/asset_loading.test.ts)
+  covers concurrent sharing, independent release, retry after failure, and
+  one-requester cancellation in the `[asset-loading] manifest cache` suite.
 
-Use `[asset-loading]` in relevant suite names and add actual file/suite links as tests land.
+The current cache is renderer-independent. Manifest type tests, real image
+decode/upload, and final descriptor policy remain unimplemented.
 
 ## Notes
 
-AD-005 and AD-013. Open: manifest descriptors, cache identity, cancellation of one shared requester, and error details. Runtime uploads have a separate capability.
+AD-005 and AD-013. The current kernel uses manifest keys as cache identity,
+shares a pending load within one cache, and aborts the shared operation only
+when no requester remains. Runtime uploads have a separate capability.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
