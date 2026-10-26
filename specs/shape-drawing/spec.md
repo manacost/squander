@@ -93,12 +93,15 @@ Supply a rectangle’s starting corner and signed dimensions, a circle’s cente
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Real GPU geometry/appearance fixtures and boundary tests for the agreed invalid-dimension policy.
+- [`src/lib/core/runtime/shapes.test.ts`](../../src/lib/core/runtime/shapes.test.ts)
+  covers signed rectangle normalization, zero-area behavior, finite primitive
+  validation, stroke widths, snapshots, and opacity in the
+  `[shape-drawing] primitive validation` suite.
 
-Use `[shape-drawing]` in relevant suite names and add actual file/suite links as tests land.
+CPU validation is implemented; geometry buffers, stroke rules, mixed draw order,
+and real GPU fixtures remain unimplemented.
 
 ## Notes
 
