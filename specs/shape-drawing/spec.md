@@ -103,8 +103,8 @@ Current verification:
   verifies a filled rectangle submitted after a translucent sprite in the
   `[shape-drawing]` suite.
 
-CPU validation and filled rectangle/circle/line plus rectangle-outline GPU
-command paths are implemented; circle outlines, remaining stroke rules, and
+CPU validation and filled rectangle/circle/line plus rectangle- and
+circle-outline GPU command paths are implemented; remaining stroke rules and
 complete shape promotion remain unimplemented.
 Shared color construction is covered independently by
 [`src/lib/core/runtime/colors.test.ts`](../../src/lib/core/runtime/colors.test.ts),

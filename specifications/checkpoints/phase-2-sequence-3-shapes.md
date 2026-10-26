@@ -16,10 +16,12 @@ Status: **CPU validation plus filled-rectangle GPU ordering slice complete; shap
   stroke width.
 - Added a real GPU rectangle-outline fixture checking edge coverage and a
   transparent interior.
+- Added a real GPU circle-outline fixture checking radial edge coverage and a
+  transparent center.
 
 ## Not implemented
 
-- Circle outlines, curves, antialiasing, caps, joins, and the public
+- Curves, antialiasing, caps, joins, and the public
   package draw API.
 - Complete shape promotion and all primitive geometry acceptance criteria.
 
@@ -42,9 +44,11 @@ exact readback → mixed-order pixel assertion.
   verifies line placement and centered width on a real device.
 - `[shape-drawing] keeps the interior transparent for a centered rectangle outline`
   verifies centered outline coverage on a real device.
+- `[shape-drawing] keeps the interior transparent for a centered circle outline`
+  verifies radial outline coverage on a real device.
 
 ## Gate
 
-The next shape step requires circle-outline geometry and additional
+The next shape step requires broader stroke behavior and additional
 independent GPU fixtures. Do not claim complete primitive rendering from this
 partial checkpoint.

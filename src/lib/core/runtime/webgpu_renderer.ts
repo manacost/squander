@@ -51,6 +51,7 @@ export type RectangleDraw = Readonly<{ rectangle: Rectangle; color: Color; opaci
 export type CircleDraw = Readonly<{ circle: Circle; color: Color; opacity?: number }>;
 export type LineDraw = Readonly<{ line: Line; color: Color; stroke_width: number; opacity?: number }>;
 export type RectangleOutlineDraw = Readonly<{ rectangle: Rectangle; color: Color; stroke_width: number; opacity?: number }>;
+export type CircleOutlineDraw = Readonly<{ circle: Circle; color: Color; stroke_width: number; opacity?: number }>;
 
 export type RenderCommand = Readonly<
   | { kind: "texture"; draw: TextureDraw }
@@ -58,6 +59,7 @@ export type RenderCommand = Readonly<
   | { kind: "circle"; draw: CircleDraw }
   | { kind: "line"; draw: LineDraw }
   | { kind: "rectangle_outline"; draw: RectangleOutlineDraw }
+  | { kind: "circle_outline"; draw: CircleOutlineDraw }
 >;
 
 export type WebGpuRenderer = Readonly<{
@@ -112,7 +114,7 @@ struct DrawUniforms {
 
 @fragment
 fn fragment_main(input: VertexOutput) -> @location(0) vec4f {
-  if (draw_uniforms.shape.x > 0.5) {
+  if (draw_uniforms.shape.x > 0.5 && draw_uniforms.shape.x < 1.5) {
     let centered = input.uv - vec2f(0.5, 0.5);
     if (dot(centered, centered) > 0.25) {
       discard;
@@ -122,6 +124,12 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4f {
     let edge_x = min(input.uv.x, 1.0 - input.uv.x);
     let edge_y = min(input.uv.y, 1.0 - input.uv.y);
     if (edge_x > draw_uniforms.shape.y && edge_y > draw_uniforms.shape.z) {
+      discard;
+    }
+  }
+  if (draw_uniforms.shape.x > 2.5) {
+    let radial_distance = distance(input.uv, vec2f(0.5, 0.5));
+    if (radial_distance < 0.5 - draw_uniforms.shape.y || radial_distance > 0.5) {
       discard;
     }
   }
@@ -311,6 +319,29 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
             tint: command.draw.color,
             opacity: command.draw.opacity,
             shape_kind: 1,
+          },
+        };
+      }
+      if (command.kind === "circle_outline") {
+        const circle = validate_circle(command.draw.circle);
+        const stroke_width = validate_stroke_width(command.draw.stroke_width);
+        if (circle.radius === 0 || stroke_width === 0) {
+          return {
+            texture: ensure_solid_texture(),
+            options: { x: 0, y: 0, width: 0.000001, height: 0.000001, opacity: 0 },
+          };
+        }
+        return {
+          texture: ensure_solid_texture(),
+          options: {
+            x: circle.x - circle.radius,
+            y: circle.y - circle.radius,
+            width: circle.radius * 2,
+            height: circle.radius * 2,
+            tint: command.draw.color,
+            opacity: command.draw.opacity,
+            shape_kind: 3,
+            shape_x: stroke_width / (circle.radius * 2),
           },
         };
       }
