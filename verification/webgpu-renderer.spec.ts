@@ -21,3 +21,21 @@ test("[webgpu-runtime] clears and reads back a real canvas texture", async ({ pa
   expect(result.gpu).toBe(true);
   expect(result.pixels).toEqual([64, 128, 191, 255]);
 });
+
+test("[sprite-drawing] uploads and draws a persistent texture", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
+    const texture = renderer.create_texture(new Uint8Array([12, 34, 56, 255]), 1, 1);
+    const pixels = await renderer.draw_texture(texture);
+    texture.release();
+    renderer.dispose();
+    return Array.from(pixels.slice(0, 4));
+  });
+
+  expect(result).toEqual([12, 34, 56, 255]);
+});

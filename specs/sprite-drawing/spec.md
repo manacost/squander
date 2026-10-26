@@ -72,16 +72,21 @@ Illustrative: draw.sprite(hero, { x: 100, y: 80, origin: { x: 0.5, y: 0.5 }, rot
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Real GPU pixel fixtures for regions, transforms, opacity, and mixed order; focused math tests.
+- [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+  verifies persistent texture upload, full-canvas sampling, ownership release,
+  and deterministic pixel readback in the `[sprite-drawing] uploads and draws a
+persistent texture` suite.
 
-Use `[sprite-drawing]` in relevant suite names and add actual file/suite links as tests land.
+Atlas regions, tint, opacity, transforms, flips, and mixed primitive ordering
+remain unimplemented.
 
 ## Notes
 
-AD-008, AD-014, AD-022, and AD-023. Open: alpha/color representation and atlas descriptor.
+AD-008, AD-014, AD-022, and AD-023. The current GPU slice accepts only a
+full-texture draw with linear sampling; atlas descriptors, color encoding,
+opacity, transforms, and flips remain open.
 Negative-scale behavior remains an API design detail; explicit flips do not imply geometry mirroring.
 The angle convention and helper are agreed; the illustrative draw-option spelling and any branded angle type remain API design details.
 
