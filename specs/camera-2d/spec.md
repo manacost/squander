@@ -111,7 +111,8 @@ Current verification:
 
 Nested scope restoration and one renderer integration fixture are implemented;
 broader camera transforms across all draw types and viewport integration remain
-unimplemented.
+unimplemented; one real GPU zoom/rotation fixture now covers the shared quad
+path.
 
 ## Notes
 

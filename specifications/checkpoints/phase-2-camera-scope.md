@@ -16,11 +16,12 @@ Status: **Synchronous camera scopes and one GPU transform verified; camera-2d re
 - Added nested active-camera scope tracking and restoration.
 - Applied active camera transforms to renderer command quad corners.
 - Added CPU scope/error tests and a real GPU centered-landmark fixture.
+- Added a real GPU zoom and inverse-rotation landmark fixture.
 
 ## Evidence
 
 - Focused real WebGPU run: `npx playwright test --config=playwright.webgpu.config.ts verification/webgpu-renderer.spec.ts -g 'camera scope'` passed (1 test).
-- Full real WebGPU run: `npm run test:webgpu` passed 17 tests.
+- Full real WebGPU run: `npm run test:webgpu` passed 18 tests.
 - `npm run test:unit`: passed, 18 files and 51 tests.
 - `npm run check`: passed with zero diagnostics.
 - `npm run test:type`: passed.
@@ -29,8 +30,8 @@ Status: **Synchronous camera scopes and one GPU transform verified; camera-2d re
 ## Code trace
 
 `camera.test.ts`/`verification/webgpu-renderer.spec.ts` → `camera.draw` active
-scope → renderer command capture → `world_to_screen` per quad corner → clip
-coordinates → render pass → exact readback.
+scope → renderer command capture → `world_to_screen` per quad corner → zoom and
+inverse rotation → clip coordinates → render pass → exact readback.
 
 ## Known gaps and gate
 
