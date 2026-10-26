@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { create_camera } from "./camera.js";
+import { create_camera, get_active_camera } from "./camera.js";
 
 describe("[camera-2d] camera transforms", () => {
   it("centers the camera position and keeps the default origin centered", () => {
@@ -33,5 +33,28 @@ describe("[camera-2d] camera transforms", () => {
     expect(() => {
       camera.is_in_view({ x: Infinity, y: 0, width: 1, height: 1 });
     }).toThrow(RangeError);
+  });
+
+  it("restores nested scopes after normal and throwing callbacks", () => {
+    const outer = create_camera({ viewport: { logical_width: 100, logical_height: 100 } });
+    const inner = create_camera({ viewport: { logical_width: 100, logical_height: 100 }, x: 10 });
+
+    expect(get_active_camera()).toBeUndefined();
+    outer.draw(() => {
+      expect(get_active_camera()).toBe(outer);
+      inner.draw(() => {
+        expect(get_active_camera()).toBe(inner);
+      });
+      expect(get_active_camera()).toBe(outer);
+    });
+    expect(get_active_camera()).toBeUndefined();
+    expect(() =>
+      outer.draw(() =>
+        inner.draw(() => {
+          throw new Error("scope failure");
+        }),
+      ),
+    ).toThrow("scope failure");
+    expect(get_active_camera()).toBeUndefined();
   });
 });

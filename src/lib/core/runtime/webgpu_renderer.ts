@@ -1,6 +1,7 @@
 import { resolve_texture_filtering, type TextureFilteringOptions } from "./texture_filtering.js";
 import { create_resource_owner, type ResourceHandle, type ResourceOwner } from "./resource_ownership.js";
 import type { Color } from "./colors.js";
+import { get_active_camera } from "./camera.js";
 import {
   has_drawable_area,
   normalize_rectangle,
@@ -418,6 +419,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     });
     const canvas_width = options.width;
     const canvas_height = options.height;
+    const active_camera = get_active_camera();
     const encoded_draws = draws.map(({ texture, options = {} }) => {
       const region = options.region ?? { x: 0, y: 0, width: texture.width, height: texture.height };
       if (!Number.isFinite(region.x) || !Number.isFinite(region.y) || !Number.isFinite(region.width) || !Number.isFinite(region.height)) {
@@ -459,10 +461,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         return [x + centered_x * cos - centered_y * sin, y + centered_x * sin + centered_y * cos];
       };
       const corners = [corner(0, 0), corner(width, 0), corner(width, height), corner(0, height)];
-      const to_clip = ([point_x, point_y]: [number, number]): [number, number] => [
-        (point_x / canvas_width) * 2 - 1,
-        1 - (point_y / canvas_height) * 2,
-      ];
+      const to_clip = ([point_x, point_y]: [number, number]): [number, number] => {
+        const screen_point = active_camera?.world_to_screen({ x: point_x, y: point_y }) ?? { x: point_x, y: point_y };
+        return [(screen_point.x / canvas_width) * 2 - 1, 1 - (screen_point.y / canvas_height) * 2];
+      };
       const positions = corners.map(to_clip);
       const u0 = region.x / texture.width;
       const v0 = region.y / texture.height;

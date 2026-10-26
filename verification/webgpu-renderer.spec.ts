@@ -370,3 +370,26 @@ test("[texture-filtering] applies minification policy without mipmaps", async ({
   expect(result.linear).toEqual([128, 128, 128, 255]);
   expect(result.nearest).not.toEqual(result.linear);
 });
+
+test("[camera-2d] applies a synchronous camera scope to GPU geometry", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const camera_url = new URL("/src/lib/core/runtime/camera.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const camera_module = (await import(/* @vite-ignore */ camera_url)) as typeof import("../src/lib/core/runtime/camera.js");
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 4, height: 4 });
+    const camera = camera_module.create_camera({ viewport: { logical_width: 4, logical_height: 4 } });
+    const texture = renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1);
+    const pixels = await camera.draw(() => renderer.draw_texture(texture, { x: 0, y: 0, width: 1, height: 1 }));
+    texture.release();
+    renderer.dispose();
+    const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return { centered: pixel_at(2, 2), screen_origin: pixel_at(0, 0) };
+  });
+
+  expect(result.centered).toEqual([255, 0, 0, 255]);
+  expect(result.screen_origin).toEqual([0, 0, 0, 255]);
+});

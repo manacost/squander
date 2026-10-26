@@ -11,6 +11,7 @@ export type CameraOptions = Readonly<{
 }>;
 
 export type Camera = Readonly<{
+  draw: <T>(callback: () => T) => T;
   get_position: () => Point;
   get_zoom: () => number;
   get_rotation: () => number;
@@ -20,6 +21,10 @@ export type Camera = Readonly<{
   world_to_screen: (point: Point) => Point;
   is_in_view: (bounds: Bounds) => boolean;
 }>;
+
+let active_camera: Camera | undefined;
+
+export const get_active_camera = (): Camera | undefined => active_camera;
 
 const assert_finite = (value: number, name: string): void => {
   if (!Number.isFinite(value)) {
@@ -110,7 +115,18 @@ export const create_camera = (options: CameraOptions): Camera => {
     return left <= options.viewport.logical_width && right >= 0 && top <= options.viewport.logical_height && bottom >= 0;
   };
 
-  return Object.freeze({
+  const draw = <T>(callback: () => T): T => {
+    const previous = active_camera;
+    active_camera = camera;
+    try {
+      return callback();
+    } finally {
+      active_camera = previous;
+    }
+  };
+
+  const camera: Camera = Object.freeze({
+    draw,
     get_position,
     get_zoom,
     get_rotation,
@@ -120,4 +136,5 @@ export const create_camera = (options: CameraOptions): Camera => {
     world_to_screen,
     is_in_view,
   });
+  return camera;
 };
