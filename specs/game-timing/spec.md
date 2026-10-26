@@ -51,12 +51,17 @@ Use `update(time)` for simulation, for example `position.x += speed * time.delta
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Controlled-clock and scheduler unit tests; browser visibility and resize integration.
+- [`src/lib/core/runtime/timing.test.ts`](../../src/lib/core/runtime/timing.test.ts)
+  covers first-update timing, clamping, reset behavior, and invalid timing
+  values in the `[game-timing] update clock` suite.
+- [`src/lib/core/runtime/frame_loop.test.ts`](../../src/lib/core/runtime/frame_loop.test.ts)
+  covers update-before-draw ordering, pause/resume, visibility suspension, and
+  idempotent disposal in the `[game-lifecycle] frame loop` suite.
 
-Use `[game-timing]` in relevant suite names and add actual file/suite links as tests land.
+These tests cover the current timing kernel only. Browser visibility/resize
+integration and the complete game lifecycle remain unimplemented.
 
 ## Notes
 

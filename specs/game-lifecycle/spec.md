@@ -42,12 +42,15 @@ Create a game with asynchronous setup and separate update/draw callbacks. The ho
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Controlled scheduler and deferred-load unit tests; browser mount/dispose integration. Inspect observable callback counts, ownership, and errors rather than private flags.
+- [`src/lib/core/runtime/frame_loop.test.ts`](../../src/lib/core/runtime/frame_loop.test.ts)
+  covers update-before-draw ordering, callback failure stop, pause/resume,
+  visibility suspension, and idempotent disposal in the `[game-lifecycle] frame
+loop` suite.
 
-Use `[game-lifecycle]` in relevant suite names and add actual file/suite links as tests land.
+This is only the scheduler sub-slice. Asynchronous setup, typed failures,
+resource cleanup, and browser host disposal remain unimplemented.
 
 ## Notes
 
