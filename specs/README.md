@@ -37,3 +37,8 @@ capability contracts.
 - Consult [Phase 2 sequencing](../specifications/phase-2.md) and the
   [decision log](../specifications/decisions.md).
 - Use `/spec-validate` for an on-demand structure and traceability review.
+
+Phase 1 closeout evidence and the selected verification baseline are recorded
+in [phase-1-readiness.md](../specifications/phase-1-readiness.md). The local
+structural check is available as `npm run validate:specs`; it does not replace
+the on-demand review or behavioral tests.

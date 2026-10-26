@@ -1,10 +1,47 @@
 # Architecture decision log
 
-Last updated: 2026-10-24.
+Last updated: 2026-10-25.
 
 These decisions were accepted during the architecture interview. They describe
 the intended replacement framework, not the current implementation. API examples
 discussed in the interview remain illustrative. The interview is ongoing.
+
+## AD-055: Synchronous game controller with asynchronous readiness
+
+The Phase 2 runtime creates a game controller synchronously. The controller
+exposes a `ready` promise; setup completes before the frame loop starts. Setup
+receives an abort signal and the game-owned resource owner. Disposal aborts
+setup, prevents a late loop start, disposes owned resources, and returns the
+same completion promise on repeated calls.
+
+Initialization failures and runtime callback failures are distinct typed errors.
+The controller remains inspectable after a runtime failure and requires
+explicit disposal. This establishes lifecycle behavior without introducing a
+scene, ECS, input, or package-boundary API.
+
+## AD-056: Explicit owner handles and draw leases
+
+The Phase 2 ownership kernel represents each acquisition with an opaque handle.
+Handles can create independent shared acquisitions; releasing one immediately
+invalidates only that handle. A draw lease retains the underlying resource until
+the accepted work completes. The final handle release destroys the resource
+after all leases finish. Repeated release and owner disposal are harmless.
+
+## AD-054: Defer the package boundary until the breaking migration
+
+During replacement-framework development, preserve the current package exports
+and dependency metadata. There are no consumer-compatibility requirements at
+this stage, and maintaining a transitional package shape would add churn before
+the replacement API exists.
+
+At the Phase 2 migration boundary, make the replacement core available from the
+package root and `squander/core`, and expose the optional Svelte host, bridge, and
+integration surface from `squander/svelte`. Remove the PixiJS-era runtime,
+exports, demos, and compatibility layer in the same intentional breaking change.
+The replacement release uses the next major version. Svelte and PixiJS remain
+optional peer dependencies only as long as the corresponding integration or
+legacy code is shipped; final dependency metadata is validated with an isolated
+package consumer fixture at migration time.
 
 ## AD-001: A standalone TypeScript-first 2D framework
 

@@ -3,9 +3,10 @@
 ## Purpose and status
 
 Establish a lightweight specification system before implementing the replacement
-framework. Planning is in progress; the spec template, spec-system capability,
-decision log, and validation skill exist, and an initial set of framework capability drafts now exist. Remaining contract
-details are tracked explicitly; Phase 1 is not declared complete.
+framework. The specification system, decision log, validation skill, capability
+drafts, and verification-readiness evidence are established. Capability
+implementation and behavioral verification remain Phase 2 work; Phase 1 does
+not promote a draft to Implemented.
 
 ## Agreed scope
 
@@ -37,16 +38,18 @@ for specification structure and validation conventions.
 - Adding an automated spec-validation CI gate.
 - Treating a matching test tag as proof of sufficient tests or coverage.
 
-## Remaining planning work
+## Closeout work
 
-- Finish the lifecycle, resource, rendering, and Svelte integration contracts.
-- Implement the agreed coverage measurement in the future verification setup and
-  select the GPU/browser environment and type-test tooling.
-- Refine the [capability drafts](../specs/README.md) using the
-  [readiness guidance](implementation-readiness.md), without inventing test references.
-- Review those specs using `/spec-validate` and resolve material ambiguities
-  before treating the affected capabilities as ready for implementation.
+- Record the verification baseline and readiness evidence in
+  [phase-1-readiness.md](phase-1-readiness.md).
+- Use the dedicated pre-slice gates in [open-questions.md](open-questions.md)
+  for details that cannot be resolved without an implementation experiment.
+- Keep capability drafts honest: do not invent test references or promote a
+  capability based on structure validation alone.
+- Run `npm run validate:specs` and the repository's `/spec-validate` review after
+  contract or planning changes.
 
-These are planning deliverables, not a claim that Phase 1 is already complete.
-The broader objectives are recorded in [goals](goals.md); implementation scope is
-recorded in [Phase 2](phase-2.md).
+These are planning deliverables, not a claim that replacement rendering is
+implemented. The broader objectives are recorded in [goals](goals.md);
+implementation scope is recorded in [Phase 2](phase-2.md). The closeout record
+and validation commands are collected in [phase-1-readiness.md](phase-1-readiness.md).

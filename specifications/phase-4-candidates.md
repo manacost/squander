@@ -5,6 +5,8 @@ Last updated: 2026-10-22.
 These are future candidates, not committed scope. Acceptance criteria and test
 mappings must be defined before implementation.
 
+Phase 1 closeout does not promote fixed-step scheduling or mipmaps into Phase 2.
+
 ## P4-001: Optional fixed-step scheduling
 
 Phase 2 uses variable `update(dt)` timing. Consider an optional scheduler that

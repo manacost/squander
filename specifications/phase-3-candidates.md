@@ -7,6 +7,9 @@ capability specs, acceptance criteria, and test mappings before implementation.
 Use capability names as stable IDs when creating specs; earlier P3 numeric labels
 were planning labels only. Lists replace the earlier tables for readability.
 
+Phase 1 and Phase 2 closeout work does not promote any candidate in this file
+into the replacement framework scope.
+
 ## Requested future directions
 
 - **Scene lifecycle/composition:** factory-based mounting, unmounting, stacking,

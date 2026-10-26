@@ -1,9 +1,22 @@
-# Remaining contract decisions
+# Implementation-slice contract gates
 
 The numbered interview established direction, not every API detail. These are
 implementation-readiness questions, not reopened decisions. Resolve the relevant
 ones before a dependent slice starts; record outcomes in its spec and the decision
 log when architectural. No fixed implementation values below are implied.
+
+## Phase 1 disposition
+
+The questionnaire decisions through AD-053 are recorded in
+[decisions.md](decisions.md) and reflected in the capability drafts. Items
+listed below are retained only when they require an implementation experiment or
+a capability-specific API choice. They are pre-slice gates: a Phase 2 slice must
+resolve its relevant items in the capability spec and, when architectural, the
+decision log before implementation begins.
+
+Phase 1 does not invent test references or claim that these gates are already
+implemented. The selected verification baseline and evidence policy are in
+[phase-1-readiness.md](phase-1-readiness.md).
 
 ## Lifecycle and runtime
 
@@ -54,7 +67,9 @@ log when architectural. No fixed implementation values below are implied.
   scope are already agreed.
 - Identify which legacy demos can be adapted and which are removed or archived;
   preserve unrelated work and avoid a broad unreviewed deletion.
-- Resolve package entry points so plain TypeScript consumers do not require Svelte.
+- Defer package entry-point and dependency-metadata changes until the final
+  Phase 2 breaking migration. The target is a core API at the package root and
+  `squander/core`, with optional Svelte integration at `squander/svelte`.
 
 See [capability drafts](../specs/README.md) and [readiness guidance](implementation-readiness.md).
 

@@ -3,9 +3,16 @@
 ## Purpose and status
 
 Replace PixiJS with a standalone TypeScript 2D foundation and optional first-class
-Svelte/SvelteKit integration. The interview direction is consolidated into
+Svelte/SvelteKit integration. The final breaking package shape exposes the core
+from the package root and `squander/core`, with Svelte integration at
+`squander/svelte`. The interview direction is consolidated into
 [15 capability drafts](../specs/README.md). They are not implemented contracts:
 [open details](open-questions.md) must be resolved for each dependent slice.
+
+Phase 2 starts only after the [Phase 1 readiness gate](phase-1-readiness.md)
+has recorded verification tooling, migration inventory, and specification
+validation results. A passing structural check does not promote a capability or
+replace real WebGPU evidence.
 
 ## Agreed scope
 
@@ -101,7 +108,8 @@ for one large rewrite. Resolve relevant contract gaps before starting each slice
 6. Build the typed Svelte bridge and host against the established lifetime rules,
    including SSR and teardown races. Early minimal hosting can support prior demos.
 7. Complete the organized feature library and composition playground. Migrate
-   retained examples, remove remaining Pixi coupling, and verify package consumers,
+   retained examples, remove remaining Pixi coupling, perform the intentional
+   major-version package migration, and verify isolated package consumers,
    coverage, type contracts, and the real rendering suite.
 
 Tests and documentation accompany each slice; step 7 completes integration rather
