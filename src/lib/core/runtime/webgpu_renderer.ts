@@ -9,10 +9,24 @@ export type WebGpuRendererOptions = Readonly<{
   height: number;
 }>;
 
+export type WebGpuTexture = Readonly<{
+  resource: ResourceHandle<GPUTexture>;
+  width: number;
+  height: number;
+  filtering: ReturnType<typeof resolve_texture_filtering>;
+  release: () => void;
+}>;
+
+export type TextureDrawOptions = Readonly<{
+  region?: Readonly<{ x: number; y: number; width: number; height: number }>;
+  tint?: Readonly<{ red: number; green: number; blue: number; alpha: number }>;
+  opacity?: number;
+}>;
+
 export type WebGpuRenderer = Readonly<{
   clear: (color: ClearColor) => Promise<Uint8Array>;
-  create_texture: (pixels: Uint8Array, width: number, height: number, options?: TextureFilteringOptions) => ResourceHandle<GPUTexture>;
-  draw_texture: (texture: ResourceHandle<GPUTexture>) => Promise<Uint8Array>;
+  create_texture: (pixels: Uint8Array, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
+  draw_texture: (texture: WebGpuTexture, options?: TextureDrawOptions) => Promise<Uint8Array>;
   dispose: () => void;
 }>;
 
@@ -49,10 +63,16 @@ fn vertex_main(@location(0) position: vec2f, @location(1) uv: vec2f) -> VertexOu
 
 @group(0) @binding(0) var texture_sampler: sampler;
 @group(0) @binding(1) var texture_data: texture_2d<f32>;
+struct DrawUniforms {
+  uv_origin: vec2f,
+  uv_size: vec2f,
+  tint: vec4f,
+};
+@group(0) @binding(2) var<uniform> draw_uniforms: DrawUniforms;
 
 @fragment
 fn fragment_main(input: VertexOutput) -> @location(0) vec4f {
-  return textureSample(texture_data, texture_sampler, input.uv);
+  return textureSample(texture_data, texture_sampler, draw_uniforms.uv_origin + input.uv * draw_uniforms.uv_size) * draw_uniforms.tint;
 }
 `;
 
@@ -162,12 +182,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     return submit_and_readback(encoder, texture);
   };
 
-  const create_texture = (
-    pixels: Uint8Array,
-    width: number,
-    height: number,
-    filtering: TextureFilteringOptions = {},
-  ): ResourceHandle<GPUTexture> => {
+  const create_texture = (pixels: Uint8Array, width: number, height: number, filtering: TextureFilteringOptions = {}): WebGpuTexture => {
     if (!Number.isInteger(width) || width <= 0 || !Number.isInteger(height) || height <= 0) {
       throw new RangeError("texture dimensions must be positive integers");
     }
@@ -192,25 +207,67 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       resource.destroy();
     });
     texture.label = `texture:${resolved_filtering.magnification}:${resolved_filtering.minification}`;
-    return handle;
+    return Object.freeze({
+      resource: handle,
+      width,
+      height,
+      filtering: resolved_filtering,
+      release: handle.release,
+    });
   };
 
-  const draw_texture = async (texture: ResourceHandle<GPUTexture>): Promise<Uint8Array> => {
+  const draw_texture = async (texture: WebGpuTexture, draw_options: TextureDrawOptions = {}): Promise<Uint8Array> => {
     if (disposed) {
       throw new Error("WebGPU renderer is disposed");
     }
-    const lease = texture.acquire_lease();
+    const region = draw_options.region ?? { x: 0, y: 0, width: texture.width, height: texture.height };
+    if (!Number.isFinite(region.x) || !Number.isFinite(region.y) || !Number.isFinite(region.width) || !Number.isFinite(region.height)) {
+      throw new RangeError("texture region must be finite");
+    }
+    if (
+      region.width <= 0 ||
+      region.height <= 0 ||
+      region.x < 0 ||
+      region.y < 0 ||
+      region.x + region.width > texture.width ||
+      region.y + region.height > texture.height
+    ) {
+      throw new RangeError("texture region must fit within the texture");
+    }
+    const tint = draw_options.tint ?? { red: 1, green: 1, blue: 1, alpha: 1 };
+    assert_color(tint);
+    const opacity = draw_options.opacity ?? 1;
+    if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1) {
+      throw new RangeError("opacity must be finite and between zero and one");
+    }
+    const lease = texture.resource.acquire_lease();
     const vertex_data = new Float32Array([-1, -1, 0, 1, 1, -1, 1, 1, -1, 1, 0, 0, -1, 1, 0, 0, 1, -1, 1, 1, 1, 1, 1, 0]);
     const vertex_buffer = device.createBuffer({ size: vertex_data.byteLength, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
     device.queue.writeBuffer(vertex_buffer, 0, vertex_data);
     /* eslint-disable @typescript-eslint/naming-convention -- WebGPU sampler descriptors use external camelCase names. */
-    const sampler = device.createSampler({ magFilter: "linear", minFilter: "linear" });
+    const sampler = device.createSampler({ magFilter: texture.filtering.magnification, minFilter: texture.filtering.minification });
     /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
+    const uniforms = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    device.queue.writeBuffer(
+      uniforms,
+      0,
+      new Float32Array([
+        region.x / texture.width,
+        region.y / texture.height,
+        region.width / texture.width,
+        region.height / texture.height,
+        tint.red,
+        tint.green,
+        tint.blue,
+        tint.alpha * opacity,
+      ]),
+    );
     const bind_group = device.createBindGroup({
       layout: pipeline.getBindGroupLayout(0),
       entries: [
         { binding: 0, resource: sampler },
         { binding: 1, resource: lease.resource.createView() },
+        { binding: 2, resource: { buffer: uniforms } },
       ],
     });
     /* eslint-disable @typescript-eslint/naming-convention -- WebGPU render descriptors use external camelCase names. */
@@ -237,6 +294,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     } finally {
       lease.release();
       vertex_buffer.destroy();
+      uniforms.destroy();
     }
   };
 

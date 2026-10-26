@@ -75,12 +75,12 @@ Illustrative: draw.sprite(hero, { x: 100, y: 80, origin: { x: 0.5, y: 0.5 }, rot
 Current verification:
 
 - [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
-  verifies persistent texture upload, full-canvas sampling, ownership release,
-  and deterministic pixel readback in the `[sprite-drawing] uploads and draws a
-persistent texture` suite.
+  verifies persistent texture upload, full-canvas sampling, atlas-region UV
+  selection, tint, opacity, ownership release, and deterministic pixel readback
+  in the `[sprite-drawing]` suites.
 
-Atlas regions, tint, opacity, transforms, flips, and mixed primitive ordering
-remain unimplemented.
+Placement transforms, origins, flips, and mixed primitive ordering remain
+unimplemented.
 
 ## Notes
 
