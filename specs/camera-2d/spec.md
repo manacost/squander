@@ -99,16 +99,22 @@ Configure the camera position to the world point you want centered, then apply i
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Independent transform/round-trip tests where conversion is exposed; real mixed-primitive camera fixture.
+- [`src/lib/core/runtime/camera.test.ts`](../../src/lib/core/runtime/camera.test.ts)
+  covers centered focus, zoom, inverse rotation, signed bounds, conservative
+  visibility, and finite-value validation in the `[camera-2d] camera transforms`
+  suite.
 
-Use `[camera-2d]` in relevant suite names and add actual file/suite links as tests land.
+Nested scope behavior, renderer integration, and real GPU transform fixtures
+remain unimplemented.
 
 ## Notes
 
-AD-006, AD-014, and AD-040 through AD-053. Open: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, optional enforcement of in-scope mutation, and numerical precision/representability at extreme values. Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+AD-006, AD-014, and AD-040 through AD-053. The current CPU helper uses a
+world-axis-aligned rectangle and transformed-corner AABB for conservative
+visibility. Scope enforcement and numerical tolerances remain open.
+Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

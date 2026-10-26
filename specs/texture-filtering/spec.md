@@ -40,16 +40,19 @@ Select filtering in texture asset options; use separate controls only when the m
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+Current verification:
 
-Real GPU sampling fixtures plus descriptor/default tests.
+- [`src/lib/core/runtime/texture_filtering.test.ts`](../../src/lib/core/runtime/texture_filtering.test.ts)
+  covers linear defaults, independent magnification/minification values, and
+  shorthand precedence in the `[texture-filtering] sampler policy` suite.
 
-Use `[texture-filtering]` in relevant suite names and add actual file/suite links as tests land.
+Real GPU sampling fixtures and sampler binding remain unimplemented.
 
 ## Notes
 
-AD-010. Open: final option names, sampler mutability, and filtering rules for internally generated font atlases. Mipmaps are Phase 4.
+AD-010. The current CPU policy uses `filter`, `magnification`, and
+`minification`, defaults to linear, and does not represent mipmaps. GPU sampler
+binding and font-atlas filtering remain open. Mipmaps are Phase 4.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
