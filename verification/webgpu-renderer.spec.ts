@@ -346,3 +346,27 @@ test("[texture-filtering] keeps nearest and linear sampling independent", async 
   expect(result.linear[2]).toBeGreaterThan(0);
   expect(result.linear[0]).toBeLessThan(255);
 });
+
+test("[texture-filtering] applies minification policy without mipmaps", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const pixels = new Uint8Array([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255]);
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
+    const nearest = renderer.create_texture(pixels, 2, 2, { magnification: "nearest", minification: "nearest" });
+    const linear = renderer.create_texture(pixels, 2, 2, { magnification: "linear", minification: "linear" });
+    const nearest_pixels = await renderer.draw_texture(nearest, { width: 1, height: 1 });
+    const linear_pixels = await renderer.draw_texture(linear, { width: 1, height: 1 });
+    nearest.release();
+    linear.release();
+    renderer.dispose();
+    return { nearest: Array.from(nearest_pixels.slice(0, 4)), linear: Array.from(linear_pixels.slice(0, 4)) };
+  });
+
+  expect(result.nearest[3]).toBe(255);
+  expect(result.linear).toEqual([128, 128, 128, 255]);
+  expect(result.nearest).not.toEqual(result.linear);
+});

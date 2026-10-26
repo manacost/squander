@@ -1,6 +1,6 @@
 # Phase 2 texture filtering checkpoint
 
-Status: **Nearest and linear magnification verified; texture-filtering remains Draft**.
+Status: **Nearest and linear magnification/minification verified; texture-filtering remains Draft**.
 
 ## Pre-slice contract checkpoint
 
@@ -16,11 +16,12 @@ Status: **Nearest and linear magnification verified; texture-filtering remains D
 - Verified a nearest sample remains a discrete red texel while a linear sample at
   the measured midpoint contains both red and blue channels.
 - Verified both textures render in one ordered pass without policy leakage.
+- Added a 2×2-to-1×1 fixture that measures linear averaging without mipmaps.
 
 ## Evidence
 
 - Focused real WebGPU run: `npx playwright test --config=playwright.webgpu.config.ts verification/webgpu-renderer.spec.ts -g 'keeps nearest'` passed (1 test).
-- Full real WebGPU run: `npm run test:webgpu` passed 15 tests.
+- Full real WebGPU run: `npm run test:webgpu` passed 16 tests.
 - `npm run check`: passed with zero diagnostics.
 - `npm run test:unit`: passed, 17 files and 48 tests.
 - `npm run test:type`: passed.
@@ -34,6 +35,6 @@ independent nearest/midpoint pixel assertions.
 
 ## Known gaps and gate
 
-- Minification/downscaling, mipmaps, and font-atlas filtering remain unverified.
+- Mipmaps and font-atlas filtering remain unverified.
 - Go/no-go: **continue to the next independent capability slice; do not promote
   `texture-filtering` yet.**

@@ -49,8 +49,9 @@ Current verification:
   verifies independent nearest and linear sampling at real GPU pixels in the
   `[texture-filtering]` suite.
 
-Real GPU sampling fixtures and sampler binding are implemented for the basic
-mag/linear case; minification and downscaling limits remain unverified.
+Real GPU sampling fixtures and sampler binding are implemented for nearest and
+linear magnification/minification without mipmaps; font-atlas filtering remains
+unverified.
 
 ## Notes
 
