@@ -6,7 +6,9 @@ Reuse custom geometry for filled polygons and stroked curved paths.
 
 ## Status
 
-Draft. Target: Phase 2.
+Draft. Target: Phase 2. The CPU polygon snapshot and validation slice is
+implemented and verified; reusable ownership, paths, tessellation, and GPU
+rendering remain unimplemented.
 
 The direction was agreed in the interview; open contract details are listed below.
 This draft does not claim implementation or verification.
@@ -125,8 +127,11 @@ The operation name is intentionally undecided; `replace` is not an accepted API 
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+The CPU polygon snapshot and validation contract is covered by
+[`src/lib/core/runtime/polygons.test.ts`](../../src/lib/core/runtime/polygons.test.ts),
+including normalization, caller isolation, valid updates, invalid updates, and
+prior-state preservation. Existing legacy tests are not claimed as replacement
+framework coverage. Planned verification (not existing test links):
 
 Triangulation invariants (area/coverage) and curve endpoint tests; real GPU concavity/curve fixtures; geometry reuse checks.
 

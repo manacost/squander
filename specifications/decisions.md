@@ -523,7 +523,10 @@ Use the same editing contract as paths: snapshot input point values, return an
 opaque stable handle, and accept revised points through an explicit validated
 update outside `draw`. Mutating application-owned points does not silently alter
 prepared geometry. Invalid updates throw and leave the previous geometry usable.
-The update operation's name remains unresolved for both paths and polygons.
+For the current CPU snapshot slice, the operation is exposed as `update(points)`
+on the opaque handle. This resolves the implementation seam for polygon
+snapshots without claiming that the final package-level factory or path update
+surface is complete.
 
 AD-036 defines winding, duplicate-point cleanup, and polygon validation.
 
