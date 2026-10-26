@@ -28,9 +28,9 @@ Status: **Placement, origin, flip, ordered submission, and source-over sprite co
 ## Evidence
 
 - The prior focused real WebGPU run for placement/flip passed (1 test).
-- Full real WebGPU run: `npm run test:webgpu` passed 7 tests, including the
+- Full real WebGPU run: `npm run test:webgpu` passed 8 tests, including the
   baseline, clear/readback, persistent texture, atlas, source-over, transform,
-  and ordered multi-sprite fixtures.
+  ordered multi-sprite, and combined-flip fixtures.
 - `npm run check`: passed with zero diagnostics.
 - `npm run test:unit`: passed, 16 files and 45 tests.
 - `npm run test:type`: passed.
