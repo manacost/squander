@@ -87,14 +87,14 @@ Current verification:
 Real GPU coverage now includes placement, origin anchoring, horizontal flipping,
 rotation-path execution, ordered sprite overlap, combined flipping, and
 source-over composition. Mixed primitive ordering remains unimplemented; shared
-color construction is covered at its CPU seam but is not yet consumed by the
-renderer.
+color construction is covered at its CPU seam and sprite tinting now consumes
+the shared type internally.
 
 ## Notes
 
-AD-008, AD-014, AD-022, and AD-023. The current GPU slice accepts only a
-full-texture draw with linear sampling; atlas descriptors, color encoding,
-opacity, transforms, and flips remain open.
+AD-008, AD-014, AD-022, and AD-023. The current GPU slice accepts the shared
+internal color representation; final package exports and mixed primitive
+ordering remain open.
 Negative-scale behavior remains an API design detail; explicit flips do not imply geometry mirroring.
 The angle convention and helper are agreed; the illustrative draw-option spelling and any branded angle type remain API design details.
 

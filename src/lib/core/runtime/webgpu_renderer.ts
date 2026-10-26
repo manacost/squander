@@ -1,5 +1,6 @@
 import { resolve_texture_filtering, type TextureFilteringOptions } from "./texture_filtering.js";
 import { create_resource_owner, type ResourceHandle, type ResourceOwner } from "./resource_ownership.js";
+import type { Color } from "./colors.js";
 
 export type ClearColor = Readonly<{ red: number; green: number; blue: number; alpha: number }>;
 
@@ -27,7 +28,7 @@ export type TextureDrawOptions = Readonly<{
   rotation?: number;
   flip_x?: boolean;
   flip_y?: boolean;
-  tint?: Readonly<{ red: number; green: number; blue: number; alpha: number }>;
+  tint?: Color;
   opacity?: number;
 }>;
 

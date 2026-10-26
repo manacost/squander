@@ -10,7 +10,7 @@ Status: **Color construction and validation verified; dependent drawing capabili
 - Hex accepts `#RGB`, `#RGBA`, `#RRGGBB`, and `#RRGGBBAA`; hex alpha is the byte
   divided by 255.
 - All helpers return one frozen readonly `{ red, green, blue, alpha }` value.
-- This slice changes no package exports and does not claim renderer integration.
+- This slice changes no package exports; renderer integration is internal only.
 
 ## Implemented slice
 
@@ -19,6 +19,8 @@ Status: **Color construction and validation verified; dependent drawing capabili
   hex strings.
 - Added equivalence, shorthand, freezing, and invalid-input tests at the helper
   seam.
+- Wired the internal sprite renderer tint option to the shared `Color` type
+  without changing its runtime representation.
 
 ## Evidence
 
@@ -26,16 +28,17 @@ Status: **Color construction and validation verified; dependent drawing capabili
 - `npm run test:unit`: passed, 17 files and 48 tests.
 - `npm run check`: passed with zero diagnostics.
 - `npm run test:type`: passed.
+- Focused real WebGPU tint/blending run passed 2 tests after the type wiring.
 
 ## Code trace
 
 `colors.test.ts` → helper call → range/format validation → RGB conversion →
-frozen readonly `Color` value. No renderer, GPU resource, or package export is
-involved in this slice.
+frozen readonly `Color` value; sprite tint type → WebGPU uniform values. No
+package export is involved in this slice.
 
 ## Known gaps and gate
 
-- Sprite, shape, and text renderers do not yet consume `Color`.
-- GPU color-space behavior and visual tint equivalence remain unverified.
+- Shape and text renderers do not yet consume `Color`.
+- GPU color-space behavior and public package color exports remain unverified.
 - Go/no-go: **allow dependent renderer work to consume this contract; do not
   promote sprite, shape, or text capabilities from this checkpoint.**
