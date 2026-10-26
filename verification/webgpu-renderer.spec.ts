@@ -452,3 +452,51 @@ test("[viewport-sizing] maps logical content into fixed-fit letterbox bounds", a
   expect(result.content).toEqual([255, 0, 0, 255]);
   expect(result.top_bar).toEqual([0, 0, 0, 255]);
 });
+
+test("[viewport-sizing] applies runtime resize and DPR without changing logical placement", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const renderer = await module.create_webgpu_renderer({
+      canvas,
+      width: 2,
+      height: 2,
+      viewport: {
+        logical_width: 2,
+        logical_height: 2,
+        css_width: 2,
+        css_height: 2,
+        physical_width: 2,
+        physical_height: 2,
+        content_width: 2,
+        content_height: 2,
+        offset_x: 0,
+        offset_y: 0,
+      },
+    });
+    const texture = renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1);
+    renderer.resize({
+      logical_width: 4,
+      logical_height: 2,
+      css_width: 4,
+      css_height: 2,
+      physical_width: 8,
+      physical_height: 4,
+      content_width: 4,
+      content_height: 2,
+      offset_x: 0,
+      offset_y: 0,
+    });
+    const pixels = await renderer.draw_texture(texture, { x: 3, y: 0, width: 1, height: 1 });
+    texture.release();
+    renderer.dispose();
+    const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return { logical_landmark: pixel_at(6, 1), unchanged_area: pixel_at(0, 0) };
+  });
+
+  expect(result.logical_landmark).toEqual([255, 0, 0, 255]);
+  expect(result.unchanged_area).toEqual([0, 0, 0, 255]);
+});

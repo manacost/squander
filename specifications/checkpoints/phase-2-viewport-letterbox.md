@@ -15,11 +15,13 @@ Status: **Fixed-fit logical-to-physical letterbox mapping verified; viewport-siz
 - Configured physical canvas/readback dimensions from the viewport descriptor.
 - Applied content scale and letterbox offsets to command geometry.
 - Added a real GPU fixture for a 4×2 logical view in a 4×4 physical surface.
+- Added explicit renderer resize with a 2× DPR fixture and post-resize logical
+  landmark verification.
 
 ## Evidence
 
 - Focused real WebGPU run: `npx playwright test --config=playwright.webgpu.config.ts verification/webgpu-renderer.spec.ts -g 'letterbox'` passed (1 test).
-- Full real WebGPU run: `npm run test:webgpu` passed 19 tests.
+- Full real WebGPU run: `npm run test:webgpu` passed 20 tests.
 - `npm run check`: passed with zero diagnostics.
 - `npm run test:unit`: passed, 18 files and 51 tests.
 - `npm run test:type`: passed.
@@ -33,7 +35,7 @@ readback → content/bar pixel assertions.
 
 ## Known gaps and gate
 
-- Responsive runtime updates, resize/DPR event handling, and DOM overlay bounds
+- Automatic resize observers, responsive runtime policy, and DOM overlay bounds
   remain unimplemented.
 - Go/no-go: **continue viewport runtime integration; do not promote
   `viewport-sizing`.**

@@ -53,8 +53,8 @@ Current verification:
   the `[viewport-sizing]` suite.
 
 Fixed-fit letterbox mapping is integrated into the low-level renderer; browser
-resize, responsive runtime policy, and DOM overlay alignment remain
-unimplemented.
+resize and DPR updates are now integrated through explicit renderer resize;
+responsive runtime policy and DOM overlay alignment remain unimplemented.
 
 ## Notes
 

@@ -71,6 +71,7 @@ export type WebGpuRenderer = Readonly<{
   draw_texture: (texture: WebGpuTexture, options?: TextureDrawOptions) => Promise<Uint8Array>;
   draw_textures: (draws: readonly TextureDraw[]) => Promise<Uint8Array>;
   draw_commands: (commands: readonly RenderCommand[]) => Promise<Uint8Array>;
+  resize: (viewport: ViewportSize) => void;
   dispose: () => void;
 }>;
 
@@ -174,12 +175,13 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     throw new WebGpuUnavailableError("canvas does not provide a WebGPU context");
   }
 
-  const surface_width = options.viewport?.physical_width ?? options.width;
-  const surface_height = options.viewport?.physical_height ?? options.height;
-  const logical_width = options.viewport?.logical_width ?? options.width;
-  const logical_height = options.viewport?.logical_height ?? options.height;
-  const device_scale_x = options.viewport === undefined ? 1 : options.viewport.physical_width / options.viewport.css_width;
-  const device_scale_y = options.viewport === undefined ? 1 : options.viewport.physical_height / options.viewport.css_height;
+  let current_viewport = options.viewport;
+  let surface_width = current_viewport?.physical_width ?? options.width;
+  let surface_height = current_viewport?.physical_height ?? options.height;
+  let logical_width = current_viewport?.logical_width ?? options.width;
+  let logical_height = current_viewport?.logical_height ?? options.height;
+  let device_scale_x = current_viewport === undefined ? 1 : current_viewport.physical_width / current_viewport.css_width;
+  let device_scale_y = current_viewport === undefined ? 1 : current_viewport.physical_height / current_viewport.css_height;
   options.canvas.width = surface_width;
   options.canvas.height = surface_height;
   const format = navigator.gpu.getPreferredCanvasFormat();
@@ -428,7 +430,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     const canvas_width = logical_width;
     const canvas_height = logical_height;
     const active_camera = get_active_camera();
-    const viewport = options.viewport;
+    const viewport = current_viewport;
     const encoded_draws = draws.map(({ texture, options = {} }) => {
       const region = options.region ?? { x: 0, y: 0, width: texture.width, height: texture.height };
       if (!Number.isFinite(region.x) || !Number.isFinite(region.y) || !Number.isFinite(region.width) || !Number.isFinite(region.height)) {
@@ -604,6 +606,24 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     return solid_texture;
   }
 
+  const resize = (viewport: ViewportSize): void => {
+    if (disposed) {
+      throw new Error("WebGPU renderer is disposed");
+    }
+    current_viewport = viewport;
+    surface_width = viewport.physical_width;
+    surface_height = viewport.physical_height;
+    logical_width = viewport.logical_width;
+    logical_height = viewport.logical_height;
+    device_scale_x = viewport.physical_width / viewport.css_width;
+    device_scale_y = viewport.physical_height / viewport.css_height;
+    options.canvas.width = surface_width;
+    options.canvas.height = surface_height;
+    /* eslint-disable @typescript-eslint/naming-convention -- WebGPU configuration uses external camelCase names. */
+    context.configure({ device, format, alphaMode: "opaque", usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
+    /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
+  };
+
   const dispose = (): void => {
     if (disposed) {
       return;
@@ -614,5 +634,5 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     device.destroy();
   };
 
-  return Object.freeze({ clear, create_texture, draw_texture, draw_textures, draw_commands, dispose });
+  return Object.freeze({ clear, create_texture, draw_texture, draw_textures, draw_commands, resize, dispose });
 };
