@@ -14,10 +14,12 @@ Status: **CPU validation plus filled-rectangle GPU ordering slice complete; shap
 - Added a real GPU filled-circle fixture using center/radius placement.
 - Added a real GPU flat-ended line fixture using explicit endpoints and centered
   stroke width.
+- Added a real GPU rectangle-outline fixture checking edge coverage and a
+  transparent interior.
 
 ## Not implemented
 
-- Outlines, curves, antialiasing, caps, joins, and the public
+- Circle outlines, curves, antialiasing, caps, joins, and the public
   package draw API.
 - Complete shape promotion and all primitive geometry acceptance criteria.
 
@@ -38,9 +40,11 @@ exact readback → mixed-order pixel assertion.
   center/radius placement and circular coverage on a real device.
 - `[shape-drawing] renders a centered flat-ended line from explicit endpoints`
   verifies line placement and centered width on a real device.
+- `[shape-drawing] keeps the interior transparent for a centered rectangle outline`
+  verifies centered outline coverage on a real device.
 
 ## Gate
 
-The next shape step requires outline geometry and additional
+The next shape step requires circle-outline geometry and additional
 independent GPU fixtures. Do not claim complete primitive rendering from this
 partial checkpoint.

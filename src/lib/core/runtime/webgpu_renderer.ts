@@ -41,6 +41,8 @@ export type TextureDrawOptions = Readonly<{
   tint?: Color;
   opacity?: number;
   shape_kind?: number;
+  shape_x?: number;
+  shape_y?: number;
 }>;
 
 export type TextureDraw = Readonly<{ texture: WebGpuTexture; options?: TextureDrawOptions }>;
@@ -48,12 +50,14 @@ export type TextureDraw = Readonly<{ texture: WebGpuTexture; options?: TextureDr
 export type RectangleDraw = Readonly<{ rectangle: Rectangle; color: Color; opacity?: number }>;
 export type CircleDraw = Readonly<{ circle: Circle; color: Color; opacity?: number }>;
 export type LineDraw = Readonly<{ line: Line; color: Color; stroke_width: number; opacity?: number }>;
+export type RectangleOutlineDraw = Readonly<{ rectangle: Rectangle; color: Color; stroke_width: number; opacity?: number }>;
 
 export type RenderCommand = Readonly<
   | { kind: "texture"; draw: TextureDraw }
   | { kind: "rectangle"; draw: RectangleDraw }
   | { kind: "circle"; draw: CircleDraw }
   | { kind: "line"; draw: LineDraw }
+  | { kind: "rectangle_outline"; draw: RectangleOutlineDraw }
 >;
 
 export type WebGpuRenderer = Readonly<{
@@ -111,6 +115,13 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4f {
   if (draw_uniforms.shape.x > 0.5) {
     let centered = input.uv - vec2f(0.5, 0.5);
     if (dot(centered, centered) > 0.25) {
+      discard;
+    }
+  }
+  if (draw_uniforms.shape.x > 1.5 && draw_uniforms.shape.x < 2.5) {
+    let edge_x = min(input.uv.x, 1.0 - input.uv.x);
+    let edge_y = min(input.uv.y, 1.0 - input.uv.y);
+    if (edge_x > draw_uniforms.shape.y && edge_y > draw_uniforms.shape.z) {
       discard;
     }
   }
@@ -330,6 +341,30 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           },
         };
       }
+      if (command.kind === "rectangle_outline") {
+        const normalized = normalize_rectangle(command.draw.rectangle);
+        const stroke_width = validate_stroke_width(command.draw.stroke_width);
+        if (!has_drawable_area(normalized) || stroke_width === 0) {
+          return {
+            texture: ensure_solid_texture(),
+            options: { x: 0, y: 0, width: 0.000001, height: 0.000001, opacity: 0 },
+          };
+        }
+        return {
+          texture: ensure_solid_texture(),
+          options: {
+            x: normalized.left,
+            y: normalized.top,
+            width: normalized.width,
+            height: normalized.height,
+            tint: command.draw.color,
+            opacity: command.draw.opacity,
+            shape_kind: 2,
+            shape_x: stroke_width / normalized.width,
+            shape_y: stroke_width / normalized.height,
+          },
+        };
+      }
       const normalized = normalize_rectangle(command.draw.rectangle);
       if (!has_drawable_area(normalized)) {
         return {
@@ -424,7 +459,16 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         flipped_uvs[6],
         flipped_uvs[7],
       ]);
-      return { texture, tint, opacity, vertex_data, region, shape_kind: options.shape_kind ?? 0 };
+      return {
+        texture,
+        tint,
+        opacity,
+        vertex_data,
+        region,
+        shape_kind: options.shape_kind ?? 0,
+        shape_x: options.shape_x ?? 0,
+        shape_y: options.shape_y ?? 0,
+      };
     });
     const leases = encoded_draws.map(({ texture }) => texture.resource.acquire_lease());
     const buffers = encoded_draws.map(({ vertex_data }) => {
@@ -438,7 +482,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
       return sampler;
     });
-    const uniforms = encoded_draws.map(({ tint, opacity, region, texture, shape_kind }) => {
+    const uniforms = encoded_draws.map(({ tint, opacity, region, texture, shape_kind, shape_x, shape_y }) => {
       const uniform = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       device.queue.writeBuffer(
         uniform,
@@ -453,8 +497,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           tint.blue,
           tint.alpha * opacity,
           shape_kind,
-          0,
-          0,
+          shape_x,
+          shape_y,
           0,
         ]),
       );
