@@ -25,6 +25,16 @@ Use two-space indentation, double quotes, trailing commas, and a 140-character p
 
 Name unit tests `*.test.ts` or `*.spec.ts` beneath `src/`; Vitest only discovers that tree. Place browser flows in `tests/`. Coverage is minimal, so add focused tests and manually exercise the relevant demo for rendering or lifecycle work. Run `npm run package` when changing exports.
 
+### WebGPU and coverage rules
+
+- Cover all new framework runtime code with focused Vitest tests. Use TypeScript type tests for public inference and rejected misuse. Revisit the repository-wide greater-than-90% coverage target after Phase 2; do not use legacy PixiJS coverage to evaluate replacement code.
+- Treat TypeScript/Svelte coverage and GPU correctness as separate gates. Coverage must include statements, branches, functions, and lines for new runtime code; WGSL shader behavior requires real WebGPU evidence and is not proven by TypeScript coverage.
+- Test GPU features in Playwright with a real Chromium WebGPU device. Run the page from a secure context: use the trusted local Vite origin (`http://127.0.0.1:<port>` or `http://localhost:<port>`), never `about:blank` or a `data:` URL. Assert `window.isSecureContext`, `navigator.gpu`, adapter creation, and device creation before rendering.
+- Launch the GPU browser with the explicit WebGPU/GPU flags used by the project configuration. Record browser version, OS, GPU adapter/backend, DPR, viewport, and fixture dimensions. A missing `navigator.gpu` or adapter is a failed GPU verification environment, not a passing skip.
+- Verify rendering by executing commands and reading deterministic textures or buffers back to JavaScript. Use independent expected values and declared tolerances. Use screenshots only as supplemental visual evidence.
+- Use mocks for CPU-side failures, cancellation, ownership, caching, disposal, and device-loss state transitions; use a real device for shaders, texture sampling, blending, draw order, tessellation, and pixel results.
+- Run the WebGPU Conformance Test Suite selectively as an external API-conformance reference; it supplements project acceptance tests and does not replace feature-specific fixtures.
+
 ## Git Guidelines
 
 - Commit frequently at meaningful checkpoints, once a coherent change is complete and its relevant checks pass. Each commit must be atomic: one logical change, independently understandable and revertible.

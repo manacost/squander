@@ -25,7 +25,9 @@ for (const scene of ["pixi-demo", "camera", "ui-bridge"]) {
     await page.goto(`/scenes/${scene}`);
     const canvas = page.locator("canvas");
     await expect(canvas).toBeVisible();
-    await expect.poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0)).toBe(true);
+    await expect
+      .poll(() => canvas.evaluate((element) => element instanceof HTMLCanvasElement && element.width > 0 && element.height > 0))
+      .toBe(true);
 
     if (scene === "ui-bridge") {
       await expect(page.getByRole("heading", { name: "Hello from Scene" })).toBeVisible();

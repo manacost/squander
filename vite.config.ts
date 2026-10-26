@@ -24,6 +24,12 @@ export default defineConfig({
   ],
   test: {
     include: ["src/**/*.{test,spec}.{js,ts}"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary", "html"],
+      include: ["src/lib/**/*.{ts,svelte}"],
+      exclude: ["**/*.test.ts", "**/*.spec.ts", "src/lib/ui/ui-type-testing.ts", "src/lib/polyfill/**"],
+    },
   },
   server: {
     fs: {
