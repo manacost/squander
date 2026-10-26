@@ -1,6 +1,6 @@
 # Phase 2 Sequence 3 shapes checkpoint
 
-Status: **CPU validation complete; GPU rendering remains gated**.
+Status: **CPU validation plus filled-rectangle GPU ordering slice complete; shape capability remains Draft**.
 
 ## Implemented slice
 
@@ -8,27 +8,32 @@ Status: **CPU validation complete; GPU rendering remains gated**.
 - Added finite circle and line validation with value snapshots.
 - Added finite nonnegative stroke-width validation.
 - Added finite opacity validation in the agreed `[0, 1]` range.
+- Added a frame-local filled-rectangle command path using one renderer-owned
+  solid texture and shared source-over blending.
+- Added a real GPU mixed sprite/rectangle ordering fixture.
 
 ## Not implemented
 
-- GPU geometry buffers, fills, outlines, curves, antialiasing, caps, joins,
-  source-over blending, or pixel readback.
-- Public draw API and mixed primitive submission ordering.
+- Outlines, circles, lines, curves, antialiasing, caps, joins, and the public
+  package draw API.
+- Complete shape promotion and all primitive geometry acceptance criteria.
 
 ## Trace
 
-The current path is direct test import → primitive validator → normalized or
-snapshotted CPU value. No GPU command encoder or public package export imports
-these helpers.
+The current paths are direct validator tests → normalized/snapshotted CPU value,
+and Playwright → trusted Vite origin → renderer command list → normalized
+rectangle → renderer-owned solid texture → shared source-over render pass →
+exact readback → mixed-order pixel assertion.
 
 ## Evidence
 
 - `[shape-drawing] primitive validation` covers signed dimensions, zero-area
   behavior, finite validation, snapshots, stroke widths, and opacity.
-- The full unit suite and targeted runtime lint/format checks must be refreshed
-  before this checkpoint is committed.
+- `[shape-drawing] preserves source-over order between a sprite and a rectangle`
+  verifies one filled rectangle in the shared GPU command path.
 
 ## Gate
 
-The next shape step requires a real draw-command representation and WebGPU
-fixture. Do not claim primitive rendering from this CPU validation checkpoint.
+The next shape step requires circle/line/outline geometry and additional
+independent GPU fixtures. Do not claim complete primitive rendering from this
+partial checkpoint.

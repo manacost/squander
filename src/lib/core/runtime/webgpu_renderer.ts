@@ -1,6 +1,7 @@
 import { resolve_texture_filtering, type TextureFilteringOptions } from "./texture_filtering.js";
 import { create_resource_owner, type ResourceHandle, type ResourceOwner } from "./resource_ownership.js";
 import type { Color } from "./colors.js";
+import { has_drawable_area, normalize_rectangle, type Rectangle } from "./shapes.js";
 
 export type ClearColor = Readonly<{ red: number; green: number; blue: number; alpha: number }>;
 
@@ -34,11 +35,16 @@ export type TextureDrawOptions = Readonly<{
 
 export type TextureDraw = Readonly<{ texture: WebGpuTexture; options?: TextureDrawOptions }>;
 
+export type RectangleDraw = Readonly<{ rectangle: Rectangle; color: Color; opacity?: number }>;
+
+export type RenderCommand = Readonly<{ kind: "texture"; draw: TextureDraw } | { kind: "rectangle"; draw: RectangleDraw }>;
+
 export type WebGpuRenderer = Readonly<{
   clear: (color: ClearColor) => Promise<Uint8Array>;
   create_texture: (pixels: Uint8Array, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
   draw_texture: (texture: WebGpuTexture, options?: TextureDrawOptions) => Promise<Uint8Array>;
   draw_textures: (draws: readonly TextureDraw[]) => Promise<Uint8Array>;
+  draw_commands: (commands: readonly RenderCommand[]) => Promise<Uint8Array>;
   dispose: () => void;
 }>;
 
@@ -159,6 +165,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     primitive: { topology: "triangle-list" },
   });
   let disposed = false;
+  let solid_texture: WebGpuTexture | undefined;
 
   const submit_and_readback = async (encoder: GPUCommandEncoder, texture: GPUTexture): Promise<Uint8Array> => {
     const readback = device.createBuffer({
@@ -240,13 +247,36 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     return draw_textures([{ texture, options: draw_options }]);
   };
 
-  const draw_textures = async (draws: readonly TextureDraw[]): Promise<Uint8Array> => {
+  const draw_commands = async (commands: readonly RenderCommand[]): Promise<Uint8Array> => {
     if (disposed) {
       throw new Error("WebGPU renderer is disposed");
     }
-    if (draws.length === 0) {
+    if (commands.length === 0) {
       throw new RangeError("at least one texture draw is required");
     }
+    const draws = commands.map((command): TextureDraw => {
+      if (command.kind === "texture") {
+        return command.draw;
+      }
+      const normalized = normalize_rectangle(command.draw.rectangle);
+      if (!has_drawable_area(normalized)) {
+        return {
+          texture: ensure_solid_texture(),
+          options: { x: 0, y: 0, width: 0.000001, height: 0.000001, opacity: 0 },
+        };
+      }
+      return {
+        texture: ensure_solid_texture(),
+        options: {
+          x: normalized.left,
+          y: normalized.top,
+          width: normalized.width,
+          height: normalized.height,
+          tint: command.draw.color,
+          opacity: command.draw.opacity,
+        },
+      };
+    });
     const canvas_width = options.width;
     const canvas_height = options.height;
     const encoded_draws = draws.map(({ texture, options = {} }) => {
@@ -399,6 +429,14 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     }
   };
 
+  const draw_textures = async (draws: readonly TextureDraw[]): Promise<Uint8Array> =>
+    draw_commands(draws.map((draw) => ({ kind: "texture", draw })));
+
+  function ensure_solid_texture(): WebGpuTexture {
+    solid_texture ??= create_texture(new Uint8Array([255, 255, 255, 255]), 1, 1);
+    return solid_texture;
+  }
+
   const dispose = (): void => {
     if (disposed) {
       return;
@@ -409,5 +447,5 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     device.destroy();
   };
 
-  return Object.freeze({ clear, create_texture, draw_texture, draw_textures, dispose });
+  return Object.freeze({ clear, create_texture, draw_texture, draw_textures, draw_commands, dispose });
 };

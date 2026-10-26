@@ -162,3 +162,29 @@ test("[sprite-drawing] combines horizontal and vertical flips within the same bo
     bottom_right: [255, 0, 0, 255],
   });
 });
+
+test("[shape-drawing] preserves source-over order between a sprite and a rectangle", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
+    const red = renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1);
+    const pixels = await renderer.draw_commands([
+      { kind: "texture", draw: { texture: red, options: { opacity: 0.5 } } },
+      {
+        kind: "rectangle",
+        draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: colors.rgba(0, 1, 0, 1), opacity: 0.5 },
+      },
+    ]);
+    red.release();
+    renderer.dispose();
+    return Array.from(pixels.slice(0, 4));
+  });
+
+  expect(result).toEqual([64, 128, 0, 255]);
+});

@@ -99,11 +99,15 @@ Current verification:
   covers signed rectangle normalization, zero-area behavior, finite primitive
   validation, stroke widths, snapshots, and opacity in the
   `[shape-drawing] primitive validation` suite.
+- [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+  verifies a filled rectangle submitted after a translucent sprite in the
+  `[shape-drawing]` suite.
 
-CPU validation is implemented; geometry buffers, stroke rules, mixed draw order,
-and real GPU fixtures remain unimplemented. Shared color construction is covered
-independently by [`src/lib/core/runtime/colors.test.ts`](../../src/lib/core/runtime/colors.test.ts),
-but shape rendering does not yet consume the color type.
+CPU validation and one filled-rectangle GPU command path are implemented;
+outlines, circles, lines, stroke rules, and complete shape promotion remain
+unimplemented. Shared color construction is covered independently by
+[`src/lib/core/runtime/colors.test.ts`](../../src/lib/core/runtime/colors.test.ts),
+and rectangle fills consume it internally.
 
 ## Notes
 
