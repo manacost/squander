@@ -48,8 +48,12 @@ Current verification:
 - [`src/lib/core/runtime/viewport_sizing.test.ts`](../../src/lib/core/runtime/viewport_sizing.test.ts)
   covers fixed-fit centering, responsive logical dimensions, DPR scaling, and
   invalid dimensions in the `[viewport-sizing] logical viewport math` suite.
+- [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+  verifies fixed-fit logical-to-physical placement and a clear letterbox bar in
+  the `[viewport-sizing]` suite.
 
-Browser resize, letterbox rendering, and DOM overlay alignment remain
+Fixed-fit letterbox mapping is integrated into the low-level renderer; browser
+resize, responsive runtime policy, and DOM overlay alignment remain
 unimplemented.
 
 ## Notes

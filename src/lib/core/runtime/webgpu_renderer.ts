@@ -2,6 +2,7 @@ import { resolve_texture_filtering, type TextureFilteringOptions } from "./textu
 import { create_resource_owner, type ResourceHandle, type ResourceOwner } from "./resource_ownership.js";
 import type { Color } from "./colors.js";
 import { get_active_camera } from "./camera.js";
+import type { ViewportSize } from "./viewport_sizing.js";
 import {
   has_drawable_area,
   normalize_rectangle,
@@ -19,6 +20,7 @@ export type WebGpuRendererOptions = Readonly<{
   canvas: HTMLCanvasElement;
   width: number;
   height: number;
+  viewport?: ViewportSize;
 }>;
 
 export type WebGpuTexture = Readonly<{
@@ -172,8 +174,14 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     throw new WebGpuUnavailableError("canvas does not provide a WebGPU context");
   }
 
-  options.canvas.width = options.width;
-  options.canvas.height = options.height;
+  const surface_width = options.viewport?.physical_width ?? options.width;
+  const surface_height = options.viewport?.physical_height ?? options.height;
+  const logical_width = options.viewport?.logical_width ?? options.width;
+  const logical_height = options.viewport?.logical_height ?? options.height;
+  const device_scale_x = options.viewport === undefined ? 1 : options.viewport.physical_width / options.viewport.css_width;
+  const device_scale_y = options.viewport === undefined ? 1 : options.viewport.physical_height / options.viewport.css_height;
+  options.canvas.width = surface_width;
+  options.canvas.height = surface_height;
   const format = navigator.gpu.getPreferredCanvasFormat();
   /* eslint-disable @typescript-eslint/naming-convention -- WebGPU descriptor keys use the external API's camelCase names. */
   context.configure({ device, format, alphaMode: "opaque", usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
@@ -213,19 +221,19 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
 
   const submit_and_readback = async (encoder: GPUCommandEncoder, texture: GPUTexture): Promise<Uint8Array> => {
     const readback = device.createBuffer({
-      size: bytes_per_row * options.height,
+      size: bytes_per_row * surface_height,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     encoder.copyTextureToBuffer(
       { texture },
-      { buffer: readback, bytesPerRow: bytes_per_row, rowsPerImage: options.height },
-      { width: options.width, height: options.height, depthOrArrayLayers: 1 },
+      { buffer: readback, bytesPerRow: bytes_per_row, rowsPerImage: surface_height },
+      { width: surface_width, height: surface_height, depthOrArrayLayers: 1 },
     );
     device.queue.submit([encoder.finish()]);
     await device.queue.onSubmittedWorkDone();
     await readback.mapAsync(GPUMapMode.READ);
     const mapped = new Uint8Array(readback.getMappedRange());
-    const pixels = normalize_readback(new Uint8Array(mapped), options.width, options.height, format);
+    const pixels = normalize_readback(new Uint8Array(mapped), surface_width, surface_height, format);
     readback.unmap();
     readback.destroy();
     return pixels;
@@ -417,9 +425,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         },
       };
     });
-    const canvas_width = options.width;
-    const canvas_height = options.height;
+    const canvas_width = logical_width;
+    const canvas_height = logical_height;
     const active_camera = get_active_camera();
+    const viewport = options.viewport;
     const encoded_draws = draws.map(({ texture, options = {} }) => {
       const region = options.region ?? { x: 0, y: 0, width: texture.width, height: texture.height };
       if (!Number.isFinite(region.x) || !Number.isFinite(region.y) || !Number.isFinite(region.width) || !Number.isFinite(region.height)) {
@@ -463,7 +472,11 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       const corners = [corner(0, 0), corner(width, 0), corner(width, height), corner(0, height)];
       const to_clip = ([point_x, point_y]: [number, number]): [number, number] => {
         const screen_point = active_camera?.world_to_screen({ x: point_x, y: point_y }) ?? { x: point_x, y: point_y };
-        return [(screen_point.x / canvas_width) * 2 - 1, 1 - (screen_point.y / canvas_height) * 2];
+        const physical_x = ((screen_point.x * (viewport?.content_width ?? canvas_width)) / canvas_width) * device_scale_x;
+        const physical_y = ((screen_point.y * (viewport?.content_height ?? canvas_height)) / canvas_height) * device_scale_y;
+        const offset_x = (viewport?.offset_x ?? 0) * device_scale_x;
+        const offset_y = (viewport?.offset_y ?? 0) * device_scale_y;
+        return [((physical_x + offset_x) / surface_width) * 2 - 1, 1 - ((physical_y + offset_y) / surface_height) * 2];
       };
       const positions = corners.map(to_clip);
       const u0 = region.x / texture.width;
