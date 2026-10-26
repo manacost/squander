@@ -45,8 +45,12 @@ Current verification:
 - [`src/lib/core/runtime/texture_filtering.test.ts`](../../src/lib/core/runtime/texture_filtering.test.ts)
   covers linear defaults, independent magnification/minification values, and
   shorthand precedence in the `[texture-filtering] sampler policy` suite.
+- [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+  verifies independent nearest and linear sampling at real GPU pixels in the
+  `[texture-filtering]` suite.
 
-Real GPU sampling fixtures and sampler binding remain unimplemented.
+Real GPU sampling fixtures and sampler binding are implemented for the basic
+mag/linear case; minification and downscaling limits remain unverified.
 
 ## Notes
 

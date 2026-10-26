@@ -319,3 +319,30 @@ test("[shape-drawing] centers wider strokes and ignores degenerate strokes", asy
   expect(result.lower).toEqual([255, 0, 0, 255]);
   expect(result.outside).toEqual([0, 0, 0, 255]);
 });
+
+test("[texture-filtering] keeps nearest and linear sampling independent", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 4, height: 1 });
+    const nearest = renderer.create_texture(new Uint8Array([255, 0, 0, 255, 0, 0, 255, 255]), 2, 1, { filter: "nearest" });
+    const linear = renderer.create_texture(new Uint8Array([255, 0, 0, 255, 0, 0, 255, 255]), 2, 1, { filter: "linear" });
+    const pixels = await renderer.draw_textures([
+      { texture: nearest, options: { x: 0, y: 0, width: 2, height: 1 } },
+      { texture: linear, options: { x: 1, y: 0, width: 3, height: 1 } },
+    ]);
+    nearest.release();
+    linear.release();
+    renderer.dispose();
+    const pixel_at = (x: number): number[] => Array.from(pixels.slice(x * 4, x * 4 + 4));
+    return { nearest: pixel_at(0), linear: pixel_at(2) };
+  });
+
+  expect(result.nearest).toEqual([255, 0, 0, 255]);
+  expect(result.linear[0]).toBeGreaterThan(0);
+  expect(result.linear[2]).toBeGreaterThan(0);
+  expect(result.linear[0]).toBeLessThan(255);
+});
