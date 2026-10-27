@@ -81,4 +81,24 @@ describe("[paths-and-polygons] stroke segment geometry", () => {
     );
     expect(result.vertices).toHaveLength(4);
   });
+
+  it("fills a connected corner with an outer bevel join", () => {
+    const result = create_stroke_geometry(
+      [
+        {
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+            { x: 10, y: 10 },
+          ],
+          closed: false,
+        },
+      ],
+      2,
+    );
+
+    expect(result.indices).toHaveLength(15);
+    expect(result.vertices).toContainEqual({ x: 10, y: 1 });
+    expect(result.vertices).toContainEqual({ x: 9, y: 0 });
+  });
 });
