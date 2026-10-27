@@ -1,14 +1,14 @@
 # Phase 2 stroke join checkpoint
 
-Status: **CPU outer bevel joins verified; closed-corner follow-up is recorded separately; paths-and-polygons remains Draft**.
+Status: **CPU outer-corner joins verified; policy resolution is recorded separately; paths-and-polygons remains Draft**.
 
 ## Pre-slice contract checkpoint
 
-- Non-collinear connected segment corners receive an outer bevel triangle.
+- Non-collinear connected segment corners receive an outer join triangle.
 - Collinear segments retain the existing flat-capped segment quads without an
   extra join.
-- The implementation does not claim a miter limit, sharp miter joins, bevel
-  fallback thresholds, rounded joins, or camera-scaled width.
+- The fixed miter ratio and bevel fallback threshold are recorded in the stroke
+  policy checkpoint; rounded joins and camera-scaled width remain deferred.
 
 ## Implemented slice
 
@@ -32,8 +32,8 @@ frozen geometry. Disconnected subpaths never enter the same join calculation.
 
 ## Known gaps and gate
 
-- Miter-limit policy, stroke ownership, camera scaling, polygon GPU submission,
-  and real GPU evidence remain unimplemented. Closed-corner coverage is tracked
-  in the follow-up checkpoint.
+- Stroke ownership, camera scaling, polygon GPU submission, and real GPU
+  evidence remain unimplemented. Policy coverage is tracked in the follow-up
+  checkpoint, and closed-corner coverage is tracked separately.
 - Go/no-go: **continue with closed-corner and stroke-policy verification; do not
   promote `paths-and-polygons`.**

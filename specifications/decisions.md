@@ -458,9 +458,11 @@ fixed limit, preserving square rectangle corners and falling back to a cut-off
 (bevel) join when an acute corner would produce an excessive spike. Apply the
 same policy to lines, outlined shapes, and stroked paths/polygons where applicable.
 
-The exact miter-limit value and ratio definition remain to be specified before
-implementation. Rounded ends/corners and configurable cap/join styles remain
-future options recorded in the candidate log; Phase 2 exposes fixed defaults.
+Use a miter ratio of 4, defined as the distance from the corner to the miter
+point divided by the half stroke width. If that ratio would exceed 4, use the
+fixed outer bevel fallback. Rounded ends/corners and configurable cap/join
+styles remain future options recorded in the candidate log; Phase 2 exposes
+these fixed defaults.
 
 ## AD-032: Signed rectangles and invalid basic geometry
 

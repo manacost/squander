@@ -12,6 +12,7 @@ const assert_width = (width: number): number => {
 };
 
 const same_point = (left: PolygonPoint, right: PolygonPoint): boolean => left.x === right.x && left.y === right.y;
+const miter_limit = 4;
 
 const normal = (start: PolygonPoint, end: PolygonPoint, half_width: number): PolygonPoint | undefined => {
   const dx = end.x - start.x;
@@ -35,12 +36,24 @@ const add_join = (
   const turn = (current.x - previous.x) * (next.y - current.y) - (current.y - previous.y) * (next.x - current.x);
   if (turn === 0) return;
   const side = turn > 0 ? 1 : -1;
+  const outer_first = { x: side * first_normal.x, y: side * first_normal.y };
+  const outer_second = { x: side * second_normal.x, y: side * second_normal.y };
+  const miter_sum = { x: outer_first.x + outer_second.x, y: outer_first.y + outer_second.y };
+  const miter_length = Math.hypot(miter_sum.x, miter_sum.y);
+  const miter_unit = miter_length === 0 ? undefined : { x: miter_sum.x / miter_length, y: miter_sum.y / miter_length };
+  const first_unit_length = Math.hypot(outer_first.x, outer_first.y);
+  const miter_ratio =
+    miter_unit && first_unit_length > 0
+      ? Math.abs(1 / ((miter_unit.x * outer_first.x + miter_unit.y * outer_first.y) / first_unit_length))
+      : Infinity;
   const base = vertices.length;
-  vertices.push(
-    { x: current.x + side * first_normal.x, y: current.y + side * first_normal.y },
-    { x: current.x + side * second_normal.x, y: current.y + side * second_normal.y },
-    { x: current.x, y: current.y },
-  );
+  const first_outer = { x: current.x + outer_first.x, y: current.y + outer_first.y };
+  const second_outer = { x: current.x + outer_second.x, y: current.y + outer_second.y };
+  const join_point =
+    miter_unit && miter_ratio <= miter_limit
+      ? { x: current.x + miter_unit.x * half_width * miter_ratio, y: current.y + miter_unit.y * half_width * miter_ratio }
+      : { x: current.x, y: current.y };
+  vertices.push(first_outer, second_outer, join_point);
   indices.push(base, base + 1, base + 2);
 };
 

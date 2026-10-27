@@ -147,8 +147,8 @@ validation.
 Flat-capped segment geometry is covered by
 [`src/lib/core/runtime/stroke_geometry.test.ts`](../../src/lib/core/runtime/stroke_geometry.test.ts),
 covering centered width, disconnected subpaths, and zero-length segments.
-The same suite covers the current outer bevel join at connected corners,
-including the wraparound corner of a closed subpath.
+The same suite covers fixed-ratio miter joins, bevel fallback at excessive
+spikes, and the wraparound corner of a closed subpath.
 
 Remaining planned verification includes curve endpoint tests, real GPU
 concavity/curve fixtures, and geometry reuse checks.
