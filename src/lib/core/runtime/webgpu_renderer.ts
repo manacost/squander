@@ -17,6 +17,7 @@ import { create_polygon, type PolygonPoint } from "./polygons.js";
 import { triangulate_polygon } from "./triangulation.js";
 import type { FlattenedSubpath } from "./path_flattening.js";
 import { create_stroke_geometry } from "./stroke_geometry.js";
+import type { GeometryHandle, GeometryOwner } from "./geometry_ownership.js";
 
 export type ClearColor = Readonly<{ red: number; green: number; blue: number; alpha: number }>;
 
@@ -63,6 +64,7 @@ export type TriangleDraw = Readonly<{ vertices: readonly PolygonPoint[]; indices
 export type StrokeDraw = Readonly<{ subpaths: readonly FlattenedSubpath[]; width: number; color: Color; opacity?: number }>;
 export type PolygonDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; opacity?: number }>;
 export type PolygonOutlineDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; stroke_width: number; opacity?: number }>;
+export type OwnedGeometryDraw = Readonly<{ geometry: GeometryHandle; owner: GeometryOwner; color: Color; opacity?: number }>;
 
 export type RenderCommand = Readonly<
   | { kind: "texture"; draw: TextureDraw }
@@ -75,6 +77,7 @@ export type RenderCommand = Readonly<
   | { kind: "stroke"; draw: StrokeDraw }
   | { kind: "polygon"; draw: PolygonDraw }
   | { kind: "polygon_outline"; draw: PolygonOutlineDraw }
+  | { kind: "geometry"; draw: OwnedGeometryDraw }
 >;
 
 export type WebGpuRenderer = Readonly<{
@@ -386,6 +389,21 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1)
           throw new RangeError("opacity must be finite and between zero and one");
         return { geometry: command.draw };
+      }
+      if (command.kind === "geometry") {
+        const prepared = command.draw.geometry.read(command.draw.owner);
+        assert_color(command.draw.color);
+        const opacity = command.draw.opacity ?? 1;
+        if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1)
+          throw new RangeError("opacity must be finite and between zero and one");
+        return {
+          geometry: {
+            vertices: prepared.vertices,
+            indices: prepared.indices,
+            color: command.draw.color,
+            opacity,
+          },
+        };
       }
       if (command.kind === "polygon") {
         const geometry = triangulate_polygon(command.draw.points);

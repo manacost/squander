@@ -9,7 +9,8 @@ Reuse custom geometry for filled polygons and stroked curved paths.
 Draft. Target: Phase 2. CPU polygon/path preparation, stroke geometry, indexed
 triangle submission, prepared-stroke submission, polygon fill/outline
 submission, and game-scoped geometry ownership are implemented and verified;
-public package exports remain unimplemented.
+owned-geometry renderer submission is implemented and verified; public package
+exports remain unimplemented.
 
 The direction was agreed in the interview; open contract details are listed below.
 This draft does not claim implementation or verification.
@@ -158,6 +159,9 @@ Game-scoped geometry lifecycle is covered by
 [`src/lib/core/runtime/geometry_ownership.test.ts`](../../src/lib/core/runtime/geometry_ownership.test.ts)
 and the game disposal case in
 [`src/lib/core/runtime/game.test.ts`](../../src/lib/core/runtime/game.test.ts).
+Owned-handle renderer submission and stale-handle rejection are covered by the
+real WebGPU fixture in
+[`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts).
 
 Remaining planned verification includes curve endpoint tests, real GPU
 concavity/curve fixtures, and geometry reuse checks.
