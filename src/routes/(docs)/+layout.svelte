@@ -8,7 +8,7 @@
 
   const links = [["about", "/"]] as const;
 
-  const documentation = ["getting-started", "ui"] as const;
+  const documentation = ["getting-started", "phase-2", "ui"] as const;
 
   const scenes = ["pixi-demo", "test", "camera", "ui-test", "ui-bridge", "stack", "complex-example"] as const;
   interface Props {
