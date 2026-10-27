@@ -26,9 +26,12 @@ Status: **Core public factory and type surface verified; final package boundary 
 - `npm run check`: passed with zero diagnostics.
 - `npm run validate:specs`: passed, 16 capability directories.
 - Prettier and `git diff --check`: passed.
-- `npm run package`: source packaging completed, but `publint` could not create
-  its temporary npm pack because `/Users/rory/.npm` contains root-owned cache
-  files. It also reported the pre-existing SvelteKit peer/dependency warning.
+- `npm_config_cache=/tmp/squander-npm-cache npm run package`: passed source
+  packaging and `publint` using an isolated writable cache. It reported the
+  existing SvelteKit dependency warning.
+- `npm_config_cache=/tmp/squander-npm-cache npm pack --dry-run --json`: passed
+  and included `dist/core/index.js`, `dist/core/runtime/index.js`, and their
+  declaration files.
 
 ## Code trace
 
@@ -43,6 +46,8 @@ entrypoint.
   Svelte bridge, and migration boundary remain unimplemented.
 - Full lint still includes pre-existing legacy Pixi diagnostics in
   `src/lib/core/index.ts`; the new type and runtime checks are clean.
-- Go/no-go: **continue with final package/export boundary work only after the
-  package cache/dependency environment is corrected; do not promote the full
-  Phase 2 package.**
+- Non-fatal package suggestions remain: declare `@sveltejs/kit`, normalize the
+  repository URL, and add license metadata. These are migration-boundary work,
+  not silently marked as resolved.
+- Go/no-go: **continue with final package/export review; do not promote the
+  full Phase 2 package.**
