@@ -6,9 +6,10 @@ Reuse custom geometry for filled polygons and stroked curved paths.
 
 ## Status
 
-Draft. Target: Phase 2. CPU polygon/path preparation, stroke geometry, and
-indexed triangle renderer submission are implemented and verified; reusable
-ownership and public geometry drawing remain unimplemented.
+Draft. Target: Phase 2. CPU polygon/path preparation, stroke geometry, indexed
+triangle submission, and prepared-stroke renderer submission are implemented
+and verified; reusable ownership and public geometry lifecycle remain
+unimplemented.
 
 The direction was agreed in the interview; open contract details are listed below.
 This draft does not claim implementation or verification.
@@ -151,7 +152,8 @@ The same suite covers fixed-ratio miter joins, bevel fallback at excessive
 spikes, and the wraparound corner of a closed subpath.
 The real WebGPU renderer fixture
 [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
-covers indexed triangle submission and deterministic readback.
+covers indexed triangle and prepared-stroke submission with deterministic
+readback.
 
 Remaining planned verification includes curve endpoint tests, real GPU
 concavity/curve fixtures, and geometry reuse checks.

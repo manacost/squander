@@ -269,6 +269,34 @@ test("[paths-and-polygons] renders indexed triangle geometry with real readback"
   expect(result.outside).toEqual([0, 0, 0, 255]);
 });
 
+test("[paths-and-polygons] renders prepared stroke geometry with real readback", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const stroke_url = new URL("/src/lib/core/runtime/path_flattening.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const stroke = (await import(/* @vite-ignore */ stroke_url)) as typeof import("../src/lib/core/runtime/path_flattening.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 5, height: 5 });
+    const subpaths = stroke.flatten_path([stroke.move_to(0.5, 2.5), stroke.line_to(4.5, 2.5)], 0.25);
+    const pixels = await renderer.draw_commands([
+      {
+        kind: "stroke",
+        draw: { subpaths, width: 1, color: colors.rgba(1, 0, 0, 1) },
+      },
+    ]);
+    renderer.dispose();
+    const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return { inside: pixel_at(2, 2), outside: pixel_at(2, 0) };
+  });
+
+  expect(result.inside).toEqual([255, 0, 0, 255]);
+  expect(result.outside).toEqual([0, 0, 0, 255]);
+});
+
 test("[shape-drawing] keeps the interior transparent for a centered rectangle outline", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
