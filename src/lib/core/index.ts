@@ -4,6 +4,33 @@ import { Scenes } from "./scene.js";
 import { app, signal_as_ready } from "./app.js";
 
 export { app };
+export {
+  close,
+  create_geometry_owner,
+  create_path,
+  create_polygon,
+  flatten_path,
+  line_to,
+  move_to,
+  quadratic_to,
+  cubic_to,
+  rgba,
+} from "./runtime/index.js";
+export type {
+  FlattenedSubpath,
+  GeometryHandle,
+  GeometryOwner,
+  Path,
+  PathCommand,
+  PathInput,
+  Polygon,
+  PolygonInput,
+  PolygonPoint,
+  PreparedGeometry,
+  Color,
+} from "./runtime/index.js";
+export { create_game, GameDisposedError, GameInitializationError, GameRuntimeError } from "./runtime/index.js";
+export type { Game as RuntimeGame, GameOptions, GameSetupContext } from "./runtime/index.js";
 
 // The application will create a renderer using WebGL, if possible,
 // with a fallback to a canvas render. It will also setup the ticker
