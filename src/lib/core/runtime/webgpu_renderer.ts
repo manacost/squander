@@ -13,6 +13,7 @@ import {
   type Line,
   type Rectangle,
 } from "./shapes.js";
+import type { PolygonPoint } from "./polygons.js";
 
 export type ClearColor = Readonly<{ red: number; green: number; blue: number; alpha: number }>;
 
@@ -55,6 +56,7 @@ export type CircleDraw = Readonly<{ circle: Circle; color: Color; opacity?: numb
 export type LineDraw = Readonly<{ line: Line; color: Color; stroke_width: number; opacity?: number }>;
 export type RectangleOutlineDraw = Readonly<{ rectangle: Rectangle; color: Color; stroke_width: number; opacity?: number }>;
 export type CircleOutlineDraw = Readonly<{ circle: Circle; color: Color; stroke_width: number; opacity?: number }>;
+export type TriangleDraw = Readonly<{ vertices: readonly PolygonPoint[]; indices: readonly number[]; color: Color; opacity?: number }>;
 
 export type RenderCommand = Readonly<
   | { kind: "texture"; draw: TextureDraw }
@@ -63,6 +65,7 @@ export type RenderCommand = Readonly<
   | { kind: "line"; draw: LineDraw }
   | { kind: "rectangle_outline"; draw: RectangleOutlineDraw }
   | { kind: "circle_outline"; draw: CircleOutlineDraw }
+  | { kind: "triangles"; draw: TriangleDraw }
 >;
 
 export type WebGpuRenderer = Readonly<{
@@ -308,7 +311,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     if (commands.length === 0) {
       throw new RangeError("at least one texture draw is required");
     }
-    const draws = commands.map((command): TextureDraw => {
+    type GeometryDraw = Readonly<{ geometry: TriangleDraw }>;
+    const draws = commands.map((command): TextureDraw | GeometryDraw => {
       if (command.kind === "texture") {
         return command.draw;
       }
@@ -355,6 +359,24 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
             shape_x: stroke_width / (circle.radius * 2),
           },
         };
+      }
+      if (command.kind === "triangles") {
+        if (command.draw.vertices.length === 0 || command.draw.indices.length === 0 || command.draw.indices.length % 3 !== 0) {
+          throw new RangeError("triangle geometry must contain indexed triangles");
+        }
+        command.draw.vertices.forEach((vertex) => {
+          if (!Number.isFinite(vertex.x) || !Number.isFinite(vertex.y)) throw new RangeError("triangle vertices must be finite");
+        });
+        command.draw.indices.forEach((index) => {
+          if (!Number.isInteger(index) || index < 0 || index >= command.draw.vertices.length) {
+            throw new RangeError("triangle index must reference a vertex");
+          }
+        });
+        assert_color(command.draw.color);
+        const opacity = command.draw.opacity ?? 1;
+        if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1)
+          throw new RangeError("opacity must be finite and between zero and one");
+        return { geometry: command.draw };
       }
       if (command.kind === "line") {
         const line = validate_line(command.draw.line);
@@ -431,7 +453,37 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     const canvas_height = logical_height;
     const active_camera = get_active_camera();
     const viewport = current_viewport;
-    const encoded_draws = draws.map(({ texture, options = {} }) => {
+    const encoded_draws = draws.map((draw) => {
+      if ("geometry" in draw) {
+        const tint = draw.geometry.color;
+        const opacity = draw.geometry.opacity ?? 1;
+        const to_clip_point = (point: PolygonPoint): [number, number] => {
+          const screen_point = active_camera?.world_to_screen(point) ?? point;
+          const physical_x = ((screen_point.x * (viewport?.content_width ?? canvas_width)) / canvas_width) * device_scale_x;
+          const physical_y = ((screen_point.y * (viewport?.content_height ?? canvas_height)) / canvas_height) * device_scale_y;
+          const offset_x = (viewport?.offset_x ?? 0) * device_scale_x;
+          const offset_y = (viewport?.offset_y ?? 0) * device_scale_y;
+          return [((physical_x + offset_x) / surface_width) * 2 - 1, 1 - ((physical_y + offset_y) / surface_height) * 2];
+        };
+        const vertex_data = new Float32Array(
+          draw.geometry.indices.flatMap((index) => {
+            const [x, y] = to_clip_point(draw.geometry.vertices[index]);
+            return [x, y, 0, 0];
+          }),
+        );
+        return {
+          texture: ensure_solid_texture(),
+          tint,
+          opacity,
+          vertex_data,
+          vertex_count: draw.geometry.indices.length,
+          region: { x: 0, y: 0, width: 1, height: 1 },
+          shape_kind: 0,
+          shape_x: 0,
+          shape_y: 0,
+        };
+      }
+      const { texture, options = {} } = draw;
       const region = options.region ?? { x: 0, y: 0, width: texture.width, height: texture.height };
       if (!Number.isFinite(region.x) || !Number.isFinite(region.y) || !Number.isFinite(region.width) || !Number.isFinite(region.height)) {
         throw new RangeError("texture region must be finite");
@@ -512,6 +564,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         tint,
         opacity,
         vertex_data,
+        vertex_count: 6,
         region,
         shape_kind: options.shape_kind ?? 0,
         shape_x: options.shape_x ?? 0,
@@ -576,10 +629,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       ],
     });
     pass.setPipeline(pipeline);
-    encoded_draws.forEach((_, index) => {
+    encoded_draws.forEach(({ vertex_count }, index) => {
       pass.setBindGroup(0, bind_groups[index]);
       pass.setVertexBuffer(0, buffers[index]);
-      pass.draw(6);
+      pass.draw(vertex_count);
     });
     pass.end();
     /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
