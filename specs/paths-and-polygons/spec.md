@@ -160,6 +160,8 @@ Game-scoped geometry lifecycle is covered by
 [`src/lib/core/runtime/geometry_ownership.test.ts`](../../src/lib/core/runtime/geometry_ownership.test.ts)
 and the game disposal case in
 [`src/lib/core/runtime/game.test.ts`](../../src/lib/core/runtime/game.test.ts).
+The same ownership suite covers one-shot release observation and the renderer
+suite covers release-driven GPU cache cleanup through stale-handle rejection.
 Owned-handle renderer submission and stale-handle rejection are covered by the
 real WebGPU fixture in
 [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts).

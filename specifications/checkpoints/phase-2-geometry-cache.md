@@ -1,6 +1,6 @@
 # Phase 2 geometry cache checkpoint
 
-Status: **Persistent owned-geometry GPU buffer reuse and update replacement verified; paths-and-polygons remains Draft**.
+Status: **Persistent owned-geometry GPU buffer reuse, update replacement, and release cleanup verified; paths-and-polygons remains Draft**.
 
 ## Pre-slice contract checkpoint
 
@@ -9,8 +9,8 @@ Status: **Persistent owned-geometry GPU buffer reuse and update replacement veri
 - When the handle updates to a new snapshot, the prior cached buffer is
   destroyed and replacement geometry is uploaded before drawing.
 - Per-frame raw triangle, polygon, and stroke commands remain transient.
-- Cached buffers are destroyed with renderer disposal; handle-release cleanup
-  before renderer disposal is not yet observable through the current handle API.
+- Cached buffers are destroyed immediately when the owned handle releases or its
+  owner disposes, and renderer disposal remains idempotent cleanup.
 
 ## Implemented slice
 
@@ -36,9 +36,7 @@ the replacement path; renderer disposal destroys retained buffers.
 
 ## Known gaps and gate
 
-- The renderer cannot observe a handle release until a later command read fails;
-  released-handle cache cleanup before renderer disposal remains unresolved.
 - Public path/polygon factories, package exports, and broader lifecycle
   integration remain deferred.
-- Go/no-go: **continue with release-observation or document its boundary before
-  capability promotion; do not promote `paths-and-polygons`.**
+- Go/no-go: **continue with public factory integration; do not promote
+  `paths-and-polygons`.**

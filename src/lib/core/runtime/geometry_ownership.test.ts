@@ -42,6 +42,25 @@ describe("[resource-ownership] game-scoped geometry handles", () => {
     }).toThrow("geometry handle is released");
   });
 
+  it("notifies one-shot release observers on release and owner disposal", () => {
+    const owner = create_geometry_owner();
+    const first = owner.create(geometry(1));
+    const second = owner.create(geometry(2));
+    let notifications = 0;
+    first.on_release(() => {
+      notifications += 1;
+    });
+    second.on_release(() => {
+      notifications += 1;
+    });
+
+    first.release();
+    first.release();
+    expect(notifications).toBe(1);
+    owner.dispose();
+    expect(notifications).toBe(2);
+  });
+
   it("invalidates all handles on owner disposal and rejects new geometry", () => {
     const owner = create_geometry_owner();
     const handle = owner.create(geometry(1));

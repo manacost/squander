@@ -235,8 +235,12 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   });
   let disposed = false;
   let solid_texture: WebGpuTexture | undefined;
-  const cached_geometry_buffers = new WeakMap<object, { snapshot: PreparedGeometry; buffer: GPUBuffer; vertex_count: number }>();
+  const cached_geometry_buffers = new WeakMap<
+    object,
+    { snapshot: PreparedGeometry; buffer: GPUBuffer; vertex_count: number; stop_observing: () => void }
+  >();
   const persistent_geometry_buffers = new Set<GPUBuffer>();
+  const persistent_geometry_observers = new Set<() => void>();
 
   const submit_and_readback = async (encoder: GPUCommandEncoder, texture: GPUTexture): Promise<Uint8Array> => {
     const readback = device.createBuffer({
@@ -658,12 +662,28 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           return { buffer: cached.buffer, persistent: true };
         }
         if (cached !== undefined) {
+          cached.stop_observing();
           cached.buffer.destroy();
           persistent_geometry_buffers.delete(cached.buffer);
         }
         const buffer = device.createBuffer({ size: vertex_data.byteLength, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
         device.queue.writeBuffer(buffer, 0, vertex_data);
-        cached_geometry_buffers.set(geometry_key, { snapshot: geometry_snapshot, buffer, vertex_count });
+        const entry: { snapshot: PreparedGeometry; buffer: GPUBuffer; vertex_count: number; stop_observing: () => void } = {
+          snapshot: geometry_snapshot,
+          buffer,
+          vertex_count,
+          stop_observing: () => undefined,
+        };
+        const release_observer = (): void => {
+          if (cached_geometry_buffers.get(geometry_key) !== entry) return;
+          cached_geometry_buffers.delete(geometry_key);
+          persistent_geometry_buffers.delete(buffer);
+          persistent_geometry_observers.delete(entry.stop_observing);
+          buffer.destroy();
+        };
+        entry.stop_observing = geometry_key.on_release(release_observer);
+        persistent_geometry_observers.add(entry.stop_observing);
+        cached_geometry_buffers.set(geometry_key, entry);
         persistent_geometry_buffers.add(buffer);
         return { buffer, persistent: true };
       }
@@ -777,6 +797,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     }
     disposed = true;
     resources.dispose();
+    persistent_geometry_observers.forEach((stop_observing) => {
+      stop_observing();
+    });
+    persistent_geometry_observers.clear();
     persistent_geometry_buffers.forEach((buffer) => {
       buffer.destroy();
     });

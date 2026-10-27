@@ -11,10 +11,11 @@ export type GeometryOwner = Readonly<{
 export type GeometryHandle = Readonly<{
   read: (owner: GeometryOwner) => PreparedGeometry;
   update: (owner: GeometryOwner, geometry: PreparedGeometry) => void;
+  on_release: (listener: () => void) => () => void;
   release: () => void;
 }>;
 
-type RecordState = { geometry: PreparedGeometry; released: boolean };
+type RecordState = { geometry: PreparedGeometry; released: boolean; listeners: Set<() => void> };
 
 const snapshot_geometry = (geometry: PreparedGeometry): PreparedGeometry => {
   const vertices = geometry.vertices.map((vertex, index) => {
@@ -36,7 +37,7 @@ export const create_geometry_owner = (): GeometryOwner => {
 
   const create = (geometry: PreparedGeometry): GeometryHandle => {
     if (disposed) throw new Error("geometry owner is disposed");
-    const state: RecordState = { geometry: snapshot_geometry(geometry), released: false };
+    const state: RecordState = { geometry: snapshot_geometry(geometry), released: false, listeners: new Set() };
     records.add(state);
     const read = (read_owner: GeometryOwner): PreparedGeometry => {
       if (read_owner !== owner_ref.current) throw new Error("geometry belongs to another owner");
@@ -50,18 +51,40 @@ export const create_geometry_owner = (): GeometryOwner => {
       if (state.released) throw new Error("geometry handle is released");
       state.geometry = snapshot_geometry(next_geometry);
     };
+    const on_release = (listener: () => void): (() => void) => {
+      if (state.released || disposed) {
+        listener();
+        return () => undefined;
+      }
+      state.listeners.add(listener);
+      return () => {
+        state.listeners.delete(listener);
+      };
+    };
     const release = (): void => {
       if (state.released) return;
       state.released = true;
       records.delete(state);
+      const listeners = [...state.listeners];
+      state.listeners.clear();
+      listeners.forEach((listener) => {
+        listener();
+      });
     };
-    return Object.freeze({ read, update, release });
+    return Object.freeze({ read, update, on_release, release });
   };
 
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
-    for (const state of records) state.released = true;
+    for (const state of records) {
+      state.released = true;
+      const listeners = [...state.listeners];
+      state.listeners.clear();
+      listeners.forEach((listener) => {
+        listener();
+      });
+    }
     records.clear();
   };
 
