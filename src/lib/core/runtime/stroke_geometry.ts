@@ -69,12 +69,13 @@ export const create_stroke_geometry = (subpaths: readonly FlattenedSubpath[], wi
       );
       indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
     }
-    const join_end = subpath.closed ? points.length - 1 : points.length - 2;
+    const unique_point_count = subpath.closed ? points.length - 1 : points.length;
+    const join_end = subpath.closed ? unique_point_count - 1 : unique_point_count - 2;
     const join_start = subpath.closed ? 0 : 1;
     for (let index = join_start; index <= join_end; index += 1) {
-      const previous = points[(index + points.length - 1) % points.length];
+      const previous = points[(index + unique_point_count - 1) % unique_point_count];
       const current = points[index];
-      const next = points[(index + 1) % points.length];
+      const next = points[(index + 1) % unique_point_count];
       add_join(vertices, indices, previous, current, next, half_width);
     }
   }

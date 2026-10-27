@@ -1,6 +1,6 @@
 # Phase 2 stroke join checkpoint
 
-Status: **CPU outer bevel joins verified; paths-and-polygons remains Draft**.
+Status: **CPU outer bevel joins verified; closed-corner follow-up is recorded separately; paths-and-polygons remains Draft**.
 
 ## Pre-slice contract checkpoint
 
@@ -32,7 +32,8 @@ frozen geometry. Disconnected subpaths never enter the same join calculation.
 
 ## Known gaps and gate
 
-- Miter-limit policy, concave/closed-corner fixtures, stroke ownership, camera
-  scaling, polygon GPU submission, and real GPU evidence remain unimplemented.
+- Miter-limit policy, stroke ownership, camera scaling, polygon GPU submission,
+  and real GPU evidence remain unimplemented. Closed-corner coverage is tracked
+  in the follow-up checkpoint.
 - Go/no-go: **continue with closed-corner and stroke-policy verification; do not
   promote `paths-and-polygons`.**
