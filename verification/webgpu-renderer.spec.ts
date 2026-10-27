@@ -404,6 +404,56 @@ test("[paths-and-polygons] submits game-owned geometry and rejects released hand
   expect(result.rejected).toBe(true);
 });
 
+test("[paths-and-polygons] replaces cached GPU geometry after an owned update", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const owner_url = new URL("/src/lib/core/runtime/geometry_ownership.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const owner_module = (await import(/* @vite-ignore */ owner_url)) as typeof import("../src/lib/core/runtime/geometry_ownership.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 4, height: 4 });
+    const owner = owner_module.create_geometry_owner();
+    const geometry = owner.create({
+      vertices: [
+        { x: 0, y: 0 },
+        { x: 4, y: 0 },
+        { x: 0, y: 2 },
+      ],
+      indices: [0, 1, 2],
+    });
+    const draw = () => renderer.draw_commands([{ kind: "geometry", draw: { geometry, owner, color: colors.rgba(1, 1, 0, 1) } }]);
+    const first = await draw();
+    geometry.update(owner, {
+      vertices: [
+        { x: 0, y: 2 },
+        { x: 4, y: 2 },
+        { x: 0, y: 4 },
+      ],
+      indices: [0, 1, 2],
+    });
+    const second = await draw();
+    geometry.release();
+    owner.dispose();
+    renderer.dispose();
+    const pixel_at = (pixels: Uint8Array, x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return {
+      first_top: pixel_at(first, 1, 0),
+      first_bottom: pixel_at(first, 0, 3),
+      second_top: pixel_at(second, 1, 0),
+      second_bottom: pixel_at(second, 0, 3),
+    };
+  });
+
+  expect(result.first_top).toEqual([255, 255, 0, 255]);
+  expect(result.first_bottom).toEqual([0, 0, 0, 255]);
+  expect(result.second_top).toEqual([0, 0, 0, 255]);
+  expect(result.second_bottom).toEqual([255, 255, 0, 255]);
+});
+
 test("[shape-drawing] keeps the interior transparent for a centered rectangle outline", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

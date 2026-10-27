@@ -10,7 +10,8 @@ Draft. Target: Phase 2. CPU polygon/path preparation, stroke geometry, indexed
 triangle submission, prepared-stroke submission, polygon fill/outline
 submission, and game-scoped geometry ownership are implemented and verified;
 owned-geometry renderer submission is implemented and verified; public package
-exports remain unimplemented.
+exports remain unimplemented. Persistent owned-geometry GPU buffer reuse and
+replacement are also verified.
 
 The direction was agreed in the interview; open contract details are listed below.
 This draft does not claim implementation or verification.
@@ -162,6 +163,7 @@ and the game disposal case in
 Owned-handle renderer submission and stale-handle rejection are covered by the
 real WebGPU fixture in
 [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts).
+The same fixture covers cached-buffer replacement after an owned update.
 
 Remaining planned verification includes curve endpoint tests, real GPU
 concavity/curve fixtures, and geometry reuse checks.

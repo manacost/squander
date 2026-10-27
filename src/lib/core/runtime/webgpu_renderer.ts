@@ -17,7 +17,7 @@ import { create_polygon, type PolygonPoint } from "./polygons.js";
 import { triangulate_polygon } from "./triangulation.js";
 import type { FlattenedSubpath } from "./path_flattening.js";
 import { create_stroke_geometry } from "./stroke_geometry.js";
-import type { GeometryHandle, GeometryOwner } from "./geometry_ownership.js";
+import type { GeometryHandle, GeometryOwner, PreparedGeometry } from "./geometry_ownership.js";
 
 export type ClearColor = Readonly<{ red: number; green: number; blue: number; alpha: number }>;
 
@@ -235,6 +235,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   });
   let disposed = false;
   let solid_texture: WebGpuTexture | undefined;
+  const cached_geometry_buffers = new WeakMap<object, { snapshot: PreparedGeometry; buffer: GPUBuffer; vertex_count: number }>();
+  const persistent_geometry_buffers = new Set<GPUBuffer>();
 
   const submit_and_readback = async (encoder: GPUCommandEncoder, texture: GPUTexture): Promise<Uint8Array> => {
     const readback = device.createBuffer({
@@ -323,7 +325,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     if (commands.length === 0) {
       throw new RangeError("at least one texture draw is required");
     }
-    type GeometryDraw = Readonly<{ geometry: TriangleDraw }>;
+    type GeometryDraw = Readonly<{ geometry: TriangleDraw; handle?: GeometryHandle; snapshot?: PreparedGeometry }>;
     const draws = commands.map((command): TextureDraw | GeometryDraw => {
       if (command.kind === "texture") {
         return command.draw;
@@ -403,6 +405,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
             color: command.draw.color,
             opacity,
           },
+          handle: command.draw.geometry,
+          snapshot: prepared,
         };
       }
       if (command.kind === "polygon") {
@@ -550,6 +554,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           opacity,
           vertex_data,
           vertex_count: draw.geometry.indices.length,
+          geometry_key: draw.handle,
+          geometry_snapshot: draw.snapshot,
           region: { x: 0, y: 0, width: 1, height: 1 },
           shape_kind: 0,
           shape_x: 0,
@@ -645,10 +651,25 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       };
     });
     const leases = encoded_draws.map(({ texture }) => texture.resource.acquire_lease());
-    const buffers = encoded_draws.map(({ vertex_data }) => {
+    const buffer_entries = encoded_draws.map(({ vertex_data, geometry_key, geometry_snapshot, vertex_count }) => {
+      if (geometry_key !== undefined && geometry_snapshot !== undefined) {
+        const cached = cached_geometry_buffers.get(geometry_key);
+        if (cached?.snapshot === geometry_snapshot && cached.vertex_count === vertex_count) {
+          return { buffer: cached.buffer, persistent: true };
+        }
+        if (cached !== undefined) {
+          cached.buffer.destroy();
+          persistent_geometry_buffers.delete(cached.buffer);
+        }
+        const buffer = device.createBuffer({ size: vertex_data.byteLength, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
+        device.queue.writeBuffer(buffer, 0, vertex_data);
+        cached_geometry_buffers.set(geometry_key, { snapshot: geometry_snapshot, buffer, vertex_count });
+        persistent_geometry_buffers.add(buffer);
+        return { buffer, persistent: true };
+      }
       const buffer = device.createBuffer({ size: vertex_data.byteLength, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
       device.queue.writeBuffer(buffer, 0, vertex_data);
-      return buffer;
+      return { buffer, persistent: false };
     });
     const samplers = encoded_draws.map(({ texture }) => {
       /* eslint-disable @typescript-eslint/naming-convention -- WebGPU sampler descriptors use external camelCase names. */
@@ -704,7 +725,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     pass.setPipeline(pipeline);
     encoded_draws.forEach(({ vertex_count }, index) => {
       pass.setBindGroup(0, bind_groups[index]);
-      pass.setVertexBuffer(0, buffers[index]);
+      pass.setVertexBuffer(0, buffer_entries[index].buffer);
       pass.draw(vertex_count);
     });
     pass.end();
@@ -715,8 +736,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       leases.forEach((lease) => {
         lease.release();
       });
-      buffers.forEach((buffer) => {
-        buffer.destroy();
+      buffer_entries.forEach(({ buffer, persistent }) => {
+        if (!persistent) buffer.destroy();
       });
       uniforms.forEach((uniform) => {
         uniform.destroy();
@@ -756,6 +777,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     }
     disposed = true;
     resources.dispose();
+    persistent_geometry_buffers.forEach((buffer) => {
+      buffer.destroy();
+    });
+    persistent_geometry_buffers.clear();
     context.unconfigure();
     device.destroy();
   };
