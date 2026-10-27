@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { create_game, GameDisposedError, GameInitializationError, GameRuntimeError } from "./game.js";
 import { type FrameScheduler } from "./frame_loop.js";
+import type { GeometryHandle } from "./geometry_ownership.js";
 
 const create_scheduler = () => {
   let now_seconds = 0;
@@ -80,6 +81,22 @@ describe("[game-lifecycle] game setup", () => {
     await expect(dispose).resolves.toBeUndefined();
     expect(scheduler.pending()).toBe(0);
     expect(game.dispose()).toBe(dispose);
+  });
+
+  it("owns setup geometry and invalidates it when the game is disposed", async () => {
+    const scheduler = create_scheduler();
+    let handle!: GeometryHandle;
+    const game = create_game({
+      scheduler: scheduler.scheduler,
+      setup: ({ geometry }) => {
+        handle = geometry.create({ vertices: [{ x: 0, y: 0 }], indices: [0, 0, 0] });
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+    await game.ready;
+    await game.dispose();
+    expect(() => handle.read(game.geometry)).toThrow("geometry owner is disposed");
   });
 
   it("wraps setup and callback failures while retaining disposal", async () => {

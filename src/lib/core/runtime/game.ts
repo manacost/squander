@@ -1,5 +1,6 @@
 import { create_frame_loop, type FrameLoop, type FrameLoopOptions, type FrameLoopState, type FrameScheduler } from "./frame_loop.js";
 import { create_resource_owner, type ResourceOwner } from "./resource_ownership.js";
+import { create_geometry_owner, type GeometryOwner } from "./geometry_ownership.js";
 import type { UpdateTime } from "./timing.js";
 
 export class GameInitializationError extends Error {
@@ -26,6 +27,7 @@ export class GameDisposedError extends Error {
 export type GameSetupContext = Readonly<{
   signal: AbortSignal;
   resources: ResourceOwner;
+  geometry: GeometryOwner;
 }>;
 
 export type GameOptions = Readonly<{
@@ -40,6 +42,7 @@ export type GameOptions = Readonly<{
 export type Game = Readonly<{
   ready: Promise<void>;
   resources: ResourceOwner;
+  geometry: GeometryOwner;
   pause: () => void;
   resume: () => void;
   set_visibility: (visible: boolean) => void;
@@ -57,6 +60,7 @@ const create_loop_options = (options: GameOptions, on_error: (error: unknown) =>
 
 export const create_game = (options: GameOptions): Game => {
   const resources = create_resource_owner();
+  const geometry = create_geometry_owner();
   const abort_controller = new AbortController();
   let loop: FrameLoop | undefined;
   const lifecycle = { disposed: false, manually_paused: false, visible: true };
@@ -64,7 +68,7 @@ export const create_game = (options: GameOptions): Game => {
 
   const ready = (async (): Promise<void> => {
     try {
-      await options.setup?.({ signal: abort_controller.signal, resources });
+      await options.setup?.({ signal: abort_controller.signal, resources, geometry });
       if (lifecycle.disposed || abort_controller.signal.aborted) {
         throw new GameDisposedError();
       }
@@ -82,6 +86,7 @@ export const create_game = (options: GameOptions): Game => {
       loop.start();
     } catch (cause) {
       resources.dispose();
+      geometry.dispose();
       if (cause instanceof GameDisposedError) {
         throw cause;
       }
@@ -114,11 +119,12 @@ export const create_game = (options: GameOptions): Game => {
     abort_controller.abort();
     disposal_promise = (loop?.dispose() ?? Promise.resolve()).then(() => {
       resources.dispose();
+      geometry.dispose();
     });
     return disposal_promise;
   };
 
   const get_state = (): FrameLoopState | "initializing" => loop?.get_state() ?? "initializing";
 
-  return Object.freeze({ ready, resources, pause, resume, set_visibility, dispose, get_state });
+  return Object.freeze({ ready, resources, geometry, pause, resume, set_visibility, dispose, get_state });
 };
