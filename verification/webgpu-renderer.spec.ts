@@ -297,6 +297,75 @@ test("[paths-and-polygons] renders prepared stroke geometry with real readback",
   expect(result.outside).toEqual([0, 0, 0, 255]);
 });
 
+test("[paths-and-polygons] renders a concave polygon fill and preserves its notch", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 5, height: 5 });
+    const pixels = await renderer.draw_commands([
+      {
+        kind: "polygon",
+        draw: {
+          points: [
+            { x: 0, y: 0 },
+            { x: 4, y: 0 },
+            { x: 4, y: 1 },
+            { x: 1, y: 1 },
+            { x: 1, y: 4 },
+            { x: 0, y: 4 },
+          ],
+          color: colors.rgba(0, 1, 0, 1),
+        },
+      },
+    ]);
+    renderer.dispose();
+    const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return { filled: pixel_at(0, 0), notch: pixel_at(2, 2) };
+  });
+
+  expect(result.filled).toEqual([0, 255, 0, 255]);
+  expect(result.notch).toEqual([0, 0, 0, 255]);
+});
+
+test("[paths-and-polygons] renders a polygon outline without filling its interior", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 5, height: 5 });
+    const pixels = await renderer.draw_commands([
+      {
+        kind: "polygon_outline",
+        draw: {
+          points: [
+            { x: 0.5, y: 0.5 },
+            { x: 4.5, y: 0.5 },
+            { x: 4.5, y: 4.5 },
+            { x: 0.5, y: 4.5 },
+          ],
+          stroke_width: 1,
+          color: colors.rgba(1, 0, 0, 1),
+        },
+      },
+    ]);
+    renderer.dispose();
+    const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return { edge: pixel_at(2, 0), interior: pixel_at(2, 2) };
+  });
+
+  expect(result.edge).toEqual([255, 0, 0, 255]);
+  expect(result.interior).toEqual([0, 0, 0, 255]);
+});
+
 test("[shape-drawing] keeps the interior transparent for a centered rectangle outline", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

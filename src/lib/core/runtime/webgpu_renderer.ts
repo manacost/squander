@@ -13,7 +13,8 @@ import {
   type Line,
   type Rectangle,
 } from "./shapes.js";
-import type { PolygonPoint } from "./polygons.js";
+import { create_polygon, type PolygonPoint } from "./polygons.js";
+import { triangulate_polygon } from "./triangulation.js";
 import type { FlattenedSubpath } from "./path_flattening.js";
 import { create_stroke_geometry } from "./stroke_geometry.js";
 
@@ -60,6 +61,8 @@ export type RectangleOutlineDraw = Readonly<{ rectangle: Rectangle; color: Color
 export type CircleOutlineDraw = Readonly<{ circle: Circle; color: Color; stroke_width: number; opacity?: number }>;
 export type TriangleDraw = Readonly<{ vertices: readonly PolygonPoint[]; indices: readonly number[]; color: Color; opacity?: number }>;
 export type StrokeDraw = Readonly<{ subpaths: readonly FlattenedSubpath[]; width: number; color: Color; opacity?: number }>;
+export type PolygonDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; opacity?: number }>;
+export type PolygonOutlineDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; stroke_width: number; opacity?: number }>;
 
 export type RenderCommand = Readonly<
   | { kind: "texture"; draw: TextureDraw }
@@ -70,6 +73,8 @@ export type RenderCommand = Readonly<
   | { kind: "circle_outline"; draw: CircleOutlineDraw }
   | { kind: "triangles"; draw: TriangleDraw }
   | { kind: "stroke"; draw: StrokeDraw }
+  | { kind: "polygon"; draw: PolygonDraw }
+  | { kind: "polygon_outline"; draw: PolygonOutlineDraw }
 >;
 
 export type WebGpuRenderer = Readonly<{
@@ -381,6 +386,37 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1)
           throw new RangeError("opacity must be finite and between zero and one");
         return { geometry: command.draw };
+      }
+      if (command.kind === "polygon") {
+        const geometry = triangulate_polygon(command.draw.points);
+        assert_color(command.draw.color);
+        const opacity = command.draw.opacity ?? 1;
+        if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1)
+          throw new RangeError("opacity must be finite and between zero and one");
+        return {
+          geometry: {
+            vertices: geometry.vertices,
+            indices: geometry.indices,
+            color: command.draw.color,
+            opacity,
+          },
+        };
+      }
+      if (command.kind === "polygon_outline") {
+        const polygon = create_polygon(command.draw.points).get_points();
+        const geometry = create_stroke_geometry([{ points: [...polygon, polygon[0]], closed: true }], command.draw.stroke_width);
+        assert_color(command.draw.color);
+        const opacity = command.draw.opacity ?? 1;
+        if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1)
+          throw new RangeError("opacity must be finite and between zero and one");
+        return {
+          geometry: {
+            vertices: geometry.vertices,
+            indices: geometry.indices,
+            color: command.draw.color,
+            opacity,
+          },
+        };
       }
       if (command.kind === "stroke") {
         const geometry = create_stroke_geometry(command.draw.subpaths, command.draw.width);
