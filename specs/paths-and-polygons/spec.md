@@ -6,9 +6,9 @@ Reuse custom geometry for filled polygons and stroked curved paths.
 
 ## Status
 
-Draft. Target: Phase 2. The CPU polygon and path preparation slices are
-implemented and verified; reusable ownership and GPU rendering remain
-unimplemented.
+Draft. Target: Phase 2. The CPU polygon, path preparation, and flat-capped
+segment geometry slices are implemented and verified; reusable ownership and
+GPU rendering remain unimplemented.
 
 The direction was agreed in the interview; open contract details are listed below.
 This draft does not claim implementation or verification.
@@ -143,6 +143,10 @@ CPU curve flattening is covered by
 [`src/lib/core/runtime/path_flattening.test.ts`](../../src/lib/core/runtime/path_flattening.test.ts),
 covering endpoint preservation, disconnected subpaths, closure, and tolerance
 validation.
+
+Flat-capped segment geometry is covered by
+[`src/lib/core/runtime/stroke_geometry.test.ts`](../../src/lib/core/runtime/stroke_geometry.test.ts),
+covering centered width, disconnected subpaths, and zero-length segments.
 
 Remaining planned verification includes curve endpoint tests, real GPU
 concavity/curve fixtures, and geometry reuse checks.
