@@ -32,6 +32,9 @@ Status: **Core public factory and type surface verified; final package boundary 
 - `npm_config_cache=/tmp/squander-npm-cache npm pack --dry-run --json`: passed
   and included `dist/core/index.js`, `dist/core/runtime/index.js`, and their
   declaration files.
+- Self-import verification now passes for `squander/core/runtime` and
+  `squander/core`; the explicit export targets prevent Node's unsupported
+  directory-import failure.
 
 ## Code trace
 
