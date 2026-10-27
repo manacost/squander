@@ -21,7 +21,8 @@
     "test:type": "tsc --noEmit -p tsconfig.type-tests.json",
     "test:webgpu": "playwright test --config=playwright.webgpu.config.ts",
     "test:coverage": "vitest run --coverage",
-    "validate:specs": "node verification/validate-specs.mjs"
+    "validate:specs": "node verification/validate-specs.mjs",
+    "validate:package": "node verification/validate-package-exports.mjs"
   },
   "exports": {
     ".": {
