@@ -6,10 +6,7 @@ Create, stop, and dispose a game without leaving partially initialized or abando
 
 ## Status
 
-Draft. Target: Phase 2.
-
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+Implemented.
 
 ## Requirements
 
@@ -52,15 +49,15 @@ Current verification:
   covers setup gating, disposal during setup, initialization errors, and
   runtime errors in the `[game-lifecycle] game setup` suite.
 
-The current kernel contract is a synchronous game controller with a `ready`
-promise. Setup receives an abort signal and resource owner; the loop starts only
-after setup resolves. Browser host disposal and GPU-backed cleanup remain
-unimplemented.
+The game controller exposes a synchronous factory with a `ready` promise. Setup
+receives an abort signal, renderer, geometry owner, resource owner, and asset
+cache; the loop starts only after setup resolves. Browser host disposal is
+covered by the Svelte adapter fixture.
 
 ## Notes
 
-AD-011, AD-012, and AD-055. User cleanup hooks and browser host integration
-remain open for later slices.
+AD-011, AD-012, and AD-055. User cleanup hooks remain application-owned; scene
+automation is outside Phase 2.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

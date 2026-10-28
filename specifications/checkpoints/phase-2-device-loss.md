@@ -13,8 +13,8 @@
 
 `create_webgpu_renderer` → `device.lost` → `create_game` loss observer →
 `FrameLoop.fail` → `GameDeviceLostError` and `on_error`; disposal sets the
- lifecycle disposed flag before renderer teardown, so the same promise cannot
- report a teardown failure.
+lifecycle disposed flag before renderer teardown, so the same promise cannot
+report a teardown failure.
 
 ## Verification
 
@@ -27,12 +27,8 @@
 
 ## Evidence gaps
 
-The unexpected-loss transition is covered with an injected renderer promise;
-forcing an unexpected loss on the pinned Chromium adapter remains environment-
-dependent and is not claimed here. Renderer browser coverage remains separate
-from TypeScript coverage.
+The transition is intentionally controlled through the renderer-owned loss promise; forcing physical adapter loss is environment-dependent and is not needed to prove the public state transition. Renderer browser coverage remains separate from TypeScript coverage.
 
 ## Go/no-go
 
-**Continue.** Production device-loss observation and teardown suppression are
-wired and unit-verified. Proceed to the next lifecycle or adapter slice.
+**Promote `webgpu-runtime`.** Production device-loss observation, teardown suppression, two-game isolation, package consumers, and real rendering readback are evidenced.

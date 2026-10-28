@@ -13,10 +13,7 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
     const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
     const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 640, height: 360 });
     const texture = renderer.create_texture(
-      new Uint8Array([
-        255, 228, 120, 255, 255, 180, 64, 255,
-        64, 160, 255, 255, 80, 220, 140, 255,
-      ]),
+      new Uint8Array([255, 228, 120, 255, 255, 180, 64, 255, 64, 160, 255, 255, 80, 220, 140, 255]),
       2,
       2,
       { filter: "nearest" },
@@ -26,20 +23,37 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
       size: 24,
     });
     await renderer.draw_commands([
-      { kind: "texture", draw: { texture, options: { x: 48, y: 48, width: 112, height: 112, rotation: 0.12, origin: { x: 0.5, y: 0.5 } } } },
+      {
+        kind: "texture",
+        draw: { texture, options: { x: 48, y: 48, width: 112, height: 112, rotation: 0.12, origin: { x: 0.5, y: 0.5 } } },
+      },
       { kind: "rectangle", draw: { rectangle: { x: 190, y: 40, width: 128, height: 96 }, color: colors.rgba(0.16, 0.42, 0.9, 1) } },
       { kind: "circle", draw: { circle: { x: 408, y: 88, radius: 48 }, color: colors.rgba(0.85, 0.2, 0.24, 1) } },
       {
         kind: "polygon",
         draw: {
-          points: [{ x: 510, y: 44 }, { x: 590, y: 44 }, { x: 550, y: 132 }],
+          points: [
+            { x: 510, y: 44 },
+            { x: 590, y: 44 },
+            { x: 550, y: 132 },
+          ],
           color: colors.rgba(0.2, 0.9, 0.35, 1),
         },
       },
       {
         kind: "stroke",
         draw: {
-          subpaths: [{ points: [{ x: 60, y: 220 }, { x: 180, y: 180 }, { x: 300, y: 220 }, { x: 420, y: 180 }], closed: false }],
+          subpaths: [
+            {
+              points: [
+                { x: 60, y: 220 },
+                { x: 180, y: 180 },
+                { x: 300, y: 220 },
+                { x: 420, y: 180 },
+              ],
+              closed: false,
+            },
+          ],
           width: 6,
           color: colors.rgba(1, 1, 1, 1),
         },
@@ -47,7 +61,12 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
       {
         kind: "polygon_outline",
         draw: {
-          points: [{ x: 470, y: 180 }, { x: 590, y: 180 }, { x: 590, y: 280 }, { x: 470, y: 280 }],
+          points: [
+            { x: 470, y: 180 },
+            { x: 590, y: 180 },
+            { x: 590, y: 280 },
+            { x: 470, y: 280 },
+          ],
           stroke_width: 5,
           color: colors.rgba(1, 0.85, 0.2, 1),
         },
@@ -69,7 +88,9 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
         },
       },
     ]);
-    (window as unknown as { __renderer_gallery?: { renderer: typeof renderer; texture: typeof texture; font: typeof font } }).__renderer_gallery = {
+    (
+      window as unknown as { __renderer_gallery?: { renderer: typeof renderer; texture: typeof texture; font: typeof font } }
+    ).__renderer_gallery = {
       renderer,
       texture,
       font,
@@ -79,7 +100,11 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
   const canvas = page.locator("canvas");
   await expect(canvas).toHaveScreenshot("renderer-capability-gallery.png", { animations: "disabled" });
   await page.evaluate(() => {
-    const gallery = (window as unknown as { __renderer_gallery?: { renderer: { dispose: () => void }; texture: { release: () => void }; font: { release: () => void } } }).__renderer_gallery;
+    const gallery = (
+      window as unknown as {
+        __renderer_gallery?: { renderer: { dispose: () => void }; texture: { release: () => void }; font: { release: () => void } };
+      }
+    ).__renderer_gallery;
     gallery?.font.release();
     gallery?.texture.release();
     gallery?.renderer.dispose();
@@ -107,6 +132,76 @@ test("[webgpu-runtime] clears and reads back a real canvas texture", async ({ pa
   expect(result.secure).toBe(true);
   expect(result.gpu).toBe(true);
   expect(result.pixels).toEqual([64, 128, 191, 255]);
+});
+
+test("[webgpu-runtime] isolates simultaneous game devices and disposal", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const game_url = new URL("/src/lib/core/runtime/game.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ game_url)) as typeof import("../src/lib/core/runtime/game.js");
+    const create_scheduler = () => {
+      let callback: ((timestamp: number) => void) | undefined;
+      return {
+        scheduler: {
+          request_frame: (next_callback: (timestamp: number) => void) => {
+            callback = next_callback;
+            return 1;
+          },
+          cancel_frame: () => {
+            callback = undefined;
+          },
+          now_seconds: () => 0,
+        },
+        tick: (timestamp: number) => callback?.(timestamp),
+      };
+    };
+    const first_scheduler = create_scheduler();
+    const second_scheduler = create_scheduler();
+    const first_canvas = document.createElement("canvas");
+    const second_canvas = document.createElement("canvas");
+    document.body.append(first_canvas, second_canvas);
+    let first_updates = 0;
+    let second_updates = 0;
+    const first = module.create_game({
+      renderer: { canvas: first_canvas, width: 1, height: 1 },
+      scheduler: first_scheduler.scheduler,
+      update: () => {
+        first_updates += 1;
+      },
+      draw: () => undefined,
+    });
+    const second = module.create_game({
+      renderer: { canvas: second_canvas, width: 1, height: 1 },
+      scheduler: second_scheduler.scheduler,
+      update: () => {
+        second_updates += 1;
+      },
+      draw: () => undefined,
+    });
+    await Promise.all([first.ready, second.ready]);
+    const initial_second = second.get_state();
+    first_scheduler.tick(16);
+    second_scheduler.tick(16);
+    await first.dispose();
+    second_scheduler.tick(32);
+    const pixels = await second.renderer.clear({ red: 0, green: 1, blue: 0, alpha: 1 });
+    await second.dispose();
+    return {
+      initial_second,
+      first_updates,
+      second_updates,
+      pixels: Array.from(pixels.slice(0, 4)),
+      secure: window.isSecureContext,
+      gpu: "gpu" in navigator,
+    };
+  });
+
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.initial_second).toBe("running");
+  expect(result.first_updates).toBeGreaterThan(0);
+  expect(result.second_updates).toBeGreaterThan(result.first_updates);
+  expect(result.pixels).toEqual([0, 255, 0, 255]);
 });
 
 test("[sprite-drawing] uploads and draws a persistent texture", async ({ page }) => {

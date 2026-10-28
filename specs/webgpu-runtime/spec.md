@@ -6,10 +6,7 @@ Provide a WebGPU-only rendering runtime with explicit availability and device-lo
 
 ## Status
 
-Draft. Target: Phase 2.
-
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+Implemented.
 
 ## Requirements
 
@@ -49,16 +46,23 @@ Current verification:
   `[webgpu-runtime] clears and reads back a real canvas texture` suite.
 - [`tests/webgpu.spec.ts`](../../tests/webgpu.spec.ts) retains the
   independent low-level adapter/device probe.
+- [`src/lib/core/runtime/game.test.ts`](../../src/lib/core/runtime/game.test.ts)
+  verifies controlled device loss, stopped callbacks, typed loss errors, and
+  teardown-loss suppression.
+- [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts)
+  verifies two production-renderer game instances remain isolated when one is
+  disposed.
 
-Device-loss transitions, independent game devices, and final package-consumer
-checks remain unimplemented.
+The package consumer checks are recorded in the package-boundary and runtime
+coverage checkpoints.
 
 ## Notes
 
 AD-001, AD-002, and AD-012. The current renderer rejects insecure contexts,
 missing WebGPU, missing adapters, and missing canvas contexts with a typed
 availability error. The test baseline is trusted local Chromium on the Apple
-M1/Metal host. Device-loss transitions and final package checks remain open.
+M1/Metal host. Controlled device-loss transitions distinguish unexpected
+runtime loss from teardown.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

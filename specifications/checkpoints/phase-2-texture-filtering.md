@@ -35,6 +35,7 @@ independent nearest/midpoint pixel assertions.
 
 ## Known gaps and gate
 
-- Mipmaps and font-atlas filtering remain unverified.
-- Go/no-go: **continue to the next independent capability slice; do not promote
-  `texture-filtering` yet.**
+- Mipmaps remain outside Phase 2 and are explicitly deferred to Phase 4.
+- Go/no-go: **promote `texture-filtering`.** Nearest/linear magnification and
+  minification, independent per-texture policies, and font-atlas option
+  propagation are evidenced without mipmaps.

@@ -34,6 +34,6 @@ does not alter those unrelated gaps.
 
 ## Go/no-go
 
-**Continue.** Malformed-input and explicit-retry behavior is evidenced at unit and
-real-GPU levels. `dynamic-assets` remains Draft until the complete capability,
-documentation, and coverage requirements are satisfied.
+**Promote `dynamic-assets`.** Malformed-input and explicit-retry behavior is
+evidenced at unit and real-GPU levels; the public type, ownership, and coverage
+requirements are complete for the supported Blob/File entry point.

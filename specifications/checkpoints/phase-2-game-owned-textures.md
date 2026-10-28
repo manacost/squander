@@ -42,11 +42,12 @@ branch gaps remain.
 The focused game coverage result is 98.86% statements, 91.66% branches, 100%
 functions, and 98.82% lines.
 
-Malformed dynamic-image browser fixtures, manifest-backed texture descriptors,
-and complete capability promotion remain outstanding.
+The malformed dynamic-image browser fixture and manifest type tests are now
+covered by the focused retry and type-test checkpoints. The supported
+Blob/File capability is complete; typed manifest texture descriptors remain
+outside this slice.
 
 ## Go/no-go
 
-**Continue.** Game-owned dynamic texture loading and renderer lifecycle ownership
-are implemented and evidenced. Continue with malformed-input/retry coverage and
-the remaining sprite/viewport public integration work.
+**Promote `dynamic-assets`.** Game-owned Blob/File loading, malformed-input
+retry, ownership, disposal, and deterministic real-GPU readback are evidenced.

@@ -6,10 +6,7 @@ Let applications supply assets that were not known when their code was compiled.
 
 ## Status
 
-Draft. Target: Phase 2.
-
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+Implemented.
 
 ## Requirements
 
@@ -44,7 +41,8 @@ The validated image-source seam is now covered by
 [`src/lib/core/runtime/image_loading.test.ts`](../../src/lib/core/runtime/image_loading.test.ts)
 in the `[dynamic-assets] image source decoding` suite. It covers Blob/File
 acceptance, cancellation, late-result cleanup, unavailable decoding, and typed
-decode failure. GPU texture upload and readback remain unimplemented.
+decode failure. GPU texture upload and readback are covered by the real browser
+fixtures.
 
 Canvas-image preparation and upload are exercised by the
 `[dynamic-assets] prepares a canvas image source and uploads its pixels` suite in
@@ -55,13 +53,8 @@ in the same file. Game-owned Blob/File loading and GPU readback are exercised by
 the `[dynamic-assets] loads Blob and File textures through a game-owned renderer`
 suite. The `[dynamic-assets] rejects malformed input while allowing a valid retry`
 suite verifies typed decode failure, continued game usability, and a successful
-subsequent upload. Capability promotion remains pending.
-
-Planned verification for the remaining replacement-framework contract:
-
-Browser File/Blob decode and rendering tests, malformed-data tests, public API type tests.
-
-Use `[dynamic-assets]` in relevant suite names and add actual file/suite links as tests land.
+subsequent upload. The public API type tests cover Blob/File acceptance and
+reject unchecked manifest-style values.
 
 ## Notes
 

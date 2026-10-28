@@ -6,10 +6,7 @@ Advance gameplay using elapsed time while supporting pause and browser visibilit
 
 ## Status
 
-Draft. Target: Phase 2.
-
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+Implemented.
 
 ## Requirements
 
@@ -60,8 +57,8 @@ Current verification:
   covers update-before-draw ordering, pause/resume, visibility suspension, and
   idempotent disposal in the `[game-lifecycle] frame loop` suite.
 
-These tests cover the current timing kernel only. Browser visibility/resize
-integration and the complete game lifecycle remain unimplemented.
+The frame-loop fixture covers visibility suspension and explicit pause behavior;
+the game lifecycle fixture covers setup gating and disposal races.
 
 ## Notes
 

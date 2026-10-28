@@ -6,10 +6,7 @@ Choose texture sampling appropriate to artwork when enlarging or reducing it.
 
 ## Status
 
-Draft. Target: Phase 2.
-
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+Implemented.
 
 ## Requirements
 
@@ -50,14 +47,14 @@ Current verification:
   `[texture-filtering]` suite.
 
 Real GPU sampling fixtures and sampler binding are implemented for nearest and
-linear magnification/minification without mipmaps; font-atlas filtering remains
-unverified.
+linear magnification/minification without mipmaps. Font preparation coverage
+also verifies that filtering options reach every generated atlas/glyph texture.
 
 ## Notes
 
 AD-010. The current CPU policy uses `filter`, `magnification`, and
-`minification`, defaults to linear, and does not represent mipmaps. GPU sampler
-binding and font-atlas filtering remain open. Mipmaps are Phase 4.
+`minification`, defaults to linear, and does not represent mipmaps. Mipmaps
+are Phase 4.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

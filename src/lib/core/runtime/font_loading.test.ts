@@ -89,6 +89,8 @@ describe("[text-drawing] font preparation", () => {
     const { renderer } = create_renderer();
     await create_webgpu_font(renderer, "local(Arial)", { weight: "700", style: "italic", filtering: { filter: "linear" } });
     expect(font_face_args).toEqual([expect.any(String), "local(Arial)", { weight: "700", style: "italic" }]);
+    const texture_calls = (renderer.create_texture as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    expect(texture_calls[0]?.[3]).toEqual({ filter: "linear" });
 
     await expect(create_webgpu_font(renderer, "   ")).rejects.toBeInstanceOf(FontLoadError);
     install_font_environment({ load: () => Promise.reject(new Error("missing font")) });

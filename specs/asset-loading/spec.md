@@ -6,10 +6,7 @@ Load declared assets with checked keys and inferred resource types while sharing
 
 ## Status
 
-Draft. Target: Phase 2.
-
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+Implemented.
 
 ## Requirements
 
@@ -48,16 +45,15 @@ Current verification:
   covers concurrent sharing, independent release, retry after failure, and
   one-requester cancellation in the `[asset-loading] manifest cache` suite.
 
-The current manifest cache remains renderer-independent. It now also supports
-game-owned dynamic texture handles when a renderer is supplied. Manifest type
-tests, final descriptor policy, and complete asset capability promotion remain
-unimplemented.
+The manifest cache remains renderer-independent. It also supports game-owned
+dynamic texture handles when a renderer is supplied. Public type tests and
+browser upload fixtures cover the supported descriptor and Blob/File seams.
 
 The game-owned typed manifest seam is currently exercised by
 [`src/lib/core/runtime/game.test.ts`](../../src/lib/core/runtime/game.test.ts) in
 the `[game-lifecycle] game setup` suite, and public inference is checked by
-[`type-tests/runtime-assets.ts`](../../type-tests/runtime-assets.ts). These tests
-do not yet claim image decoding or GPU upload behavior.
+[`type-tests/runtime-assets.ts`](../../type-tests/runtime-assets.ts). The real
+browser fixtures separately establish image decoding and GPU upload behavior.
 
 ## Notes
 
