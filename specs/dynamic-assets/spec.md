@@ -51,8 +51,9 @@ Canvas-image preparation and upload are exercised by the
 [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts). Direct
 Blob/File decoding and GPU upload are now exercised by the
 `[dynamic-assets] decodes Blob and File sources and uploads their pixels` suite
-in the same file. The higher-level game-owned texture-loading integration and
-malformed-input browser fixture remain unimplemented.
+in the same file. Game-owned Blob/File loading and GPU readback are exercised by
+the `[dynamic-assets] loads Blob and File textures through a game-owned renderer`
+suite. Malformed-input browser coverage and capability promotion remain pending.
 
 Planned verification for the remaining replacement-framework contract:
 

@@ -3,6 +3,7 @@ import { create_resource_owner, type ResourceOwner } from "./resource_ownership.
 import { create_geometry_owner, type GeometryOwner } from "./geometry_ownership.js";
 import { create_asset_cache, type AssetCache, type AssetManifest } from "./asset_loading.js";
 import type { UpdateTime } from "./timing.js";
+import { create_webgpu_renderer, type WebGpuRenderer, type WebGpuRendererOptions } from "./webgpu_renderer.js";
 
 export class GameInitializationError extends Error {
   public constructor(cause: unknown) {
@@ -34,13 +35,18 @@ export class GameDisposedError extends Error {
 
 export type GameSetupContext<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   signal: AbortSignal;
+  renderer: WebGpuRenderer;
   resources: ResourceOwner;
   geometry: GeometryOwner;
   assets: AssetCache<Manifest>;
 }>;
 
+export type RendererFactory = (options: WebGpuRendererOptions) => Promise<WebGpuRenderer>;
+
 export type GameOptions<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   scheduler: FrameScheduler;
+  renderer: WebGpuRendererOptions;
+  renderer_factory?: RendererFactory;
   manifest?: Manifest;
   setup?: (context: GameSetupContext<Manifest>) => void | Promise<void>;
   update: (time: UpdateTime) => void;
@@ -52,6 +58,7 @@ export type GameOptions<Manifest extends AssetManifest = AssetManifest> = Readon
 
 export type Game<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   ready: Promise<void>;
+  readonly renderer: WebGpuRenderer;
   resources: ResourceOwner;
   geometry: GeometryOwner;
   assets: AssetCache<Manifest>;
@@ -73,7 +80,11 @@ const create_loop_options = (options: GameOptions, on_error: (error: unknown) =>
 export const create_game = <Manifest extends AssetManifest = AssetManifest>(options: GameOptions<Manifest>): Game<Manifest> => {
   const resources = create_resource_owner();
   const geometry = create_geometry_owner();
-  const assets = create_asset_cache((options.manifest ?? {}) as Manifest, resources);
+  let renderer: WebGpuRenderer | undefined;
+  let renderer_disposed = false;
+  const renderer_factory = options.renderer_factory ?? create_webgpu_renderer;
+  const renderer_ready = Promise.resolve().then(() => renderer_factory(options.renderer));
+  const assets = create_asset_cache((options.manifest ?? {}) as Manifest, resources, renderer_ready);
   const abort_controller = new AbortController();
   let loop: FrameLoop | undefined;
   const lifecycle = { disposed: false, manually_paused: false, visible: true };
@@ -81,7 +92,16 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
 
   const ready = (async (): Promise<void> => {
     try {
-      await options.setup?.({ signal: abort_controller.signal, resources, geometry, assets });
+      renderer = await renderer_ready;
+      if (lifecycle.disposed || abort_controller.signal.aborted) {
+        if (!renderer_disposed) {
+          renderer.dispose();
+          renderer_disposed = true;
+        }
+        renderer = undefined;
+        throw new GameDisposedError();
+      }
+      await options.setup?.({ signal: abort_controller.signal, renderer, resources, geometry, assets });
       if (lifecycle.disposed || abort_controller.signal.aborted) {
         throw new GameDisposedError();
       }
@@ -108,6 +128,11 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
       assets.dispose();
       resources.dispose();
       geometry.dispose();
+      if (renderer !== undefined && !renderer_disposed) {
+        renderer.dispose();
+        renderer_disposed = true;
+      }
+      renderer = undefined;
       if (cause instanceof GameDisposedError) {
         throw cause;
       }
@@ -142,11 +167,42 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
       assets.dispose();
       resources.dispose();
       geometry.dispose();
+      return renderer_ready
+        .then((resolved_renderer) => {
+          if (renderer_disposed) {
+            return;
+          }
+          if (renderer === undefined) {
+            resolved_renderer.dispose();
+            renderer_disposed = true;
+          } else {
+            resolved_renderer.dispose();
+            renderer_disposed = true;
+            renderer = undefined;
+          }
+        })
+        .catch(() => undefined);
     });
     return disposal_promise;
   };
 
   const get_state = (): FrameLoopState | "initializing" => loop?.get_state() ?? "initializing";
 
-  return Object.freeze({ ready, resources, geometry, assets, pause, resume, set_visibility, dispose, get_state });
+  return Object.freeze({
+    ready,
+    get renderer(): WebGpuRenderer {
+      if (renderer === undefined) {
+        throw new Error("game renderer is not ready");
+      }
+      return renderer;
+    },
+    resources,
+    geometry,
+    assets,
+    pause,
+    resume,
+    set_visibility,
+    dispose,
+    get_state,
+  });
 };

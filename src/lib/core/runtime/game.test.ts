@@ -1,8 +1,50 @@
-import { describe, expect, it } from "vitest";
-import { create_game, GameDeviceLostError, GameDisposedError, GameInitializationError, GameRuntimeError } from "./game.js";
+import { describe, expect, it, vi } from "vitest";
+import {
+  create_game,
+  GameDeviceLostError,
+  GameDisposedError,
+  GameInitializationError,
+  GameRuntimeError,
+  type GameOptions,
+} from "./game.js";
 import { type FrameScheduler } from "./frame_loop.js";
 import type { GeometryHandle } from "./geometry_ownership.js";
 import type { ResourceHandle } from "./resource_ownership.js";
+import { create_resource_owner } from "./resource_ownership.js";
+import type { AssetManifest } from "./asset_loading.js";
+import type { WebGpuRenderer } from "./webgpu_renderer.js";
+
+const test_renderer_options = { canvas: {} as HTMLCanvasElement, width: 1, height: 1 };
+
+const create_fake_renderer = (): WebGpuRenderer => {
+  const owner = create_resource_owner();
+  const create_texture = (pixels: Uint8Array, width: number, height: number) => {
+    const resource = owner.acquire({} as GPUTexture, () => undefined);
+    return {
+      resource,
+      width,
+      height,
+      filtering: { magnification: "linear", minification: "linear" } as const,
+      release: resource.release,
+    };
+  };
+  const draw = async () => new Uint8Array();
+  return {
+    clear: draw,
+    create_texture,
+    create_texture_from_image: (image, width, height) => create_texture(new Uint8Array(), width, height),
+    create_texture_from_blob: async (source) => create_texture(new Uint8Array(), 1, 1),
+    draw_texture: draw,
+    draw_textures: draw,
+    draw_commands: draw,
+    resize: () => undefined,
+    dispose: owner.dispose,
+  };
+};
+
+const create_test_game = <Manifest extends AssetManifest = AssetManifest>(
+  options: Omit<GameOptions<Manifest>, "renderer" | "renderer_factory">,
+) => create_game({ ...options, renderer: test_renderer_options, renderer_factory: async () => create_fake_renderer() });
 
 const create_scheduler = () => {
   let now_seconds = 0;
@@ -38,6 +80,84 @@ const create_scheduler = () => {
 };
 
 describe("[game-lifecycle] game setup", () => {
+  it("creates the renderer before setup and exposes it through the game", async () => {
+    const renderer = create_fake_renderer();
+    const factory = vi.fn(async () => renderer);
+    let setup_renderer!: WebGpuRenderer;
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: factory,
+      scheduler: create_scheduler().scheduler,
+      setup: ({ renderer: setup_value }) => {
+        setup_renderer = setup_value;
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+
+    await game.ready;
+    expect(factory).toHaveBeenCalledOnce();
+    expect(setup_renderer).toBe(renderer);
+    expect(game.renderer).toBe(renderer);
+    await game.dispose();
+  });
+
+  it("disposes a renderer when setup fails", async () => {
+    const renderer = create_fake_renderer();
+    const dispose = vi.spyOn(renderer, "dispose");
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => renderer,
+      scheduler: create_scheduler().scheduler,
+      setup: () => {
+        throw new Error("setup failed");
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+
+    await expect(game.ready).rejects.toBeInstanceOf(GameInitializationError);
+    expect(dispose).toHaveBeenCalledOnce();
+    await game.dispose();
+    expect(dispose).toHaveBeenCalledOnce();
+  });
+
+  it("wraps renderer factory failures as initialization errors", async () => {
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => {
+        throw new Error("renderer failed");
+      },
+      scheduler: create_scheduler().scheduler,
+      update: () => undefined,
+      draw: () => undefined,
+    });
+
+    await expect(game.ready).rejects.toBeInstanceOf(GameInitializationError);
+    await game.dispose();
+  });
+
+  it("does not expose the renderer before readiness", async () => {
+    const renderer = create_fake_renderer();
+    let resolve_renderer!: (value: WebGpuRenderer) => void;
+    const pending_renderer = new Promise<WebGpuRenderer>((resolve) => {
+      resolve_renderer = resolve;
+    });
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => pending_renderer,
+      scheduler: create_scheduler().scheduler,
+      update: () => undefined,
+      draw: () => undefined,
+    });
+
+    expect(() => game.renderer).toThrow("game renderer is not ready");
+    const disposal = game.dispose();
+    resolve_renderer(renderer);
+    await expect(game.ready).rejects.toBeInstanceOf(GameDisposedError);
+    await disposal;
+  });
+
   it("applies controls requested before setup completes", async () => {
     const scheduler = create_scheduler();
     let resolve_setup!: () => void;
@@ -46,7 +166,7 @@ describe("[game-lifecycle] game setup", () => {
     });
     let updates = 0;
     let draws = 0;
-    const game = create_game({
+    const game = create_test_game({
       scheduler: scheduler.scheduler,
       setup: async () => setup,
       update: () => {
@@ -82,7 +202,7 @@ describe("[game-lifecycle] game setup", () => {
       resolve_setup = resolve;
     });
     let updates = 0;
-    const game = create_game({
+    const game = create_test_game({
       scheduler: scheduler.scheduler,
       setup: async () => setup,
       update: () => {
@@ -106,7 +226,7 @@ describe("[game-lifecycle] game setup", () => {
     const setup = new Promise<void>((resolve) => {
       resolve_setup = resolve;
     });
-    const game = create_game({
+    const game = create_test_game({
       scheduler: scheduler.scheduler,
       setup: async () => setup,
       update: () => undefined,
@@ -124,7 +244,7 @@ describe("[game-lifecycle] game setup", () => {
   it("owns setup geometry and invalidates it when the game is disposed", async () => {
     const scheduler = create_scheduler();
     let handle!: GeometryHandle;
-    const game = create_game({
+    const game = create_test_game({
       scheduler: scheduler.scheduler,
       setup: ({ geometry }) => {
         handle = geometry.create({ vertices: [{ x: 0, y: 0 }], indices: [0, 0, 0] });
@@ -140,7 +260,7 @@ describe("[game-lifecycle] game setup", () => {
   it("wraps setup and callback failures while retaining disposal", async () => {
     const scheduler = create_scheduler();
     const initialization_errors: unknown[] = [];
-    const failed = create_game({
+    const failed = create_test_game({
       scheduler: scheduler.scheduler,
       setup: () => {
         throw new Error("setup failed");
@@ -153,7 +273,7 @@ describe("[game-lifecycle] game setup", () => {
     expect(initialization_errors[0]).toBeInstanceOf(GameInitializationError);
 
     const runtime_errors: unknown[] = [];
-    const running = create_game({
+    const running = create_test_game({
       scheduler: scheduler.scheduler,
       update: () => {
         throw new Error("update failed");
@@ -172,7 +292,7 @@ describe("[game-lifecycle] game setup", () => {
     const scheduler = create_scheduler();
     let destroyed = 0;
     let handle!: ResourceHandle<string>;
-    const failed = create_game({
+    const failed = create_test_game({
       scheduler: scheduler.scheduler,
       setup: ({ resources }) => {
         handle = resources.acquire("asset", () => {
@@ -192,7 +312,7 @@ describe("[game-lifecycle] game setup", () => {
 
   it("supports repeated disposal while running", async () => {
     const scheduler = create_scheduler();
-    const game = create_game({ scheduler: scheduler.scheduler, update: () => undefined, draw: () => undefined });
+    const game = create_test_game({ scheduler: scheduler.scheduler, update: () => undefined, draw: () => undefined });
     await game.ready;
     const first = game.dispose();
     expect(game.dispose()).toBe(first);
@@ -208,7 +328,7 @@ describe("[game-lifecycle] game setup", () => {
       lose_device = resolve;
     });
     const errors: unknown[] = [];
-    const game = create_game({
+    const game = create_test_game({
       scheduler: scheduler.scheduler,
       device_lost,
       update: () => undefined,
@@ -226,7 +346,7 @@ describe("[game-lifecycle] game setup", () => {
 
   it("exposes a typed manifest cache through setup and disposes it with the game", async () => {
     let destroyed = 0;
-    const game = create_game({
+    const game = create_test_game({
       scheduler: create_scheduler().scheduler,
       manifest: {
         hero: {

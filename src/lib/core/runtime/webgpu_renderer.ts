@@ -85,7 +85,7 @@ export type WebGpuRenderer = Readonly<{
   clear: (color: ClearColor) => Promise<Uint8Array>;
   create_texture: (pixels: Uint8Array, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
   create_texture_from_image: (image: CanvasImageSource, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
-  create_texture_from_blob: (source: Blob, options?: TextureFilteringOptions) => Promise<WebGpuTexture>;
+  create_texture_from_blob: (source: Blob, options?: TextureFilteringOptions, signal?: AbortSignal) => Promise<WebGpuTexture>;
   draw_texture: (texture: WebGpuTexture, options?: TextureDrawOptions) => Promise<Uint8Array>;
   draw_textures: (draws: readonly TextureDraw[]) => Promise<Uint8Array>;
   draw_commands: (commands: readonly RenderCommand[]) => Promise<Uint8Array>;
@@ -340,8 +340,12 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     return create_texture(new Uint8Array(pixels), width, height, filtering);
   };
 
-  const create_texture_from_blob = async (source: Blob, filtering: TextureFilteringOptions = {}): Promise<WebGpuTexture> => {
-    const bitmap = await decode_image_source(source);
+  const create_texture_from_blob = async (
+    source: Blob,
+    filtering: TextureFilteringOptions = {},
+    signal?: AbortSignal,
+  ): Promise<WebGpuTexture> => {
+    const bitmap = await decode_image_source(source, signal);
     try {
       return create_texture_from_image(bitmap, bitmap.width, bitmap.height, filtering);
     } finally {

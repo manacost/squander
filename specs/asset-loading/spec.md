@@ -48,8 +48,10 @@ Current verification:
   covers concurrent sharing, independent release, retry after failure, and
   one-requester cancellation in the `[asset-loading] manifest cache` suite.
 
-The current cache is renderer-independent. Manifest type tests, real image
-decode/upload, and final descriptor policy remain unimplemented.
+The current manifest cache remains renderer-independent. It now also supports
+game-owned dynamic texture handles when a renderer is supplied. Manifest type
+tests, final descriptor policy, and complete asset capability promotion remain
+unimplemented.
 
 The game-owned typed manifest seam is currently exercised by
 [`src/lib/core/runtime/game.test.ts`](../../src/lib/core/runtime/game.test.ts) in

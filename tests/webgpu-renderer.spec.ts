@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import type { ResourceHandle } from "../src/lib/core/runtime/resource_ownership.js";
+import type { WebGpuTexture } from "../src/lib/core/runtime/webgpu_renderer.js";
 
 test("[webgpu-runtime] clears and reads back a real canvas texture", async ({ page }) => {
   await page.goto("/");
@@ -91,6 +93,54 @@ test("[dynamic-assets] decodes Blob and File sources and uploads their pixels", 
     blob_texture.release();
     file_texture.release();
     renderer.dispose();
+    return { blob: Array.from(blob_pixels.slice(0, 4)), file: Array.from(file_pixels.slice(0, 4)) };
+  });
+
+  expect(result.blob).toEqual([255, 0, 0, 255]);
+  expect(result.file).toEqual([255, 0, 0, 255]);
+});
+
+test("[dynamic-assets] loads Blob and File textures through a game-owned renderer", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const source = document.createElement("canvas");
+    source.width = 1;
+    source.height = 1;
+    const source_context = source.getContext("2d");
+    if (source_context === null) throw new Error("Canvas 2D is unavailable");
+    source_context.fillStyle = "rgb(255 0 0)";
+    source_context.fillRect(0, 0, 1, 1);
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      source.toBlob((value) => (value === null ? reject(new Error("could not encode image")) : resolve(value)), "image/png");
+    });
+    const file = new File([blob], "pixel.png", { type: "image/png" });
+    const game_url = new URL("/src/lib/core/runtime/game.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ game_url)) as typeof import("../src/lib/core/runtime/game.js");
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    let textures: [ResourceHandle<WebGpuTexture>, ResourceHandle<WebGpuTexture>] | undefined;
+    const game = module.create_game({
+      renderer: { canvas, width: 1, height: 1 },
+      scheduler: {
+        request_frame: () => 0,
+        cancel_frame: () => undefined,
+        now_seconds: () => 0,
+      },
+      setup: async ({ assets }) => {
+        const blob_texture = await assets.load_texture(blob);
+        const file_texture = await assets.load_texture(file);
+        textures = [blob_texture, file_texture];
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+    await game.ready;
+    if (textures === undefined) throw new Error("game setup did not load textures");
+    const blob_pixels = await game.renderer.draw_texture(textures[0].read());
+    const file_pixels = await game.renderer.draw_texture(textures[1].read());
+    textures[0].release();
+    textures[1].release();
+    await game.dispose();
     return { blob: Array.from(blob_pixels.slice(0, 4)), file: Array.from(file_pixels.slice(0, 4)) };
   });
 

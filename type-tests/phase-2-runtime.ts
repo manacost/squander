@@ -13,6 +13,12 @@ import {
   type WebGpuRenderer,
 } from "../src/lib/index.js";
 
+const renderer = {
+  canvas: {} as HTMLCanvasElement,
+  width: 1,
+  height: 1,
+};
+
 const path: Path = create_path([move_to(0, 0), line_to(1, 1), close()]);
 const polygon: Polygon = create_polygon([
   { x: 0, y: 0 },
@@ -47,6 +53,7 @@ const game = create_game({
     cancel_frame: () => undefined,
     now_seconds: () => 0,
   },
+  renderer,
   setup: ({ geometry: game_geometry }) => {
     const handle = game_geometry.create({ vertices: [{ x: 0, y: 0 }], indices: [0, 0, 0] });
     handle.read(game_geometry);

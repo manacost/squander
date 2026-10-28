@@ -1,6 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { create_asset_cache, type AssetManifest } from "./asset_loading.js";
 import { create_resource_owner } from "./resource_ownership.js";
+import type { WebGpuRenderer, WebGpuTexture } from "./webgpu_renderer.js";
+
+const create_texture = (release = vi.fn()): WebGpuTexture =>
+  ({
+    resource: {} as WebGpuTexture["resource"],
+    width: 1,
+    height: 1,
+    filtering: { magnification: "linear", minification: "linear" },
+    release,
+  }) as WebGpuTexture;
+
+const create_texture_renderer = (load: WebGpuRenderer["create_texture_from_blob"]): WebGpuRenderer =>
+  ({ create_texture_from_blob: load }) as WebGpuRenderer;
 
 type TestManifest = AssetManifest & {
   hero: {
@@ -10,6 +23,83 @@ type TestManifest = AssetManifest & {
 };
 
 describe("[asset-loading] manifest cache", () => {
+  it("loads Blob and File values into independently releasable texture handles", async () => {
+    const first_texture = create_texture();
+    const second_texture = create_texture();
+    const renderer = create_texture_renderer(vi.fn().mockResolvedValueOnce(first_texture).mockResolvedValueOnce(second_texture));
+    const cache = create_asset_cache({}, create_resource_owner(), Promise.resolve(renderer));
+
+    const first = await cache.load_texture(new Blob(["first"]));
+    const second = await cache.load_texture(new File(["second"], "second.png"));
+    expect(first.read()).toBe(first_texture);
+    expect(second.read()).toBe(second_texture);
+    first.release();
+    second.release();
+    expect(first_texture.release).toHaveBeenCalledOnce();
+    expect(second_texture.release).toHaveBeenCalledOnce();
+    cache.dispose();
+  });
+
+  it("aborts a late dynamic texture without returning a handle", async () => {
+    let resolve_texture!: (texture: WebGpuTexture) => void;
+    let abort_seen = false;
+    const texture = create_texture();
+    const renderer = create_texture_renderer(
+      vi.fn(
+        (_source, _options, signal) =>
+          new Promise<WebGpuTexture>((resolve) => {
+            signal?.addEventListener(
+              "abort",
+              () => {
+                abort_seen = true;
+              },
+              { once: true },
+            );
+            resolve_texture = resolve;
+          }),
+      ),
+    );
+    const cache = create_asset_cache({}, create_resource_owner(), Promise.resolve(renderer));
+    const controller = new AbortController();
+    const pending = cache.load_texture(new Blob(["late"]), { signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+    resolve_texture(texture);
+    await expect(pending).rejects.toThrow();
+    expect(abort_seen).toBe(true);
+    expect(texture.release).toHaveBeenCalledOnce();
+    cache.dispose();
+  });
+
+  it("releases a texture that finishes after cache disposal", async () => {
+    let resolve_texture!: (texture: WebGpuTexture) => void;
+    let abort_seen = false;
+    const texture = create_texture();
+    const renderer = create_texture_renderer(
+      vi.fn(
+        (_source, _options, signal) =>
+          new Promise<WebGpuTexture>((resolve) => {
+            signal?.addEventListener(
+              "abort",
+              () => {
+                abort_seen = true;
+              },
+              { once: true },
+            );
+            resolve_texture = resolve;
+          }),
+      ),
+    );
+    const cache = create_asset_cache({}, create_resource_owner(), Promise.resolve(renderer));
+    const pending = cache.load_texture(new Blob(["late"]));
+    await Promise.resolve();
+    cache.dispose();
+    resolve_texture(texture);
+    await expect(pending).rejects.toThrow("asset cache was disposed during loading");
+    expect(abort_seen).toBe(true);
+    expect(texture.release).toHaveBeenCalledOnce();
+  });
+
   it("shares concurrent work and returns independently releasable handles", async () => {
     let loads = 0;
     const destroyed: string[] = [];

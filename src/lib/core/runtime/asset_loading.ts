@@ -1,4 +1,6 @@
 import type { ResourceHandle, ResourceOwner } from "./resource_ownership.js";
+import type { WebGpuRenderer, WebGpuTexture } from "./webgpu_renderer.js";
+import type { TextureFilteringOptions } from "./texture_filtering.js";
 
 export type AssetDefinition<Resource> = Readonly<{
   load: (signal: AbortSignal) => Promise<Resource>;
@@ -17,6 +19,10 @@ export type AssetCache<Manifest extends AssetManifest> = Readonly<{
     key: Key,
     options?: Readonly<{ signal?: AbortSignal }>,
   ) => Promise<ResourceHandle<AssetResource<Manifest, Key>>>;
+  load_texture: (
+    source: Blob,
+    options?: Readonly<TextureFilteringOptions & { signal?: AbortSignal }>,
+  ) => Promise<ResourceHandle<WebGpuTexture>>;
   dispose: () => void;
 }>;
 
@@ -28,9 +34,14 @@ type PendingEntry = {
 
 const create_abort_error = (): Error => new DOMException("asset load was aborted", "AbortError");
 
-export const create_asset_cache = <Manifest extends AssetManifest>(manifest: Manifest, resources: ResourceOwner): AssetCache<Manifest> => {
+export const create_asset_cache = <Manifest extends AssetManifest>(
+  manifest: Manifest,
+  resources: ResourceOwner,
+  renderer: Promise<WebGpuRenderer> | undefined = undefined,
+): AssetCache<Manifest> => {
   const pending = new Map<keyof Manifest, PendingEntry>();
   const shared_handles = new Map<keyof Manifest, ResourceHandle<unknown>>();
+  const texture_operations = new Set<AbortController>();
   let disposed = false;
 
   const load = async <Key extends keyof Manifest>(
@@ -98,6 +109,42 @@ export const create_asset_cache = <Manifest extends AssetManifest>(manifest: Man
     }
   };
 
+  const load_texture = async (
+    source: Blob,
+    options: Readonly<TextureFilteringOptions & { signal?: AbortSignal }> = {},
+  ): Promise<ResourceHandle<WebGpuTexture>> => {
+    if (disposed) {
+      throw new Error("asset cache is disposed");
+    }
+    if (options.signal?.aborted) {
+      throw create_abort_error();
+    }
+    if (renderer === undefined) {
+      throw new Error("asset cache has no renderer");
+    }
+    const { signal, ...filtering } = options;
+    const controller = new AbortController();
+    const abort = (): void => controller.abort();
+    signal?.addEventListener("abort", abort, { once: true });
+    texture_operations.add(controller);
+    try {
+      const texture = await renderer.then((value) => value.create_texture_from_blob(source, filtering, controller.signal));
+      if (disposed || controller.signal.aborted) {
+        texture.release();
+        throw disposed ? new Error("asset cache was disposed during loading") : create_abort_error();
+      }
+      try {
+        return resources.acquire(texture, (resource) => resource.release());
+      } catch (error) {
+        texture.release();
+        throw error;
+      }
+    } finally {
+      texture_operations.delete(controller);
+      signal?.removeEventListener("abort", abort);
+    }
+  };
+
   const dispose = (): void => {
     if (disposed) {
       return;
@@ -106,6 +153,9 @@ export const create_asset_cache = <Manifest extends AssetManifest>(manifest: Man
     for (const entry of pending.values()) {
       entry.controller.abort();
     }
+    for (const controller of texture_operations) {
+      controller.abort();
+    }
     for (const handle of shared_handles.values()) {
       handle.release();
     }
@@ -113,5 +163,5 @@ export const create_asset_cache = <Manifest extends AssetManifest>(manifest: Man
     shared_handles.clear();
   };
 
-  return Object.freeze({ load, dispose });
+  return Object.freeze({ load, load_texture, dispose });
 };
