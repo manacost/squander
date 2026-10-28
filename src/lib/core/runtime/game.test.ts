@@ -405,6 +405,31 @@ describe("[game-lifecycle] game setup", () => {
     await game.dispose();
   });
 
+  it("observes renderer device loss and ignores teardown loss", async () => {
+    const renderer = create_fake_renderer();
+    let lose_device!: (cause: unknown) => void;
+    const device_lost = new Promise<unknown>((resolve) => {
+      lose_device = resolve;
+    });
+    const renderer_with_loss = { ...renderer, device_lost };
+    const errors: unknown[] = [];
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => renderer_with_loss,
+      scheduler: create_scheduler().scheduler,
+      update: () => undefined,
+      draw: () => undefined,
+      on_error: (error) => errors.push(error),
+    });
+    await game.ready;
+    lose_device(new Error("unexpected device removal"));
+    await Promise.resolve();
+    expect(errors[0]).toBeInstanceOf(GameDeviceLostError);
+    expect(game.get_state()).toBe("stopped");
+    await game.dispose();
+    expect(errors).toHaveLength(1);
+  });
+
   it("exposes a typed manifest cache through setup and disposes it with the game", async () => {
     let destroyed = 0;
     const game = create_test_game({

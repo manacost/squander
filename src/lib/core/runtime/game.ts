@@ -124,7 +124,10 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
       if (!lifecycle.visible) {
         loop.set_visibility(false);
       }
-      options.device_lost?.then((cause) => {
+      (options.device_lost ?? renderer.device_lost)?.then((cause) => {
+        if (lifecycle.disposed) {
+          return;
+        }
         loop?.fail(new GameDeviceLostError(cause));
       });
     } catch (cause) {

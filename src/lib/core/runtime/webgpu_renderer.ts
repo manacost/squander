@@ -90,6 +90,7 @@ export type WebGpuRenderer = Readonly<{
   create_texture_from_image: (image: CanvasImageSource, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
   create_texture_from_blob: (source: Blob, options?: TextureFilteringOptions, signal?: AbortSignal) => Promise<WebGpuTexture>;
   create_font_from_url: (source: string, options?: FontOptions) => Promise<WebGpuFont>;
+  device_lost?: PromiseLike<unknown>;
   draw_texture: (texture: WebGpuTexture, options?: TextureDrawOptions) => Promise<Uint8Array>;
   draw_textures: (draws: readonly TextureDraw[]) => Promise<Uint8Array>;
   draw_text: (font: WebGpuFont, text: string, options?: TextDrawOptions) => Promise<Uint8Array>;
@@ -244,6 +245,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     primitive: { topology: "triangle-list" },
   });
   let disposed = false;
+  const device_lost = device.lost.then((info) => info);
   let solid_texture: WebGpuTexture | undefined;
   const cached_geometry_buffers = new WeakMap<
     object,
@@ -897,6 +899,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     create_texture_from_image,
     create_texture_from_blob,
     create_font_from_url: (source: string, options?: FontOptions) => create_webgpu_font(renderer_api, source, options),
+    device_lost,
     draw_texture,
     draw_textures,
     draw_text,
