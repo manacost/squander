@@ -64,11 +64,15 @@ typed snapshot publication, command invocation, setup failure, and disposal
 during setup. Public adapter type coverage is in
 [`type-tests/svelte-adapter.ts`](../../type-tests/svelte-adapter.ts).
 
+The real browser fixture
+[`tests/webgpu-svelte-adapter.spec.ts`](../../tests/webgpu-svelte-adapter.spec.ts)
+mounts the host, observes ready state, invokes a typed command, navigates away,
+and recreates an isolated host instance.
+
 Planned verification for the remaining replacement-framework contract:
 
-Real Svelte mount/unmount and action tests, two-host browser isolation, SSR
-component rendering, notification scheduling, and the full package consumer
-test remain. `squander/svelte/adapter` is Node-safe; `squander/svelte` also
+Two-host browser isolation, SSR component rendering, notification scheduling,
+and the full package consumer test remain. `squander/svelte/adapter` is Node-safe; `squander/svelte` also
 contains the Svelte component entry and must be compiled by a Svelte-aware
 consumer.
 

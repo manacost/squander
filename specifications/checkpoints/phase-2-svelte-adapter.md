@@ -34,15 +34,18 @@ view and typed command wrappers → game disposal on effect cleanup.
 - `npm run check` — passed with zero Svelte diagnostics.
 - `npm run validate:package` — passed for `squander/core`,
   `squander/core/runtime`, and `squander/svelte/adapter`.
+- `npx playwright test --config=playwright.webgpu.config.ts
+  tests/webgpu-svelte-adapter.spec.ts` — passed, one browser mount/command/
+  navigation recreation test against the trusted Vite origin.
 - `npm run package` — reached packaging but `publint` was blocked by the
   environment's root-owned `/Users/rory/.npm` cache; it also reports the
   repository's pre-existing SvelteKit peer/dependency warning.
 
 ## Evidence gaps
 
-`svelte-bridge` remains Draft. Real browser mount/unmount, SSR component
-rendering, two-host isolation, notification scheduling, and a Svelte-aware
-consumer import remain. The component subpath is intentionally not claimed as
+`svelte-bridge` remains Draft. SSR component rendering, two-host isolation,
+notification scheduling, and a Svelte-aware consumer import remain. The
+component subpath is intentionally not claimed as
 Node-executable because its default module contains `.svelte` source.
 
 ## Go/no-go
