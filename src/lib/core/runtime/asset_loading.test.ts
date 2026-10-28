@@ -25,6 +25,7 @@ const create_font = (release = vi.fn()): WebGpuFont =>
     atlas_height: 1,
     prepare: vi.fn(),
     get_glyph: vi.fn(),
+    get_glyph_texture: vi.fn(() => create_texture()),
     release,
   }) as WebGpuFont;
 

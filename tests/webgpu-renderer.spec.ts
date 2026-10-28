@@ -577,6 +577,15 @@ test("[text-drawing] loads a font, reuses prepared glyphs, and renders text", as
       }
       return false;
     };
+    const count_ink = (pixels: Uint8Array, left: number, right: number, top = 8, bottom = 44): number => {
+      let count = 0;
+      for (let y = top; y < bottom; y += 1) {
+        for (let x = left; x < right; x += 1) {
+          if (pixels[y * 256 + x * 4] > 0 || pixels[y * 256 + x * 4 + 1] > 0 || pixels[y * 256 + x * 4 + 2] > 0) count += 1;
+        }
+      }
+      return count;
+    };
     font.release();
     renderer.dispose();
     return {
@@ -585,6 +594,7 @@ test("[text-drawing] loads a font, reuses prepared glyphs, and renders text", as
       prepared_glyph_reused: second_atlas === third_atlas,
       first_has_ink: has_ink(first, 0, 8, 29),
       second_has_ink: has_ink(second, 1, 32, 53),
+      first_ink_pixels: count_ink(first, 8, 29),
     };
   });
 
@@ -592,6 +602,7 @@ test("[text-drawing] loads a font, reuses prepared glyphs, and renders text", as
   expect(result.prepared_glyph_reused).toBe(true);
   expect(result.first_has_ink).toBe(true);
   expect(result.second_has_ink).toBe(true);
+  expect(result.first_ink_pixels).toBeLessThan(330);
 });
 
 test("[paths-and-polygons] renders prepared stroke geometry with real readback", async ({ page }) => {

@@ -115,7 +115,10 @@ const assert_color = (color: ClearColor): void => {
   }
 };
 
-const bytes_per_row = 256;
+const copy_bytes_per_row_alignment = 256;
+
+const get_readback_bytes_per_row = (width: number): number =>
+  Math.ceil((width * 4) / copy_bytes_per_row_alignment) * copy_bytes_per_row_alignment;
 
 const textured_shader = /* wgsl */ `
 struct VertexOutput {
@@ -166,14 +169,20 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4f {
 }
 `;
 
-const normalize_readback = (pixels: Uint8Array, width: number, height: number, format: GPUTextureFormat): Uint8Array => {
+const normalize_readback = (
+  pixels: Uint8Array,
+  width: number,
+  height: number,
+  format: GPUTextureFormat,
+  readback_bytes_per_row: number,
+): Uint8Array => {
   if (format !== "bgra8unorm") {
     return pixels;
   }
   const normalized = new Uint8Array(pixels);
   for (let row = 0; row < height; row += 1) {
     for (let column = 0; column < width; column += 1) {
-      const offset = row * bytes_per_row + column * 4;
+      const offset = row * readback_bytes_per_row + column * 4;
       const red = normalized[offset];
       normalized[offset] = normalized[offset + 2];
       normalized[offset + 2] = red;
@@ -255,20 +264,21 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   const persistent_geometry_observers = new Set<() => void>();
 
   const submit_and_readback = async (encoder: GPUCommandEncoder, texture: GPUTexture): Promise<Uint8Array> => {
+    const readback_bytes_per_row = get_readback_bytes_per_row(surface_width);
     const readback = device.createBuffer({
-      size: bytes_per_row * surface_height,
+      size: readback_bytes_per_row * surface_height,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     encoder.copyTextureToBuffer(
       { texture },
-      { buffer: readback, bytesPerRow: bytes_per_row, rowsPerImage: surface_height },
+      { buffer: readback, bytesPerRow: readback_bytes_per_row, rowsPerImage: surface_height },
       { width: surface_width, height: surface_height, depthOrArrayLayers: 1 },
     );
     device.queue.submit([encoder.finish()]);
     await device.queue.onSubmittedWorkDone();
     await readback.mapAsync(GPUMapMode.READ);
     const mapped = new Uint8Array(readback.getMappedRange());
-    const pixels = normalize_readback(new Uint8Array(mapped), surface_width, surface_height, format);
+    const pixels = normalize_readback(new Uint8Array(mapped), surface_width, surface_height, format, readback_bytes_per_row);
     readback.unmap();
     readback.destroy();
     return pixels;
@@ -390,9 +400,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       return [...text].map((character): RenderCommand => {
         const glyph = font.get_glyph(character);
         const draw: TextureDraw = {
-          texture: font.atlas,
+          texture: font.get_glyph_texture(character),
           options: {
-            region: { x: glyph.x, y: glyph.y, width: glyph.width, height: glyph.height },
             x: cursor_x,
             y: start_y,
             width: glyph.width * scale,

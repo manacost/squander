@@ -53,6 +53,7 @@ export type WebGpuFont = Readonly<{
   readonly atlas_height: number;
   prepare: (text: string) => void;
   get_glyph: (character: string) => FontGlyph;
+  get_glyph_texture: (character: string) => WebGpuTexture;
   release: () => void;
 }>;
 
@@ -92,6 +93,7 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
   if (context === null) throw new FontLoadError("Canvas 2D font preparation is unavailable");
   context.font = `${options.weight ?? "400"} ${size}px ${family}`;
   const glyphs = new Map<string, FontGlyph>();
+  const glyph_textures = new Map<string, WebGpuTexture>();
   let atlas: WebGpuTexture | undefined;
   let atlas_width = 0;
   let atlas_height = 0;
@@ -140,8 +142,28 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
     });
     const image = context.getImageData(0, 0, atlas_width, atlas_height).data;
     pixels.set(image);
-    const next_atlas = renderer.create_texture(pixels, atlas_width, atlas_height, options.filtering);
+    const next_atlas = renderer.create_texture(pixels, atlas_width, atlas_height, options.filtering ?? { filter: "nearest" });
+    const next_glyph_textures = new Map<string, WebGpuTexture>();
+    entries.forEach((entry, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      const x = column * cell_width;
+      const y = row * cell_height;
+      const glyph_pixels = new Uint8Array(entry.width * entry.height * 4);
+      for (let row = 0; row < entry.height; row += 1) {
+        const source_start = ((y + row) * atlas_width + x) * 4;
+        const target_start = row * entry.width * 4;
+        glyph_pixels.set(image.slice(source_start, source_start + entry.width * 4), target_start);
+      }
+      next_glyph_textures.set(
+        entry.character,
+        renderer.create_texture(glyph_pixels, entry.width, entry.height, options.filtering ?? { filter: "nearest" }),
+      );
+    });
     atlas?.release();
+    glyph_textures.forEach((texture) => texture.release());
+    glyph_textures.clear();
+    next_glyph_textures.forEach((texture, character) => glyph_textures.set(character, texture));
     atlas = next_atlas;
   };
 
@@ -179,11 +201,18 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
       if (glyph === undefined) throw new RangeError(`glyph is not prepared: ${character}`);
       return glyph;
     },
+    get_glyph_texture: (character: string): WebGpuTexture => {
+      const texture = glyph_textures.get(character);
+      if (texture === undefined) throw new RangeError(`glyph texture is unavailable: ${character}`);
+      return texture;
+    },
     release: () => {
       if (disposed) return;
       disposed = true;
       atlas?.release();
       atlas = undefined;
+      glyph_textures.forEach((texture) => texture.release());
+      glyph_textures.clear();
       document.fonts.delete(face);
     },
   });

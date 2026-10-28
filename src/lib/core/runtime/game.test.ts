@@ -44,6 +44,7 @@ const create_fake_renderer = (): WebGpuRenderer => {
       atlas_height: 1,
       prepare: () => undefined,
       get_glyph: () => ({ character: "A", x: 0, y: 0, width: 1, height: 1, advance: 1, baseline: 0 }),
+      get_glyph_texture: () => create_texture(new Uint8Array(), 1, 1),
       release: () => undefined,
     }),
     draw_texture: draw,
