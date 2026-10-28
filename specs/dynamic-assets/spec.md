@@ -40,8 +40,13 @@ Illustrative: const avatar = await game.assets.load_texture(file). For remote av
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+The validated image-source seam is now covered by
+[`src/lib/core/runtime/image_loading.test.ts`](../../src/lib/core/runtime/image_loading.test.ts)
+in the `[dynamic-assets] image source decoding` suite. It covers Blob/File
+acceptance, cancellation, late-result cleanup, unavailable decoding, and typed
+decode failure. GPU texture upload and readback remain unimplemented.
+
+Planned verification for the remaining replacement-framework contract:
 
 Browser File/Blob decode and rendering tests, malformed-data tests, public API type tests.
 

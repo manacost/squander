@@ -5,6 +5,7 @@ export * from "./colors.js";
 export * from "./frame_loop.js";
 export * from "./game.js";
 export * from "./geometry_ownership.js";
+export * from "./image_loading.js";
 export * from "./paths.js";
 export { flatten_path } from "./path_flattening.js";
 export type { FlattenedSubpath } from "./path_flattening.js";
