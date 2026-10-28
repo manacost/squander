@@ -33,6 +33,26 @@ describe("[camera-2d] camera transforms", () => {
     expect(() => {
       camera.is_in_view({ x: Infinity, y: 0, width: 1, height: 1 });
     }).toThrow(RangeError);
+    expect(() => create_camera({ viewport: { logical_width: -1, logical_height: 1 } })).toThrow(RangeError);
+    expect(() => create_camera({ viewport: { logical_width: 1, logical_height: Number.NaN } })).toThrow(RangeError);
+    expect(() => create_camera({ viewport: { logical_width: 1, logical_height: 1 }, zoom: Number.POSITIVE_INFINITY })).toThrow(RangeError);
+    expect(() => create_camera({ viewport: { logical_width: 1, logical_height: 1 }, rotation: Number.NaN })).toThrow(RangeError);
+    expect(() => camera.set_position(Number.NaN, 0)).toThrow(RangeError);
+    expect(() => camera.set_rotation(Number.POSITIVE_INFINITY)).toThrow(RangeError);
+    expect(() => camera.world_to_screen({ x: Number.NaN, y: 0 })).toThrow(RangeError);
+  });
+
+  it("exposes mutable camera values through validated setters", () => {
+    const camera = create_camera({ viewport: { logical_width: 100, logical_height: 80 } });
+    expect(camera.get_position()).toEqual({ x: 0, y: 0 });
+    expect(camera.get_zoom()).toBe(1);
+    expect(camera.get_rotation()).toBe(0);
+    camera.set_position(10, 20);
+    camera.set_zoom(2);
+    camera.set_rotation(Math.PI / 4);
+    expect(camera.get_position()).toEqual({ x: 10, y: 20 });
+    expect(camera.get_zoom()).toBe(2);
+    expect(camera.get_rotation()).toBe(Math.PI / 4);
   });
 
   it("restores nested scopes after normal and throwing callbacks", () => {

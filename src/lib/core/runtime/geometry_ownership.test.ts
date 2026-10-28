@@ -70,4 +70,37 @@ describe("[resource-ownership] game-scoped geometry handles", () => {
     expect(() => handle.read(owner)).toThrow("geometry owner is disposed");
     expect(() => owner.create(geometry(2))).toThrow("geometry owner is disposed");
   });
+
+  it("validates triangle snapshots and allows observers to unsubscribe", () => {
+    const owner = create_geometry_owner();
+    expect(() => owner.create({ vertices: [{ x: Number.NaN, y: 0 }], indices: [0, 0, 0] })).toThrow(RangeError);
+    expect(() => owner.create({ vertices: [{ x: 0, y: 0 }], indices: [1, 0, 0] })).toThrow(RangeError);
+    expect(() => owner.create({ vertices: [{ x: 0, y: 0 }], indices: [0, 0] })).toThrow(RangeError);
+
+    const handle = owner.create(geometry(1));
+    let notifications = 0;
+    const stop = handle.on_release(() => {
+      notifications += 1;
+    });
+    stop();
+    handle.release();
+    expect(notifications).toBe(0);
+    const released_stop = handle.on_release(() => {
+      notifications += 1;
+    });
+    released_stop();
+    expect(notifications).toBe(1);
+  });
+
+  it("notifies immediately when registering after owner disposal", () => {
+    const owner = create_geometry_owner();
+    const handle = owner.create(geometry(1));
+    owner.dispose();
+    let notifications = 0;
+    const stop = handle.on_release(() => {
+      notifications += 1;
+    });
+    stop();
+    expect(notifications).toBe(1);
+  });
 });
