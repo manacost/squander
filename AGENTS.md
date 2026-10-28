@@ -46,6 +46,25 @@ Name unit tests `*.test.ts` or `*.spec.ts` beneath `src/`; Vitest only discovers
 
 We never allow documentation to go stale. Update affected documentation and examples in the same atomic commit as changes to public APIs, behavior, configuration, or workflows. Before completing a change, verify that the relevant documentation matches the implementation and correct any discrepancies.
 
+### Feature/documentation crossovers
+
+When a feature has visually observable behavior or a real rendering/evidence
+fixture, treat its documentation as part of the feature. Put it in the
+appropriate sidebar section and provide all five parts:
+
+1. A sidebar link to the focused documentation page.
+2. A live example that exercises the public behavior.
+3. A plain-language explanation of what is demonstrated and what remains out
+   of scope.
+4. Public type information, including important inferred types and misuse
+   constraints.
+5. Copyable code samples showing the supported usage path.
+
+Audit these five parts when promoting a capability or adding a visual fixture.
+Record an explicit rationale in the Phase 2 documentation audit when a feature
+is internal, non-visual, deferred, or otherwise does not require this set.
+Composition playgrounds supplement focused pages; they do not replace them.
+
 ## Agent-Specific Instructions
 
 Inspect `git status` before editing and preserve unrelated work in a dirty tree. Prefer source code over stale examples when behavior differs. Keep changes scoped and report pre-existing check failures separately.

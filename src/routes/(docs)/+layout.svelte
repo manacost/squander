@@ -8,7 +8,15 @@
 
   const links = [["about", "/"]] as const;
 
-  const documentation = ["examples"] as const;
+  const documentation = [
+    { label: "examples", href: "/docs/examples", target: "/(docs)/docs/examples", children: [] },
+    {
+      label: "core",
+      href: "/docs/core",
+      target: "/(docs)/docs/core",
+      children: [{ label: "text", href: "/docs/examples/text", target: "/(docs)/docs/examples/text" }],
+    },
+  ] as const;
   interface Props {
     data: LayoutData;
     children?: import("svelte").Snippet;
@@ -42,8 +50,12 @@
 
       <h5 class="sep subtitle">Docs</h5>
       {#each documentation as doc}
-        {@const link = `/docs/${doc}` as const}
-        <a class="link" class:active={link === page_path} href={resolve(`/(docs)/docs/${doc}`)}>{doc}</a>
+        <a class="link" class:active={doc.href === page_path} href={resolve(doc.target)}>{doc.label}</a>
+        {#if doc.children}
+          {#each doc.children as child}
+            <a class="link nested" class:active={child.href === page_path} href={resolve(child.target)}>{child.label}</a>
+          {/each}
+        {/if}
       {/each}
 
     </nav>
@@ -124,6 +136,11 @@
   }
   .link:hover {
     background-color: hsla(0deg, 0%, 0%, 0.1);
+  }
+
+  .nested {
+    margin-left: 0.75rem;
+    font-size: 0.95em;
   }
 
   .link:before {

@@ -45,10 +45,15 @@ Browse focused examples by capability, then use the playground to explore featur
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
-
-Documentation navigation/feature-demo tests, playground lifecycle/composition tests, runtime coverage report, and compile-time API tests. None are yet linked as new-framework evidence.
+The crossover rule and current inventory are recorded in
+[`specifications/checkpoints/phase-2-feature-documentation-audit.md`](../../specifications/checkpoints/phase-2-feature-documentation-audit.md).
+The Core sidebar and focused text guide are covered by
+[`tests/docs-core.spec.ts`](../../tests/docs-core.spec.ts),
+[`tests/text-example.spec.ts`](../../tests/text-example.spec.ts), and the real
+WebGPU proof in
+[`tests/webgpu-text-example.spec.ts`](../../tests/webgpu-text-example.spec.ts).
+The remaining capability pages are explicitly listed as follow-up work in the
+audit; the composition playground remains supplementary evidence.
 
 Use `[feature-documentation]` in relevant suite names and add actual file/suite links as tests land.
 
