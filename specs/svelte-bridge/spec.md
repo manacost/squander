@@ -6,7 +6,11 @@ Connect Svelte UI to game state and actions with strong inferred types and per-i
 
 ## Status
 
-Draft. Target: Phase 2.
+Draft. Target: Phase 2. The first Svelte 5 adapter seam is implemented with a
+typed `create_game_adapter` factory and `<GameHost>` render-prop component.
+The adapter exposes one readonly view containing `state`, lifecycle `status`,
+an initialization `error`, and typed `commands`; game code receives the only
+`publish` function.
 
 The direction was agreed in the interview; open contract details are listed below.
 This draft does not claim implementation or verification.
@@ -54,9 +58,19 @@ in the `[svelte-bridge] core bridge` suite, with public command inference in
 [`type-tests/bridge.ts`](../../type-tests/bridge.ts). These tests do not claim
 Svelte mounting, SSR, or host isolation.
 
+The adapter unit suite
+[`src/lib/svelte/adapter.test.ts`](../../src/lib/svelte/adapter.test.ts) covers
+typed snapshot publication, command invocation, setup failure, and disposal
+during setup. Public adapter type coverage is in
+[`type-tests/svelte-adapter.ts`](../../type-tests/svelte-adapter.ts).
+
 Planned verification for the remaining replacement-framework contract:
 
-Public API type tests, real Svelte mount/unmount and action tests, SSR/package-consumer smoke tests.
+Real Svelte mount/unmount and action tests, two-host browser isolation, SSR
+component rendering, notification scheduling, and the full package consumer
+test remain. `squander/svelte/adapter` is Node-safe; `squander/svelte` also
+contains the Svelte component entry and must be compiled by a Svelte-aware
+consumer.
 
 Use `[svelte-bridge]` in relevant suite names and add actual file/suite links as tests land.
 
