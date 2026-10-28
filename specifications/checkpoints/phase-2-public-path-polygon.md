@@ -22,18 +22,21 @@ GPU triangle and stroke submission → readback of polygon and path pixels.
 - `npm run check` — passed with zero Svelte diagnostics.
 - `npm run test:webgpu -- --grep 'public polygon and path updates'` — passed,
   one real Chromium WebGPU test with deterministic readback.
+- `npm run test:webgpu -- --grep 'quadratic and cubic path curves'` — passed,
+  one real Chromium WebGPU curve fixture with independent ink-bound and
+  endpoint/peak tolerances.
 - The fixture uses the trusted local Vite origin and the repository's explicit
   WebGPU browser configuration.
 
-## Evidence gaps
+## Evidence boundary
 
-The capability remains Draft. Curve endpoint and concavity coverage, geometry
-reuse evidence, final update/release contract decisions, and the separate
-browser renderer coverage merge remain outstanding. This fixture verifies the
-public preparation seam and two successful revisions; it does not replace the
-focused validation and ownership suites.
+CPU tests cover validation, snapshots, flattening, tessellation, stroke joins,
+and ownership. Real WebGPU tests cover filled/outlined concave polygons,
+quadratic/cubic curves, prepared strokes, public updates, cached replacement,
+and released-handle rejection. Advanced filled curves, holes, fill rules, and
+scene automation remain outside Phase 2.
 
 ## Go/no-go
 
-**Continue.** The public path/polygon preparation seam is verified. Proceed to
-the next remaining Phase 2 capability slice.
+**Promote `paths-and-polygons`.** The public preparation, update, ownership,
+geometry-reuse, and real-GPU rendering evidence satisfy the Phase 2 contract.

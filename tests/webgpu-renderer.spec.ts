@@ -844,6 +844,58 @@ test("[paths-and-polygons] renders prepared stroke geometry with real readback",
   expect(result.outside).toEqual([0, 0, 0, 255]);
 });
 
+test("[paths-and-polygons] renders quadratic and cubic path curves", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const path_url = new URL("/src/lib/core/runtime/path_flattening.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const path_module = (await import(/* @vite-ignore */ path_url)) as typeof import("../src/lib/core/runtime/path_flattening.js");
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 32, height: 24 });
+    const subpaths = path_module.flatten_path(
+      [
+        path_module.move_to(2, 18),
+        path_module.quadratic_to(8, 2, 14, 18),
+        path_module.cubic_to(18, 4, 26, 4, 30, 18),
+      ],
+      0.25,
+    );
+    const pixels = await renderer.draw_commands([
+      { kind: "stroke", draw: { subpaths, width: 1, color: colors.rgba(1, 1, 1, 1) } },
+    ]);
+    renderer.dispose();
+    const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    let ink = 0;
+    let min_x = 32;
+    let max_x = -1;
+    let min_y = 24;
+    let max_y = -1;
+    for (let y = 0; y < 24; y += 1) {
+      for (let x = 0; x < 32; x += 1) {
+        if (pixels[y * 256 + x * 4] > 0) {
+          ink += 1;
+          min_x = Math.min(min_x, x);
+          max_x = Math.max(max_x, x);
+          min_y = Math.min(min_y, y);
+          max_y = Math.max(max_y, y);
+        }
+      }
+    }
+    return { ink, min_x, max_x, min_y, max_y, quadratic_peak: pixel_at(8, 10) };
+  });
+
+  expect(result.ink).toBeGreaterThan(20);
+  expect(result.min_x).toBeLessThanOrEqual(3);
+  expect(result.max_x).toBeGreaterThanOrEqual(29);
+  expect(result.min_y).toBeLessThanOrEqual(8);
+  expect(result.max_y).toBeGreaterThanOrEqual(17);
+  expect(result.quadratic_peak[0]).toBeGreaterThan(0);
+});
+
 test("[paths-and-polygons] renders a concave polygon fill and preserves its notch", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

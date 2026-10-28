@@ -6,7 +6,7 @@ Reuse custom geometry for filled polygons and stroked curved paths.
 
 ## Status
 
-Draft. Target: Phase 2. CPU polygon/path preparation, stroke geometry, indexed
+Implemented. CPU polygon/path preparation, stroke geometry, indexed
 triangle submission, prepared-stroke submission, polygon fill/outline
 submission, and game-scoped geometry ownership are implemented and verified;
 owned-geometry renderer submission is implemented and verified; public core
@@ -14,8 +14,8 @@ exports for path/polygon preparation are covered by type tests and a real GPU
 create/update/readback fixture. Persistent owned-geometry GPU buffer reuse and
 replacement are also verified.
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+The Phase 2 contract is implemented and verified below. Filled curved paths,
+holes, and fill rules remain deferred.
 
 ## Requirements
 
@@ -127,8 +127,8 @@ const marker = create_polygon(points);
 ```
 
 Submit revised commands or polygon points through an explicit update operation outside `draw`.
-The current CPU snapshot handles expose this operation as `update`; the final
-package-level geometry surface remains unpromoted.
+The current CPU snapshot handles expose this operation as `update` through the
+public core entrypoint.
 
 ## Test references
 
@@ -175,15 +175,18 @@ real WebGPU fixture in
 [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts).
 The same fixture covers cached-buffer replacement after an owned update.
 
-Remaining planned verification includes curve endpoint tests, real GPU
-concavity/curve fixtures, geometry reuse checks, and final package-level
-promotion decisions.
+The real GPU curve fixture uses independent ink bounds and endpoint/peak
+tolerances appropriate to the pinned Chromium rasterizer. Geometry reuse and
+replacement are covered by the owned renderer fixtures.
 
 Use `[paths-and-polygons]` in relevant suite names and add actual file/suite links as tests land.
 
 ## Notes
 
-AD-015, AD-033 through AD-036, and AD-039. Open: command sequencing after closure and empty subpaths, exact command shapes and update-operation name, rebuild scheduling, tessellation tolerance under zoom, exact geometry release API, numerical validation tolerances, and overlapping-edge/nonadjacent-touching-vertex behavior.
+AD-015, AD-033 through AD-036, and AD-039. Phase 2 fixes `update` as the
+explicit update operation, flat caps, the fixed miter/bevel policy, and the
+documented validation rules. Command sequencing after closure, empty-subpath
+behavior, overlapping-edge policy, and advanced fill rules remain deferred.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
