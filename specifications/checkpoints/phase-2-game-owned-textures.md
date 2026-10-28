@@ -33,12 +33,14 @@ disposal.
 
 ## Coverage and evidence gaps
 
-The modified `asset_loading.ts` passes the per-file four-metric threshold. The
-modified game lifecycle file remains below the branch threshold because the
-renderer-disposal race branches need additional focused cases. The renderer
-implementation is only minimally represented in unit coverage; browser tests
-provide the required GPU evidence but are not merged into the current unit
-coverage report. Existing color, geometry, and viewport branch gaps remain.
+The modified `asset_loading.ts` and `game.ts` pass the per-file four-metric
+threshold. The renderer implementation is only minimally represented in unit
+coverage; browser tests provide the required GPU evidence but are not merged
+into the current unit coverage report. Existing color, geometry, and viewport
+branch gaps remain.
+
+The focused game coverage result is 98.86% statements, 91.66% branches, 100%
+functions, and 98.82% lines.
 
 Malformed dynamic-image browser fixtures, manifest-backed texture descriptors,
 and complete capability promotion remain outstanding.

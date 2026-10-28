@@ -172,14 +172,9 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
           if (renderer_disposed) {
             return;
           }
-          if (renderer === undefined) {
-            resolved_renderer.dispose();
-            renderer_disposed = true;
-          } else {
-            resolved_renderer.dispose();
-            renderer_disposed = true;
-            renderer = undefined;
-          }
+          resolved_renderer.dispose();
+          renderer_disposed = true;
+          renderer = undefined;
         })
         .catch(() => undefined);
     });

@@ -122,6 +122,31 @@ describe("[game-lifecycle] game setup", () => {
     expect(dispose).toHaveBeenCalledOnce();
   });
 
+  it("does not start after disposal while setup is already pending", async () => {
+    const scheduler = create_scheduler();
+    const renderer = create_fake_renderer();
+    let resolve_setup!: () => void;
+    const setup = new Promise<void>((resolve) => {
+      resolve_setup = resolve;
+    });
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => renderer,
+      scheduler: scheduler.scheduler,
+      setup: async () => setup,
+      update: () => undefined,
+      draw: () => undefined,
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    const disposal = game.dispose();
+    resolve_setup();
+    await expect(game.ready).rejects.toBeInstanceOf(GameDisposedError);
+    await disposal;
+    expect(scheduler.pending()).toBe(0);
+  });
+
   it("wraps renderer factory failures as initialization errors", async () => {
     const game = create_game({
       renderer: test_renderer_options,
