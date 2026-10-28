@@ -47,8 +47,9 @@ Status: **Replacement package boundary and v2 release metadata verified; capabil
   the adapter and compiled `GameHost.svelte`.
 - `npm run test:unit`: passed with 25 files and 110 tests after removing legacy
   suites.
-- `npm run check:coverage`: not yet passing; the exact remaining failures are
-  recorded below and are unrelated to package export resolution.
+- `npm run check:coverage`: passed for all 22 included replacement-runtime
+  files; the detailed metrics are recorded in
+  `phase-2-runtime-coverage.md`.
 
 ## Code trace
 
@@ -69,8 +70,7 @@ Svelte-aware consumer.
 
 ## Remaining Phase 2 coverage gaps
 
-`npm run check:coverage` still reports asset-loading, colors, font-loading,
-path-flattening, triangulation, viewport-sizing, and WebGPU renderer metrics
-below the greater-than-90% four-metric threshold. Browser-only renderer coverage
-is not merged into the CPU report; text and renderer promotion therefore remain
-Draft despite passing real WebGPU evidence.
+The replacement-runtime four-metric coverage gate is complete. Browser-only
+renderer correctness is intentionally not merged into the CPU report; real
+WebGPU readback remains a separate acceptance gate. Individual capabilities
+remain Draft until their complete public-contract and GPU evidence is present.

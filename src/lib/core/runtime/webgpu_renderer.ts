@@ -629,10 +629,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         const opacity = draw.geometry.opacity ?? 1;
         const to_clip_point = (point: PolygonPoint): [number, number] => {
           const screen_point = active_camera?.world_to_screen(point) ?? point;
-          const physical_x = ((screen_point.x * (viewport?.content_width ?? canvas_width)) / canvas_width) * device_scale_x;
-          const physical_y = ((screen_point.y * (viewport?.content_height ?? canvas_height)) / canvas_height) * device_scale_y;
-          const offset_x = (viewport?.offset_x ?? 0) * device_scale_x;
-          const offset_y = (viewport?.offset_y ?? 0) * device_scale_y;
+          const physical_x = ((screen_point.x * viewport.content_width) / canvas_width) * device_scale_x;
+          const physical_y = ((screen_point.y * viewport.content_height) / canvas_height) * device_scale_y;
+          const offset_x = viewport.offset_x * device_scale_x;
+          const offset_y = viewport.offset_y * device_scale_y;
           return [((physical_x + offset_x) / surface_width) * 2 - 1, 1 - ((physical_y + offset_y) / surface_height) * 2];
         };
         const vertex_data = new Float32Array(
@@ -698,10 +698,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       const corners = [corner(0, 0), corner(width, 0), corner(width, height), corner(0, height)];
       const to_clip = ([point_x, point_y]: [number, number]): [number, number] => {
         const screen_point = active_camera?.world_to_screen({ x: point_x, y: point_y }) ?? { x: point_x, y: point_y };
-        const physical_x = ((screen_point.x * (viewport?.content_width ?? canvas_width)) / canvas_width) * device_scale_x;
-        const physical_y = ((screen_point.y * (viewport?.content_height ?? canvas_height)) / canvas_height) * device_scale_y;
-        const offset_x = (viewport?.offset_x ?? 0) * device_scale_x;
-        const offset_y = (viewport?.offset_y ?? 0) * device_scale_y;
+        const physical_x = ((screen_point.x * viewport.content_width) / canvas_width) * device_scale_x;
+        const physical_y = ((screen_point.y * viewport.content_height) / canvas_height) * device_scale_y;
+        const offset_x = viewport.offset_x * device_scale_x;
+        const offset_y = viewport.offset_y * device_scale_y;
         return [((physical_x + offset_x) / surface_width) * 2 - 1, 1 - ((physical_y + offset_y) / surface_height) * 2];
       };
       const positions = corners.map(to_clip);
