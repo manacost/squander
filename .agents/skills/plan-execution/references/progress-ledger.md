@@ -1,7 +1,8 @@
 # Plan progress ledger
 
-Use one ledger per multi-slice plan. Keep entries factual and update the same file at every
-checkpoint.
+Use one local ledger per multi-slice plan, normally under `.codex/plans/`. Keep entries factual
+and update the same file at every checkpoint. The ledger is intentionally gitignored; committed
+checkpoints, test reports, and commit history remain the durable audit trail.
 
 ```md
 # <Plan name> progress
@@ -44,5 +45,6 @@ Overall status: in-progress | blocked | complete
 - [ ] Only evidenced capabilities are promoted.
 ```
 
-The ledger is a navigation and audit record, not a substitute for test output or checkpoint
-detail. Link to the authoritative report, checkpoint, or test rather than copying large logs.
+The ledger is a local navigation record, not a substitute for committed test output or
+checkpoint detail. Link to the authoritative report, checkpoint, or test rather than copying
+large logs. The ignored ledger may be reconstructed from commits and checkpoints if lost.

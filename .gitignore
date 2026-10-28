@@ -11,6 +11,9 @@ debug.log
 /test-results
 /coverage
 
+# Local Codex work plans and their progress ledgers
+/.codex/plans/
+
 # OS
 .DS_Store
 Thumbs.db

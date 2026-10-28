@@ -52,8 +52,10 @@ Inspect `git status` before editing and preserve unrelated work in a dirty tree.
 
 For multi-slice plans or requests to continue working, use the repository workflow in
 [`.agents/skills/plan-execution/SKILL.md`](.agents/skills/plan-execution/SKILL.md).
-Before editing, read the plan and its progress ledger when one exists. Continue through
-independent work after a blocked gate, record the blocker and exact next action, and stop
-only for an unresolved contract decision, missing authority, or an exhausted independent
-work queue. Every completed slice needs its acceptance evidence, coverage where applicable,
-code trace, and commit recorded before promotion.
+Local plan files and ledgers belong in the gitignored `.codex/plans/` directory unless the
+user explicitly requests a versioned plan. Before editing, read the plan and its ledger when
+one exists. Continue through independent work after a blocked gate, record the blocker and
+exact next action, and stop only for an unresolved contract decision, missing authority, or
+an exhausted independent work queue. Every completed slice needs its acceptance evidence,
+coverage where applicable, code trace, and commit recorded before promotion. Checkpoints,
+commits, and test reports—not the ignored ledger—are the durable audit evidence.

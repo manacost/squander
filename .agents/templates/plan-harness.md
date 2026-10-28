@@ -2,14 +2,14 @@
 
 Use this template for plans that Codex will implement over multiple turns. Replace every
 placeholder before execution. Keep the plan authoritative; put changing execution state in a
-separate progress ledger.
+separate local ledger under `.codex/plans/`, which is gitignored by this repository.
 
 ## Harness rule
 
 Copy this section into the repository's `AGENTS.md` when the plan needs resumable execution:
 
 ```md
-For this plan, use the repository plan-execution workflow. Read the plan and progress ledger
+For this plan, use the repository plan-execution workflow. Read the plan and local progress ledger
 before editing. Work in the smallest unblocked slice. Each slice requires tests for its
 acceptance criteria, the applicable type/integration/coverage evidence, a checkpoint, and an
 atomic commit before promotion. After a failure, fix it, record the exact blocker and next
@@ -133,4 +133,5 @@ Every slice checkpoint records:
 - [ ] Public exports, package consumers, and documentation match the implementation.
 - [ ] Non-goals were not silently implemented or promised.
 - [ ] Pre-existing failures are separated from regressions.
-- [ ] The final progress ledger is complete and auditable without chat history.
+- [ ] The final progress ledger is complete locally; committed checkpoints and reports make
+      the audit reproducible without chat history.
