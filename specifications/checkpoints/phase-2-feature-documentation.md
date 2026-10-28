@@ -37,8 +37,7 @@ measured commands and checkpoint directory.
 
 ## Known gaps and gate
 
-- Per-capability runnable demos beyond the composition/Svelte examples, final
-  migration guide, final release metadata, and complete coverage promotion
-  remain deferred.
-- Go/no-go: **continue with final migration review; do not promote the full
-  Phase 2 package.**
+- Per-capability runnable demos beyond the composition/Svelte examples and
+  complete coverage promotion remain deferred.
+- Go/no-go: **release metadata and package validation are complete; do not
+  promote the full Phase 2 package until individual capability gates pass.**

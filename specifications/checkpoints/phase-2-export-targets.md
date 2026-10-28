@@ -1,6 +1,6 @@
 # Phase 2 explicit export target checkpoint
 
-Status: **Core and core/runtime package subpath imports verified; final release metadata remains Draft**.
+Status: **Core, core/runtime, and Svelte package subpath imports verified; v2 release metadata is complete**.
 
 ## Pre-slice contract checkpoint
 
@@ -37,8 +37,8 @@ factory symbols.
 
 - `publint` continues to report non-fatal metadata suggestions for the
   SvelteKit declaration, repository URL, and license field.
-- Final release metadata and package-promotion documentation remain
-  unimplemented; Svelte subpath, WebGPU declaration boundary, and Pixi removal
-  are now verified.
-- Go/no-go: **continue with dependency metadata review; do not promote the
-  full Phase 2 package.**
+- Release metadata, Svelte subpath, WebGPU declaration boundary, and Pixi
+  removal are verified. Individual capability promotion remains governed by
+  the current capability checkpoints.
+- Go/no-go: **package boundary is complete; do not promote the full Phase 2
+  package until individual capability gates pass.**

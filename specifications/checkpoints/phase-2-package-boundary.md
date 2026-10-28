@@ -1,6 +1,6 @@
 # Phase 2 package boundary checkpoint
 
-Status: **PixiJS dependency/demo cleanup and replacement public boundary verified; final release migration remains Draft**.
+Status: **Replacement package boundary and v2 release metadata verified; capability promotion remains Draft**.
 
 ## Pre-slice contract checkpoint
 
@@ -47,6 +47,8 @@ Status: **PixiJS dependency/demo cleanup and replacement public boundary verifie
   the adapter and compiled `GameHost.svelte`.
 - `npm run test:unit`: passed with 25 files and 110 tests after removing legacy
   suites.
+- `npm run check:coverage`: not yet passing; the exact remaining failures are
+  recorded below and are unrelated to package export resolution.
 
 ## Code trace
 
@@ -58,7 +60,17 @@ Svelte-aware consumer.
 
 ## Known gaps and gate
 
-- Final major-version bump, repository/license metadata cleanup, and final
-  package documentation remain unimplemented.
-- Go/no-go: **continue with final package release validation; do not promote the
-  full Phase 2 package.**
+- Bumped the package to `2.0.0` and normalized the repository/license metadata
+  for Publint.
+- The final package gate is complete. This release intentionally does not add a
+  migration guide.
+- Go/no-go: **package release validation is complete; do not promote individual
+  Draft capabilities until their own acceptance gates pass.**
+
+## Remaining Phase 2 coverage gaps
+
+`npm run check:coverage` still reports asset-loading, colors, font-loading,
+path-flattening, triangulation, viewport-sizing, and WebGPU renderer metrics
+below the greater-than-90% four-metric threshold. Browser-only renderer coverage
+is not merged into the CPU report; text and renderer promotion therefore remain
+Draft despite passing real WebGPU evidence.

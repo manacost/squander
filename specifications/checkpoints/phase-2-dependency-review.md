@@ -1,13 +1,13 @@
 # Phase 2 dependency review checkpoint
 
-Status: **Dependency metadata reviewed and intentionally deferred to migration; package export validator verified**.
+Status: **Dependency metadata and package exports verified at the v2 migration boundary**.
 
 ## Pre-slice contract checkpoint
 
-- AD-054 keeps current PixiJS/Svelte dependency metadata until the intentional
-  breaking migration boundary.
-- Non-fatal package suggestions are recorded rather than changing compatibility
-  metadata mid-phase.
+- AD-054 records the intentional breaking migration boundary for the replacement
+  runtime.
+- Package metadata is now explicit for the v2 release; non-fatal suggestions
+  are recorded in the package checkpoint when applicable.
 - Core package subpaths require a repeatable consumer-facing export check.
 
 ## Implemented slice
@@ -16,8 +16,8 @@ Status: **Dependency metadata reviewed and intentionally deferred to migration; 
   `npm run validate:package` command.
 - Verified `squander/core` and `squander/core/runtime` expose the intended
   factory symbols after packaging.
-- Left PixiJS, Svelte, repository URL, license metadata, and SvelteKit warning
-  unchanged pending the migration decision.
+- Removed PixiJS package metadata, retained Svelte as an optional adapter
+  dependency, and finalized the repository URL and license metadata.
 
 ## Evidence
 
@@ -37,7 +37,7 @@ Status: **Dependency metadata reviewed and intentionally deferred to migration; 
 
 ## Known gaps and gate
 
-- Final migration must decide SvelteKit dependency declaration, repository URL,
-  license metadata, PixiJS removal, and Svelte subpath exports together.
-- Go/no-go: **continue with capability documentation and final migration review;
-  do not promote the full Phase 2 package.**
+- The package boundary is intentionally breaking and complete. Individual
+  capability promotion remains governed by the current capability checkpoints.
+- Go/no-go: **continue with capability verification; do not promote the full
+  Phase 2 package until individual capability gates pass.**
