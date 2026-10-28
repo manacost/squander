@@ -71,8 +71,12 @@ and recreates an isolated host instance.
 
 Planned verification for the remaining replacement-framework contract:
 
-Two-host browser isolation, SSR component rendering, notification scheduling,
-and the full package consumer test remain. `squander/svelte/adapter` is Node-safe; `squander/svelte` also
+Notification scheduling and the full package consumer test remain.
+Two-host browser isolation is covered by
+[`tests/webgpu-svelte-adapter.spec.ts`](../../tests/webgpu-svelte-adapter.spec.ts),
+and SSR component import/rendering is covered by
+[`src/lib/svelte/GameHost.ssr.test.ts`](../../src/lib/svelte/GameHost.ssr.test.ts).
+`squander/svelte/adapter` is Node-safe; `squander/svelte` also
 contains the Svelte component entry and must be compiled by a Svelte-aware
 consumer.
 
