@@ -178,7 +178,7 @@
   };
 </script>
 
-<svelte:head><title>Phase 2 composition playground</title></svelte:head>
+<svelte:head><title>Phase 2 examples playground</title></svelte:head>
 
 <GameHost
   class="playground-canvas"

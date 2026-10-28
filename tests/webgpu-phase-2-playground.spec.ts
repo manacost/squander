@@ -5,7 +5,7 @@ test("[phase-2-playground] composes runtime capabilities through GameHost", asyn
   page.on("console", (message) => {
     if (message.type() === "warning" || message.type() === "error") console_messages.push(message.text());
   });
-  await page.goto("/docs/phase-2/playground");
+  await page.goto("/docs/examples/playground");
   await page.waitForTimeout(500);
   if ((await page.getByTestId("playground-status").textContent()) === "error") {
     throw new Error((await page.getByTestId("playground-error").textContent()) ?? "unknown playground initialization error");

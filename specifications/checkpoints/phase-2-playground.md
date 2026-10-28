@@ -2,7 +2,7 @@
 
 ## Scope
 
-- Added a runnable Phase 2 playground route at `/docs/phase-2/playground`.
+- Added a runnable Phase 2 playground route at `/docs/examples/playground`.
 - Composed a game-owned PNG Blob texture with nearest/linear filtering,
   transformed sprite drawing, rectangle/circle primitives, polygon fill,
   flattened path stroke, font text, camera scope, and Svelte bridge state.

@@ -1,4 +1,4 @@
-# Phase 2 replacement framework
+# Phase 2 examples and verification
 
 This page records the replacement framework work that has measured evidence in
 this repository. A slice is not a promoted capability unless its checkpoint
@@ -6,7 +6,8 @@ states that the complete acceptance evidence exists.
 
 ## Verified slices
 
-Open the [composition playground](/docs/phase-2/playground) to exercise the
+This route is the home for runnable examples and verification evidence. Open
+the [composition playground](/docs/examples/playground) to exercise the
 verified runtime capabilities together.
 
 - WebGPU runtime setup, deterministic readback, texture sampling, source-over

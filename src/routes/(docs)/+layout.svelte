@@ -8,7 +8,7 @@
 
   const links = [["about", "/"]] as const;
 
-  const documentation = ["phase-2"] as const;
+  const documentation = ["examples"] as const;
   interface Props {
     data: LayoutData;
     children?: import("svelte").Snippet;
