@@ -95,7 +95,8 @@ Supply a rectangle’s starting corner and signed dimensions, a circle’s cente
 
 Primitive draw command types are now re-exported through the public core
 entrypoint alongside the shared color helpers used for tint and fill/stroke
-configuration.
+configuration. A real GPU fixture now verifies source-over ordering across a
+sprite, rectangle, and circle in both submission orders.
 
 Current verification:
 

@@ -25,6 +25,8 @@ deterministic readback.
 - `npm run check` — passed with zero Svelte diagnostics.
 - Focused CPU tests for camera, shapes, and polygons — passed, 12 tests.
 - `npm run test:webgpu -- --grep 'camera-2d|shape-drawing|paths-and-polygons|resource-ownership'` — passed, 15 real Chromium WebGPU tests.
+- Mixed sprite/rectangle/circle source-over ordering fixture — passed with
+  independently calculated reversed-order readback values.
 
 ## Evidence gaps
 
@@ -35,6 +37,6 @@ coverage remain documented.
 
 ## Go/no-go
 
-**Continue.** The public camera and primitive command seam is verified. Proceed
-with remaining mixed-order fixtures and final public path/polygon behavior before
-promoting the capabilities.
+**Continue.** The public camera and primitive command seam and mixed source-over
+ordering are verified. Proceed with remaining public path/polygon behavior and
+capability promotion evidence.

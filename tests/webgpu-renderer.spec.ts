@@ -412,6 +412,42 @@ test("[shape-drawing] renders a filled circle from center and radius", async ({ 
   expect(result.corner).toEqual([0, 0, 0, 255]);
 });
 
+test("[shape-drawing] preserves source-over order across sprite, rectangle, and circle commands", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 2, height: 2 });
+    const red = renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1);
+    const circle = { kind: "circle" as const, draw: { circle: { x: 1, y: 1, radius: 1 }, color: colors.rgba(0, 0, 1, 1), opacity: 0.5 } };
+    const rectangle = {
+      kind: "rectangle" as const,
+      draw: { rectangle: { x: 0, y: 0, width: 2, height: 2 }, color: colors.rgba(0, 1, 0, 1), opacity: 0.5 },
+    };
+    const sprite_then_shapes = await renderer.draw_commands([
+      { kind: "texture", draw: { texture: red, options: { width: 2, height: 2, opacity: 0.5 } } },
+      rectangle,
+      circle,
+    ]);
+    const shapes_then_sprite = await renderer.draw_commands([
+      circle,
+      rectangle,
+      { kind: "texture", draw: { texture: red, options: { width: 2, height: 2, opacity: 0.5 } } },
+    ]);
+    red.release();
+    renderer.dispose();
+    const pixel_at = (pixels: Uint8Array, x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return { sprite_then_shapes: pixel_at(sprite_then_shapes, 1, 1), shapes_then_sprite: pixel_at(shapes_then_sprite, 1, 1) };
+  });
+
+  expect(result.sprite_then_shapes).toEqual([32, 64, 128, 255]);
+  expect(result.shapes_then_sprite).toEqual([128, 64, 32, 255]);
+});
+
 test("[shape-drawing] renders a centered flat-ended line from explicit endpoints", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
