@@ -9,7 +9,8 @@ states that the complete acceptance evidence exists.
 This route is the home for runnable examples and verification evidence. Open
 the [composition playground](/docs/examples/playground) to exercise the
 verified runtime capabilities together, or open the [Svelte 5 adapter example](/docs/examples/svelte)
-to see typed state, commands, and per-host isolation.
+to see typed state, commands, and per-host isolation. The focused [text drawing example](/docs/examples/text)
+shows bundled-font loading, glyph preparation, WebGPU output, types, and code samples.
 
 ## Evidence map
 

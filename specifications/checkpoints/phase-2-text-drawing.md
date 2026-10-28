@@ -40,6 +40,10 @@ over WebGPU sampling and deterministic readback.
 - `npm run test:webgpu -- --grep 'phase-2-playground' --update-snapshots` —
   passed after intentionally replacing the Arial screenshot with the bundled
   Geostar character-sheet baseline.
+- `npm run test:integration -- --grep 'text example documentation'` — passed;
+  the focused docs page exposes the loading and drawing samples.
+- `npm run test:webgpu -- --grep 'text-drawing'` — passed two tests, including
+  the focused `/docs/examples/text` proof page with non-black WebGPU readback.
 - `npm run test:coverage:runtime` and `npm run check:coverage` — passed with
   the replacement-runtime four-metric gate above 90% for every included file.
 
@@ -47,8 +51,11 @@ over WebGPU sampling and deterministic readback.
 
 The bundled Geostar URL, glyph reuse/addition, typed capacity and failure paths,
 camera integration through the shared command transform, and real readback
-tolerances are evidenced. Rich layout, shaping, fallback, and arbitrary-script
-support remain outside Phase 2.
+tolerances are evidenced. The focused example is implemented at
+`src/routes/(docs)/docs/examples/text/+page.svelte`, with normal navigation
+coverage in `tests/text-example.spec.ts` and real WebGPU proof in
+`tests/webgpu-text-example.spec.ts`. Rich layout, shaping, fallback, and
+arbitrary-script support remain outside Phase 2.
 
 ## Go/no-go
 
