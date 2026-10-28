@@ -538,6 +538,34 @@ test("[shape-drawing] centers wider strokes and ignores degenerate strokes", asy
   expect(result.outside).toEqual([0, 0, 0, 255]);
 });
 
+test("[shape-drawing] places a clockwise corner join on the outer side", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const path_url = new URL("/src/lib/core/runtime/path_flattening.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const path = (await import(/* @vite-ignore */ path_url)) as typeof import("../src/lib/core/runtime/path_flattening.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 12, height: 12 });
+    const subpaths = path.flatten_path(
+      [path.move_to(3.5, 3.5), path.line_to(7.5, 3.5), path.line_to(7.5, 7.5)],
+      0.25,
+    );
+    const pixels = await renderer.draw_commands([
+      { kind: "stroke", draw: { subpaths, width: 4, color: colors.rgba(0, 1, 0, 1) } },
+    ]);
+    renderer.dispose();
+    const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return { outer: pixel_at(8, 1), inner: pixel_at(7, 4) };
+  });
+
+  expect(result.outer).toEqual([0, 255, 0, 255]);
+  expect(result.inner).toEqual([0, 255, 0, 255]);
+});
+
 test("[texture-filtering] keeps nearest and linear sampling independent", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

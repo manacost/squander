@@ -35,7 +35,9 @@ const add_join = (
   if (!first_normal || !second_normal) return;
   const turn = (current.x - previous.x) * (next.y - current.y) - (current.y - previous.y) * (next.x - current.x);
   if (turn === 0) return;
-  const side = turn > 0 ? 1 : -1;
+  // Positive cross products are clockwise turns in the positive-Y-down world;
+  // the outer side is the opposite of the mathematical left normal.
+  const side = turn > 0 ? -1 : 1;
   const outer_first = { x: side * first_normal.x, y: side * first_normal.y };
   const outer_second = { x: side * second_normal.x, y: side * second_normal.y };
   const miter_sum = { x: outer_first.x + outer_second.x, y: outer_first.y + outer_second.y };

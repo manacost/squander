@@ -98,8 +98,9 @@ describe("[paths-and-polygons] stroke segment geometry", () => {
     );
 
     expect(result.indices).toHaveLength(15);
-    expect(result.vertices).toContainEqual({ x: 10, y: 1 });
-    expect(result.vertices).toContainEqual({ x: 9, y: 1 });
+    expect(result.vertices).toContainEqual({ x: 10, y: -1 });
+    expect(result.vertices).toContainEqual({ x: 11, y: 0 });
+    expect(result.vertices).toContainEqual({ x: 11, y: -1 });
   });
 
   it("joins every corner of a closed subpath, including the wraparound corner", () => {
@@ -140,5 +141,37 @@ describe("[paths-and-polygons] stroke segment geometry", () => {
 
     expect(result.vertices.some((point) => Math.abs(point.y) > 4)).toBe(false);
     expect(result.vertices).toContainEqual({ x: 10, y: 0 });
+  });
+
+  it("skips collinear and degenerate join candidates", () => {
+    const collinear = create_stroke_geometry(
+      [
+        {
+          points: [
+            { x: 0, y: 0 },
+            { x: 2, y: 0 },
+            { x: 4, y: 0 },
+          ],
+          closed: false,
+        },
+      ],
+      2,
+    );
+    const duplicate = create_stroke_geometry(
+      [
+        {
+          points: [
+            { x: 0, y: 0 },
+            { x: 0, y: 0 },
+            { x: 2, y: 0 },
+          ],
+          closed: false,
+        },
+      ],
+      2,
+    );
+
+    expect(collinear.indices).toHaveLength(12);
+    expect(duplicate.indices).toHaveLength(6);
   });
 });
