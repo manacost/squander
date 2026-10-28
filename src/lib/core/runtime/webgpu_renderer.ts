@@ -19,6 +19,7 @@ import { triangulate_polygon } from "./triangulation.js";
 import type { FlattenedSubpath } from "./path_flattening.js";
 import { create_stroke_geometry } from "./stroke_geometry.js";
 import type { GeometryHandle, GeometryOwner, PreparedGeometry } from "./geometry_ownership.js";
+import { create_webgpu_font, type FontOptions, type TextDrawOptions, type WebGpuFont } from "./font_loading.js";
 
 export type ClearColor = Readonly<{ red: number; green: number; blue: number; alpha: number }>;
 
@@ -66,6 +67,7 @@ export type StrokeDraw = Readonly<{ subpaths: readonly FlattenedSubpath[]; width
 export type PolygonDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; opacity?: number }>;
 export type PolygonOutlineDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; stroke_width: number; opacity?: number }>;
 export type OwnedGeometryDraw = Readonly<{ geometry: GeometryHandle; owner: GeometryOwner; color: Color; opacity?: number }>;
+export type TextDraw = Readonly<{ font: WebGpuFont; text: string; options?: TextDrawOptions }>;
 
 export type RenderCommand = Readonly<
   | { kind: "texture"; draw: TextureDraw }
@@ -79,6 +81,7 @@ export type RenderCommand = Readonly<
   | { kind: "polygon"; draw: PolygonDraw }
   | { kind: "polygon_outline"; draw: PolygonOutlineDraw }
   | { kind: "geometry"; draw: OwnedGeometryDraw }
+  | { kind: "text"; draw: TextDraw }
 >;
 
 export type WebGpuRenderer = Readonly<{
@@ -86,8 +89,10 @@ export type WebGpuRenderer = Readonly<{
   create_texture: (pixels: Uint8Array, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
   create_texture_from_image: (image: CanvasImageSource, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
   create_texture_from_blob: (source: Blob, options?: TextureFilteringOptions, signal?: AbortSignal) => Promise<WebGpuTexture>;
+  create_font_from_url: (source: string, options?: FontOptions) => Promise<WebGpuFont>;
   draw_texture: (texture: WebGpuTexture, options?: TextureDrawOptions) => Promise<Uint8Array>;
   draw_textures: (draws: readonly TextureDraw[]) => Promise<Uint8Array>;
+  draw_text: (font: WebGpuFont, text: string, options?: TextDrawOptions) => Promise<Uint8Array>;
   draw_commands: (commands: readonly RenderCommand[]) => Promise<Uint8Array>;
   resize: (viewport: ViewportSize) => void;
   get_viewport: () => ViewportSize;
@@ -367,7 +372,38 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       throw new RangeError("at least one texture draw is required");
     }
     type GeometryDraw = Readonly<{ geometry: TriangleDraw; handle?: GeometryHandle; snapshot?: PreparedGeometry }>;
-    const draws = commands.map((command): TextureDraw | GeometryDraw => {
+    const expanded_commands = commands.flatMap((command): readonly RenderCommand[] => {
+      if (command.kind !== "text") return [command];
+      const { font, text, options = {} } = command.draw;
+      font.prepare(text);
+      const size = options.size ?? font.size;
+      if (!Number.isFinite(size) || size <= 0) throw new RangeError("text size must be finite and positive");
+      const color = options.color ?? { red: 1, green: 1, blue: 1, alpha: 1 };
+      const scale = size / font.size;
+      const total_width = [...text].reduce((width, character) => width + font.get_glyph(character).advance * scale, 0);
+      const origin = options.origin ?? { x: 0, y: 0 };
+      const start_x = (options.x ?? 0) - total_width * origin.x;
+      const start_y = (options.y ?? 0) - size * origin.y;
+      let cursor_x = start_x;
+      return [...text].map((character): RenderCommand => {
+        const glyph = font.get_glyph(character);
+        const draw: TextureDraw = {
+          texture: font.atlas,
+          options: {
+            region: { x: glyph.x, y: glyph.y, width: glyph.width, height: glyph.height },
+            x: cursor_x,
+            y: start_y,
+            width: glyph.width * scale,
+            height: glyph.height * scale,
+            tint: color,
+            opacity: options.opacity,
+          },
+        };
+        cursor_x += glyph.advance * scale;
+        return { kind: "texture", draw };
+      });
+    });
+    const draws = expanded_commands.map((command): TextureDraw | GeometryDraw => {
       if (command.kind === "texture") {
         return command.draw;
       }
@@ -546,6 +582,9 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
             shape_y: stroke_width / normalized.height,
           },
         };
+      }
+      if (command.kind !== "rectangle") {
+        throw new Error("unsupported render command");
       }
       const normalized = normalize_rectangle(command.draw.rectangle);
       if (!has_drawable_area(normalized)) {
@@ -805,6 +844,9 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   const draw_textures = async (draws: readonly TextureDraw[]): Promise<Uint8Array> =>
     draw_commands(draws.map((draw) => ({ kind: "texture", draw })));
 
+  const draw_text = async (font: WebGpuFont, text: string, options?: TextDrawOptions): Promise<Uint8Array> =>
+    draw_commands([{ kind: "text", draw: { font, text, options } }]);
+
   function ensure_solid_texture(): WebGpuTexture {
     solid_texture ??= create_texture(new Uint8Array([255, 255, 255, 255]), 1, 1);
     return solid_texture;
@@ -848,16 +890,20 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     device.destroy();
   };
 
-  return Object.freeze({
+  let renderer_api!: WebGpuRenderer;
+  renderer_api = Object.freeze({
     clear,
     create_texture,
     create_texture_from_image,
     create_texture_from_blob,
+    create_font_from_url: (source: string, options?: FontOptions) => create_webgpu_font(renderer_api, source, options),
     draw_texture,
     draw_textures,
+    draw_text,
     draw_commands,
     resize,
     get_viewport,
     dispose,
   });
+  return renderer_api;
 };

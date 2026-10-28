@@ -5,6 +5,7 @@ import { app, signal_as_ready } from "./app.js";
 
 export { app };
 export {
+  basic_latin,
   close,
   degrees,
   create_geometry_owner,
@@ -12,6 +13,9 @@ export {
   create_path,
   create_polygon,
   create_stroke_geometry,
+  create_webgpu_font,
+  FontLoadError,
+  GlyphAtlasCapacityError,
   flatten_path,
   hex,
   hsl,
@@ -46,6 +50,9 @@ export type {
   PolygonDraw,
   PolygonOutlineDraw,
   PreparedGeometry,
+  ResourceHandle,
+  ResourceLease,
+  ResourceOwner,
   Color,
   Rectangle,
   RectangleDraw,
@@ -62,7 +69,18 @@ export type {
 export { create_game, GameDeviceLostError, GameDisposedError, GameInitializationError, GameRuntimeError } from "./runtime/index.js";
 export type { Game as RuntimeGame, GameOptions, GameSetupContext } from "./runtime/index.js";
 export { create_webgpu_renderer, WebGpuUnavailableError } from "./runtime/index.js";
-export type { WebGpuRenderer, WebGpuRendererOptions, WebGpuTexture, TextureDrawOptions, TextureDraw } from "./runtime/index.js";
+export type {
+  WebGpuRenderer,
+  WebGpuRendererOptions,
+  WebGpuTexture,
+  TextureDrawOptions,
+  TextureDraw,
+  TextDraw,
+  TextDrawOptions,
+  FontOptions,
+  FontGlyph,
+  WebGpuFont,
+} from "./runtime/index.js";
 
 // The application will create a renderer using WebGL, if possible,
 // with a fallback to a canvas render. It will also setup the ticker

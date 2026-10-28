@@ -6,7 +6,9 @@ Draw changing world-space labels from familiar font assets without making develo
 
 ## Status
 
-Draft. Target: Phase 2.
+Draft. Target: Phase 2. The first typed font asset and WebGPU text path are
+implemented, with basic-Latin preparation, non-evicting atlas rebuilds capped
+at 4096×4096, and repeated prepared-glyph rendering verified in Chromium.
 
 The direction was agreed in the interview; open contract details are listed below.
 This draft does not claim implementation or verification.
@@ -63,10 +65,15 @@ Illustrative: labels: font(font_url), then draw.text(labels, "Treasure", { x: 10
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+The asset-loading unit suite covers owned font handles. The real WebGPU fixture
+[`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts) covers
+font creation from a browser font source, glyph atlas sampling, repeated text
+rendering, and atlas reuse. Existing legacy tests are not claimed as coverage.
+Remaining planned verification includes bundled URL loading, automatic new-glyph
+preparation, typed capacity failure, font-load failure, and camera/readback
+tolerances.
 
-Browser font-load/rasterization/GPU fixtures, cache-behavior tests, and typed font-handle tests.
+The public type coverage is in [`type-tests/phase-2-runtime.ts`](../../type-tests/phase-2-runtime.ts).
 
 Use `[text-drawing]` in relevant suite names and add actual file/suite links as tests land.
 

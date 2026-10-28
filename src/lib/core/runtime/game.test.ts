@@ -36,8 +36,19 @@ const create_fake_renderer = (): WebGpuRenderer => {
     create_texture,
     create_texture_from_image: (image, width, height) => create_texture(new Uint8Array(), width, height),
     create_texture_from_blob: async (source) => create_texture(new Uint8Array(), 1, 1),
+    create_font_from_url: async () => ({
+      family: "test",
+      size: 16,
+      atlas: create_texture(new Uint8Array(), 1, 1),
+      atlas_width: 1,
+      atlas_height: 1,
+      prepare: () => undefined,
+      get_glyph: () => ({ character: "A", x: 0, y: 0, width: 1, height: 1, advance: 1, baseline: 0 }),
+      release: () => undefined,
+    }),
     draw_texture: draw,
     draw_textures: draw,
+    draw_text: draw,
     draw_commands: draw,
     resize: (next_viewport: ViewportSize) => {
       viewport = next_viewport;

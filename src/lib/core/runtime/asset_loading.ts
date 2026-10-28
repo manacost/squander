@@ -1,6 +1,7 @@
 import type { ResourceHandle, ResourceOwner } from "./resource_ownership.js";
 import type { WebGpuRenderer, WebGpuTexture } from "./webgpu_renderer.js";
 import type { TextureFilteringOptions } from "./texture_filtering.js";
+import type { FontOptions, WebGpuFont } from "./font_loading.js";
 
 export type AssetDefinition<Resource> = Readonly<{
   load: (signal: AbortSignal) => Promise<Resource>;
@@ -23,6 +24,7 @@ export type AssetCache<Manifest extends AssetManifest> = Readonly<{
     source: Blob,
     options?: Readonly<TextureFilteringOptions & { signal?: AbortSignal }>,
   ) => Promise<ResourceHandle<WebGpuTexture>>;
+  load_font: (source: string, options?: FontOptions & { signal?: AbortSignal }) => Promise<ResourceHandle<WebGpuFont>>;
   dispose: () => void;
 }>;
 
@@ -42,6 +44,7 @@ export const create_asset_cache = <Manifest extends AssetManifest>(
   const pending = new Map<keyof Manifest, PendingEntry>();
   const shared_handles = new Map<keyof Manifest, ResourceHandle<unknown>>();
   const texture_operations = new Set<AbortController>();
+  const font_operations = new Set<AbortController>();
   let disposed = false;
 
   const load = async <Key extends keyof Manifest>(
@@ -145,6 +148,33 @@ export const create_asset_cache = <Manifest extends AssetManifest>(
     }
   };
 
+  const load_font = async (source: string, options: FontOptions & { signal?: AbortSignal } = {}): Promise<ResourceHandle<WebGpuFont>> => {
+    if (disposed) throw new Error("asset cache is disposed");
+    if (options.signal?.aborted) throw create_abort_error();
+    if (renderer === undefined) throw new Error("asset cache has no renderer");
+    const { signal, ...font_options } = options;
+    const controller = new AbortController();
+    const abort = (): void => controller.abort();
+    signal?.addEventListener("abort", abort, { once: true });
+    font_operations.add(controller);
+    try {
+      const font = await renderer.then((value) => value.create_font_from_url(source, font_options));
+      if (disposed || controller.signal.aborted) {
+        font.release();
+        throw disposed ? new Error("asset cache was disposed during loading") : create_abort_error();
+      }
+      try {
+        return resources.acquire(font, (resource) => resource.release());
+      } catch (error) {
+        font.release();
+        throw error;
+      }
+    } finally {
+      font_operations.delete(controller);
+      signal?.removeEventListener("abort", abort);
+    }
+  };
+
   const dispose = (): void => {
     if (disposed) {
       return;
@@ -156,6 +186,9 @@ export const create_asset_cache = <Manifest extends AssetManifest>(
     for (const controller of texture_operations) {
       controller.abort();
     }
+    for (const controller of font_operations) {
+      controller.abort();
+    }
     for (const handle of shared_handles.values()) {
       handle.release();
     }
@@ -163,5 +196,5 @@ export const create_asset_cache = <Manifest extends AssetManifest>(
     shared_handles.clear();
   };
 
-  return Object.freeze({ load, load_texture, dispose });
+  return Object.freeze({ load, load_texture, load_font, dispose });
 };

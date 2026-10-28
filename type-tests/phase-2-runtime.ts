@@ -18,6 +18,8 @@ import {
   type Path,
   type Polygon,
   type WebGpuRenderer,
+  type WebGpuFont,
+  type ResourceHandle,
 } from "../src/lib/index.js";
 
 const renderer = {
@@ -84,6 +86,11 @@ const game = create_game({
 });
 
 void game;
+const font_handle: Promise<ResourceHandle<WebGpuFont>> = game.assets.load_font("url(/fonts/example.woff2)", {
+  characters: "0123456789",
+  size: 24,
+});
+void font_handle;
 game.resize({
   logical_width: 1,
   logical_height: 1,

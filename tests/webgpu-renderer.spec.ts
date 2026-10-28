@@ -554,6 +554,41 @@ test("[paths-and-polygons] renders public polygon and path updates", async ({ pa
   expect(result.second_path).toEqual([255, 0, 0, 255]);
 });
 
+test("[text-drawing] loads a font, reuses prepared glyphs, and renders text", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 64, height: 64 });
+    const font = await renderer.create_font_from_url('local("Arial")', { characters: "A", size: 24 });
+    const first = await renderer.draw_text(font, "A", { x: 8, y: 8, color: { red: 1, green: 0, blue: 0, alpha: 1 } });
+    const first_atlas = font.atlas;
+    const second = await renderer.draw_text(font, "A", { x: 32, y: 8, color: { red: 0, green: 1, blue: 0, alpha: 1 } });
+    const second_atlas = font.atlas;
+    const has_ink = (pixels: Uint8Array, channel: number, left: number, right: number): boolean => {
+      for (let y = 8; y < 44; y += 1) {
+        for (let x = left; x < right; x += 1) {
+          if (pixels[y * 256 + x * 4 + channel] > 0) return true;
+        }
+      }
+      return false;
+    };
+    font.release();
+    renderer.dispose();
+    return {
+      first_atlas_reused: first_atlas === second_atlas,
+      first_has_ink: has_ink(first, 0, 8, 29),
+      second_has_ink: has_ink(second, 1, 32, 53),
+    };
+  });
+
+  expect(result.first_atlas_reused).toBe(true);
+  expect(result.first_has_ink).toBe(true);
+  expect(result.second_has_ink).toBe(true);
+});
+
 test("[paths-and-polygons] renders prepared stroke geometry with real readback", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

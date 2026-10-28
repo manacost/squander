@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { create_asset_cache, type AssetManifest } from "./asset_loading.js";
 import { create_resource_owner } from "./resource_ownership.js";
 import type { WebGpuRenderer, WebGpuTexture } from "./webgpu_renderer.js";
+import type { WebGpuFont } from "./font_loading.js";
 
 const create_texture = (release = vi.fn()): WebGpuTexture =>
   ({
@@ -15,6 +16,18 @@ const create_texture = (release = vi.fn()): WebGpuTexture =>
 const create_texture_renderer = (load: WebGpuRenderer["create_texture_from_blob"]): WebGpuRenderer =>
   ({ create_texture_from_blob: load }) as WebGpuRenderer;
 
+const create_font = (release = vi.fn()): WebGpuFont =>
+  ({
+    family: "test",
+    size: 16,
+    atlas: create_texture(),
+    atlas_width: 1,
+    atlas_height: 1,
+    prepare: vi.fn(),
+    get_glyph: vi.fn(),
+    release,
+  }) as WebGpuFont;
+
 type TestManifest = AssetManifest & {
   hero: {
     load: (signal: AbortSignal) => Promise<string>;
@@ -23,6 +36,18 @@ type TestManifest = AssetManifest & {
 };
 
 describe("[asset-loading] manifest cache", () => {
+  it("loads fonts into owned handles", async () => {
+    const font = create_font();
+    const renderer = { create_font_from_url: vi.fn().mockResolvedValue(font) } as unknown as WebGpuRenderer;
+    const cache = create_asset_cache({}, create_resource_owner(), Promise.resolve(renderer));
+
+    const handle = await cache.load_font("local(Arial)", { characters: "ABC" });
+    expect(handle.read()).toBe(font);
+    handle.release();
+    expect(font.release).toHaveBeenCalledOnce();
+    cache.dispose();
+  });
+
   it("loads Blob and File values into independently releasable texture handles", async () => {
     const first_texture = create_texture();
     const second_texture = create_texture();
