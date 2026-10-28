@@ -93,6 +93,10 @@ Supply a rectangle’s starting corner and signed dimensions, a circle’s cente
 
 ## Test references
 
+Primitive draw command types are now re-exported through the public core
+entrypoint alongside the shared color helpers used for tint and fill/stroke
+configuration.
+
 Current verification:
 
 - [`src/lib/core/runtime/shapes.test.ts`](../../src/lib/core/runtime/shapes.test.ts)

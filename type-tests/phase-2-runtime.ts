@@ -1,5 +1,6 @@
 import {
   close,
+  create_camera,
   create_game,
   create_geometry_owner,
   create_path,
@@ -7,7 +8,11 @@ import {
   line_to,
   move_to,
   rgba,
+  degrees,
+  rgb,
+  hex,
   type GeometryHandle,
+  type RenderCommand,
   type Path,
   type Polygon,
   type WebGpuRenderer,
@@ -26,12 +31,22 @@ const polygon: Polygon = create_polygon([
   { x: 0, y: 1 },
 ]);
 const color = rgba(1, 0, 0, 1);
+const sprite_color = rgb(0, 1, 0);
+const camera = create_camera({ viewport: { logical_width: 1, logical_height: 1 } });
+const command: RenderCommand = {
+  kind: "rectangle",
+  draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: hex("#fff") },
+};
 const owner = create_geometry_owner();
 const geometry: GeometryHandle = owner.create({ vertices: [{ x: 0, y: 0 }], indices: [0, 0, 0] });
 
 void path;
 void polygon;
 void color;
+void sprite_color;
+void camera;
+void command;
+void degrees(90);
 void geometry;
 
 const accepts_renderer = (renderer: WebGpuRenderer): void => {

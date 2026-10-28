@@ -131,6 +131,10 @@ package-level geometry surface remains unpromoted.
 
 ## Test references
 
+Path, polygon, stroke, triangle, and owned-geometry command types are now
+available from the public core entrypoint; the existing renderer suites provide
+the real GPU evidence for their implementations.
+
 The CPU polygon snapshot and validation contract is covered by
 [`src/lib/core/runtime/polygons.test.ts`](../../src/lib/core/runtime/polygons.test.ts),
 including normalization, caller isolation, valid updates, invalid updates, and

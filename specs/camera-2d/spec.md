@@ -99,6 +99,10 @@ Configure the camera position to the world point you want centered, then apply i
 
 ## Test references
 
+The public core entrypoint now re-exports `create_camera`, `Camera`,
+`CameraOptions`, `CameraViewport`, `Point`, and `Bounds`; the renderer consumes
+camera scopes for world-space primitive and sprite draws.
+
 Current verification:
 
 - [`src/lib/core/runtime/camera.test.ts`](../../src/lib/core/runtime/camera.test.ts)
