@@ -6,10 +6,10 @@ Keep shared GPU assets alive exactly while owners retain them, with predictable 
 
 ## Status
 
-Draft. Target: Phase 2.
+Implemented.
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+The Phase 2 ownership contract is implemented and verified below. Scene
+automation remains outside this phase.
 
 ## Requirements
 
@@ -70,14 +70,16 @@ Current verification:
   destruction, and idempotent owner disposal in the
   `[resource-ownership] explicit handles` suite.
 
-The current kernel is renderer-independent. GPU-backed resource fixtures,
-cross-game checks, and public handle type tests remain unimplemented.
+The ownership kernel is renderer-independent for deterministic accounting, with
+real GPU fixtures covering accepted draw lifetime and cross-game isolation.
+Public handle type tests reject forged ordinary objects and wrong asset kinds.
 
 ## Notes
 
-AD-004, AD-013, AD-037 through AD-039, and AD-056. The current owner exposes
+AD-004, AD-013, AD-037 through AD-039, and AD-056. The owner exposes
 `acquire`, handle `share`, handle `release`, and draw `acquire_lease`; renderer
-integration will determine how leases map to submitted GPU work.
+submission maps leases to accepted GPU work as verified by the real readback
+fixture.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
