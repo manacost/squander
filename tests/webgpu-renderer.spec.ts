@@ -18,7 +18,7 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
       2,
       { filter: "nearest" },
     );
-    const font = await renderer.create_font_from_url('local("Arial")', {
+    const font = await renderer.create_font_from_url('url("/fonts/GeostarFill-Regular.ttf")', {
       characters: "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%",
       size: 24,
     });
@@ -773,7 +773,7 @@ test("[text-drawing] loads a font, reuses prepared glyphs, and renders text", as
     const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
     const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
     const renderer = await module.create_webgpu_renderer({ canvas, width: 64, height: 64 });
-    const font = await renderer.create_font_from_url('local("Arial")', { characters: "A", size: 24 });
+    const font = await renderer.create_font_from_url('url("/fonts/GeostarFill-Regular.ttf")', { characters: "A", size: 24 });
     const first = await renderer.draw_text(font, "A", { x: 8, y: 8, color: { red: 1, green: 0, blue: 0, alpha: 1 } });
     const first_atlas = font.atlas;
     const second = await renderer.draw_text(font, "B", { x: 32, y: 8, color: { red: 0, green: 1, blue: 0, alpha: 1 } });

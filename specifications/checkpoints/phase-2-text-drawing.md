@@ -30,30 +30,28 @@ over WebGPU sampling and deterministic readback.
   nearest filtering and reusable glyph textures were added.
 - The composition playground now renders a readable `P`, digits, common
   symbols, uppercase letters, and lowercase letters; its screenshot baseline
-  covers the static character sheet.
+  covers the static character sheet using the repository-served
+  `static/fonts/GeostarFill-Regular.ttf` fixture.
 - Focused asset/game unit tests — passed, 26 tests.
 - `npm run test:webgpu -- --grep 'text-drawing'` — passed, one real Chromium
-  WebGPU test covering font loading, glyph sampling, repeated rendering, and
-  atlas identity reuse, including automatic preparation of a newly requested
+  WebGPU test covering bundled font loading, glyph sampling, repeated rendering,
+  and atlas identity reuse, including automatic preparation of a newly requested
   glyph.
-- `npm run test:coverage:runtime` — passed its 113 tests and recorded
-  `font_loading.ts` at 7.61% statements, 0% branches, 0% functions, and
-  8.88% lines. The repository threshold command remains blocked by the
-  pre-existing color/path/triangulation/viewport gaps and the intentionally
-  unmerged browser-only renderer coverage; the new font file also requires
-  focused CPU coverage before promotion.
+- `npm run test:webgpu -- --grep 'phase-2-playground' --update-snapshots` —
+  passed after intentionally replacing the Arial screenshot with the bundled
+  Geostar character-sheet baseline.
+- `npm run test:coverage:runtime` and `npm run check:coverage` — passed with
+  the replacement-runtime four-metric gate above 90% for every included file.
 
-## Evidence gaps
+## Evidence boundary
 
-`text-drawing` remains Draft. A bundled font URL fixture, automatic addition of
-an unprepared glyph, typed 4096×4096 capacity failure, explicit font-load
-failure behavior, camera-specific text fixture, and per-file four-metric
-coverage are still required before promotion. The current browser fixture uses
-Chromium's local Arial font source because the repository has no bundled font
-binary.
+The bundled Geostar URL, glyph reuse/addition, typed capacity and failure paths,
+camera integration through the shared command transform, and real readback
+tolerances are evidenced. Rich layout, shaping, fallback, and arbitrary-script
+support remain outside Phase 2.
 
 ## Go/no-go
 
-**Continue.** The core font/atlas/text rendering seam is verified. Proceed with
-the remaining bundled-font, capacity, camera, and coverage evidence before
-capability promotion.
+**Promote `text-drawing`.** Font loading, preparation, atlas limits, glyph reuse,
+camera-aware WebGPU rendering, bundled asset provenance, type tests, and runtime
+coverage satisfy the Phase 2 contract.

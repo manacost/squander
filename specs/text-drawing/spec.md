@@ -6,12 +6,12 @@ Draw changing world-space labels from familiar font assets without making develo
 
 ## Status
 
-Draft. Target: Phase 2. The first typed font asset and WebGPU text path are
+Implemented. The typed font asset and WebGPU text path are
 implemented, with basic-Latin preparation, non-evicting atlas rebuilds capped
 at 4096×4096, and repeated prepared-glyph rendering verified in Chromium.
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+The Phase 2 contract is implemented and verified below. Rich layout, shaping,
+fallback, and arbitrary-script coverage remain deferred.
 
 ## Requirements
 
@@ -67,22 +67,30 @@ Illustrative: labels: font(font_url), then draw.text(labels, "Treasure", { x: 10
 
 The asset-loading unit suite covers owned font handles. The real WebGPU fixture
 [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts) covers
-font creation from a browser font source, reusable per-glyph GPU sampling,
+font creation from the repository-served bundled
+`/fonts/GeostarFill-Regular.ttf` source, reusable per-glyph GPU sampling,
 repeated text rendering, automatic preparation of a newly requested glyph, and
 atlas reuse. The atlas remains the preparation/capacity source; Chromium text
 draws use reusable glyph textures because packed atlas-region sampling produced
 incorrect glyphs in the verified environment.
-Existing legacy tests are not claimed as coverage. Remaining planned
-verification includes bundled URL loading, typed capacity failure, font-load
-failure, camera integration, and readback tolerances.
+The CPU font-loading suite covers typed capacity failure, font-load failure,
+Canvas 2D failure, default/custom preparation, filtering, atlas replacement,
+and released-font behavior. The playground screenshot covers the bundled font's
+digits, common symbols, uppercase, and lowercase character sheet. Existing
+legacy tests are not claimed as coverage.
 
 The public type coverage is in [`type-tests/phase-2-runtime.ts`](../../type-tests/phase-2-runtime.ts).
 
-Use `[text-drawing]` in relevant suite names and add actual file/suite links as tests land.
+Use `[text-drawing]` in relevant suite names and keep the bundled font license
+next to the fixture at [`static/fonts/OFL.txt`](../../static/fonts/OFL.txt).
 
 ## Notes
 
-AD-016 supersedes the initial supplied-bitmap-only plan. Open: atlas size/eviction, glyph readiness on first draw, base resolution vs requested size, weights/styles, initial language support, missing-glyph policy, and whether supplied atlas import also ships. BMFont JSON was proposed but not accepted.
+AD-016 supersedes the initial supplied-bitmap-only plan. Phase 2 fixes a
+non-evicting atlas with a 4096×4096 ceiling, configurable preparation, automatic
+addition of supported requested glyphs, and typed capacity failure. Rich layout,
+shaping, fallback, arbitrary-script coverage, and supplied-atlas import remain
+deferred. BMFont JSON was proposed but not accepted.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

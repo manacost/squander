@@ -125,7 +125,10 @@
           minification: "linear",
         });
         texture = texture_handle.read();
-        font = await renderer.create_font_from_url('local("Arial")', { characters: playground_characters, size: 18 });
+        font = await renderer.create_font_from_url('url("/fonts/GeostarFill-Regular.ttf")', {
+          characters: playground_characters,
+          size: 18,
+        });
         generation += 1;
         status = "ready";
         asset_error = null;

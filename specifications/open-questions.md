@@ -52,8 +52,8 @@ implemented. The selected verification baseline and evidence policy are in
 
 ## Text and integration
 
-- `text-drawing`: atlas resolution/capacity/eviction, first-use glyph readiness,
-  fonts/variants and language scope, missing-glyph behavior, and supplied-atlas import.
+- `text-drawing`: rich layout/shaping, fallback and arbitrary-script scope,
+  first-use readiness policy beyond supported glyphs, and supplied-atlas import.
   Browser-font loading was accepted; BMFont JSON import was only proposed.
 - `svelte-bridge`: exact read-only subscription and command types, runtime alias
   protection, SSR boundary, notification scheduling, and commands after disposal.
