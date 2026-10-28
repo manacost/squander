@@ -43,11 +43,11 @@ The game factory initializes the GPU runtime during setup. Applications handle t
 
 Current verification:
 
-- [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+- [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts)
   verifies secure-context and WebGPU availability, real adapter/device-backed
   canvas clearing, and deterministic RGBA readback in the
   `[webgpu-runtime] clears and reads back a real canvas texture` suite.
-- [`verification/webgpu.spec.ts`](../../verification/webgpu.spec.ts) retains the
+- [`tests/webgpu.spec.ts`](../../tests/webgpu.spec.ts) retains the
   independent low-level adapter/device probe.
 
 Device-loss transitions, independent game devices, and final package-consumer

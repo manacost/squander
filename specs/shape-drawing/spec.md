@@ -99,7 +99,7 @@ Current verification:
   covers signed rectangle normalization, zero-area behavior, finite primitive
   validation, stroke widths, snapshots, and opacity in the
   `[shape-drawing] primitive validation` suite.
-- [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+- [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts)
   verifies a filled rectangle submitted after a translucent sprite in the
   `[shape-drawing]` suite.
 

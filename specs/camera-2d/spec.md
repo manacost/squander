@@ -105,7 +105,7 @@ Current verification:
   covers centered focus, zoom, inverse rotation, signed bounds, conservative
   visibility, and finite-value validation in the `[camera-2d] camera transforms`
   suite.
-- [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+- [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts)
   verifies synchronous camera scope application to a real GPU landmark in the
   `[camera-2d]` suite.
 

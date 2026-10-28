@@ -153,7 +153,7 @@ covering centered width, disconnected subpaths, and zero-length segments.
 The same suite covers fixed-ratio miter joins, bevel fallback at excessive
 spikes, and the wraparound corner of a closed subpath.
 The real WebGPU renderer fixture
-[`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+[`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts)
 covers indexed triangle, prepared-stroke, concave polygon fill, and polygon
 outline submission with deterministic readback.
 Game-scoped geometry lifecycle is covered by
@@ -164,7 +164,7 @@ The same ownership suite covers one-shot release observation and the renderer
 suite covers release-driven GPU cache cleanup through stale-handle rejection.
 Owned-handle renderer submission and stale-handle rejection are covered by the
 real WebGPU fixture in
-[`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts).
+[`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts).
 The same fixture covers cached-buffer replacement after an owned update.
 
 Remaining planned verification includes curve endpoint tests, real GPU

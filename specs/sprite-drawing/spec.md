@@ -74,7 +74,7 @@ Illustrative: draw.sprite(hero, { x: 100, y: 80, origin: { x: 0.5, y: 0.5 }, rot
 
 Current verification:
 
-- [`verification/webgpu-renderer.spec.ts`](../../verification/webgpu-renderer.spec.ts)
+- [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts)
   verifies persistent texture upload, full-canvas sampling, atlas-region UV
   selection, tint, opacity, placement, normalized origins, horizontal flipping,
   ordered multi-draw submission, source-over alpha composition, ownership
