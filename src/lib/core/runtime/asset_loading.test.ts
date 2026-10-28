@@ -49,6 +49,65 @@ describe("[asset-loading] manifest cache", () => {
     cache.dispose();
   });
 
+  it("rejects font requests without a renderer and releases late fonts", async () => {
+    const no_renderer = create_asset_cache({}, create_resource_owner());
+    await expect(no_renderer.load_font("local(Arial)")).rejects.toThrow("no renderer");
+    no_renderer.dispose();
+
+    let resolve_font!: (font: WebGpuFont) => void;
+    const font = create_font();
+    const renderer = {
+      create_font_from_url: vi.fn(() => new Promise<WebGpuFont>((resolve) => (resolve_font = resolve))),
+    } as unknown as WebGpuRenderer;
+    const cache = create_asset_cache({}, create_resource_owner(), Promise.resolve(renderer));
+    const pending = cache.load_font("local(Arial)");
+    await Promise.resolve();
+    cache.dispose();
+    resolve_font(font);
+    await expect(pending).rejects.toThrow("disposed during loading");
+    expect(font.release).toHaveBeenCalledOnce();
+  });
+
+  it("rejects already-aborted and renderer-failed texture requests", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const renderer = create_texture_renderer(vi.fn().mockRejectedValue(new Error("decode failed")));
+    const cache = create_asset_cache({}, create_resource_owner(), Promise.resolve(renderer));
+
+    await expect(cache.load_texture(new Blob(["late"]), { signal: controller.signal })).rejects.toThrow("aborted");
+    await expect(cache.load_texture(new Blob(["bad"]))).rejects.toThrow("decode failed");
+    cache.dispose();
+    await expect(cache.load_texture(new Blob(["disposed"]))).rejects.toThrow("asset cache is disposed");
+
+    const no_renderer = create_asset_cache({}, create_resource_owner());
+    await expect(no_renderer.load_texture(new Blob(["missing renderer"]))).rejects.toThrow("no renderer");
+    no_renderer.dispose();
+  });
+
+  it("releases a texture when its owner is disposed before acquisition", async () => {
+    const texture = create_texture();
+    const renderer = create_texture_renderer(vi.fn().mockResolvedValue(texture));
+    const resources = create_resource_owner();
+    resources.dispose();
+    const cache = create_asset_cache({}, resources, Promise.resolve(renderer));
+
+    await expect(cache.load_texture(new Blob(["owned"]))).rejects.toThrow("resource owner is disposed");
+    expect(texture.release).toHaveBeenCalledOnce();
+    cache.dispose();
+  });
+
+  it("releases a font when its owner is disposed before acquisition", async () => {
+    const font = create_font();
+    const renderer = { create_font_from_url: vi.fn().mockResolvedValue(font) } as unknown as WebGpuRenderer;
+    const resources = create_resource_owner();
+    resources.dispose();
+    const cache = create_asset_cache({}, resources, Promise.resolve(renderer));
+
+    await expect(cache.load_font("local(Arial)")).rejects.toThrow("resource owner is disposed");
+    expect(font.release).toHaveBeenCalledOnce();
+    cache.dispose();
+  });
+
   it("loads Blob and File values into independently releasable texture handles", async () => {
     const first_texture = create_texture();
     const second_texture = create_texture();
