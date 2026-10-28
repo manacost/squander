@@ -506,6 +506,54 @@ test("[paths-and-polygons] renders indexed triangle geometry with real readback"
   expect(result.outside).toEqual([0, 0, 0, 255]);
 });
 
+test("[paths-and-polygons] renders public polygon and path updates", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const core_url = new URL("/src/lib/core/index.ts", location.origin).href;
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const core = (await import(/* @vite-ignore */ core_url)) as typeof import("../src/lib/core/index.js");
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 6, height: 6 });
+    const polygon = core.create_polygon([
+      { x: 0, y: 0 },
+      { x: 3, y: 0 },
+      { x: 0, y: 3 },
+    ]);
+    const path = core.create_path([core.move_to(3.5, 5.5), core.line_to(5.5, 3.5)]);
+    const draw = async () => {
+      const triangles = core.triangulate_polygon(polygon.get_points());
+      const stroke = core.flatten_path(path.get_commands(), 0.25);
+      return renderer.draw_commands([
+        { kind: "triangles", draw: { vertices: triangles.vertices, indices: triangles.indices, color: core.rgba(0, 1, 0, 1) } },
+        { kind: "stroke", draw: { subpaths: stroke, width: 1, color: core.rgba(1, 0, 0, 1) } },
+      ]);
+    };
+    const first = await draw();
+    polygon.update([
+      { x: 3, y: 3 },
+      { x: 6, y: 3 },
+      { x: 3, y: 6 },
+    ]);
+    path.update([core.move_to(0.5, 0.5), core.line_to(2.5, 0.5)]);
+    const second = await draw();
+    renderer.dispose();
+    const pixel_at = (pixels: Uint8Array, x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return {
+      first_polygon: pixel_at(first, 0, 0),
+      first_path: pixel_at(first, 4, 4),
+      second_polygon: pixel_at(second, 4, 3),
+      second_path: pixel_at(second, 1, 0),
+    };
+  });
+
+  expect(result.first_polygon).toEqual([0, 255, 0, 255]);
+  expect(result.first_path).toEqual([255, 0, 0, 255]);
+  expect(result.second_polygon).toEqual([0, 255, 0, 255]);
+  expect(result.second_path).toEqual([255, 0, 0, 255]);
+});
+
 test("[paths-and-polygons] renders prepared stroke geometry with real readback", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

@@ -11,6 +11,7 @@ export {
   create_camera,
   create_path,
   create_polygon,
+  create_stroke_geometry,
   flatten_path,
   hex,
   hsl,
@@ -21,6 +22,7 @@ export {
   cubic_to,
   rgb,
   rgba,
+  triangulate_polygon,
 } from "./runtime/index.js";
 export type {
   Bounds,
@@ -50,9 +52,11 @@ export type {
   RectangleOutlineDraw,
   RenderCommand,
   StrokeDraw,
+  StrokeGeometry,
   TextureFiltering,
   TextureFilteringOptions,
   TriangleDraw,
+  TriangulatedPolygon,
   OwnedGeometryDraw,
 } from "./runtime/index.js";
 export { create_game, GameDeviceLostError, GameDisposedError, GameInitializationError, GameRuntimeError } from "./runtime/index.js";

@@ -5,12 +5,14 @@ import {
   create_geometry_owner,
   create_path,
   create_polygon,
+  flatten_path,
   line_to,
   move_to,
   rgba,
   degrees,
   rgb,
   hex,
+  triangulate_polygon,
   type GeometryHandle,
   type RenderCommand,
   type Path,
@@ -37,6 +39,8 @@ const command: RenderCommand = {
   kind: "rectangle",
   draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: hex("#fff") },
 };
+const public_polygon = triangulate_polygon(polygon.get_points());
+const public_path = flatten_path(path.get_commands(), 0.25);
 const owner = create_geometry_owner();
 const geometry: GeometryHandle = owner.create({ vertices: [{ x: 0, y: 0 }], indices: [0, 0, 0] });
 
@@ -46,6 +50,8 @@ void color;
 void sprite_color;
 void camera;
 void command;
+void public_polygon;
+void public_path;
 void degrees(90);
 void geometry;
 

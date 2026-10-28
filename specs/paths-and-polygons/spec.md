@@ -9,8 +9,9 @@ Reuse custom geometry for filled polygons and stroked curved paths.
 Draft. Target: Phase 2. CPU polygon/path preparation, stroke geometry, indexed
 triangle submission, prepared-stroke submission, polygon fill/outline
 submission, and game-scoped geometry ownership are implemented and verified;
-owned-geometry renderer submission is implemented and verified; public package
-exports remain unimplemented. Persistent owned-geometry GPU buffer reuse and
+owned-geometry renderer submission is implemented and verified; public core
+exports for path/polygon preparation are covered by type tests and a real GPU
+create/update/readback fixture. Persistent owned-geometry GPU buffer reuse and
 replacement are also verified.
 
 The direction was agreed in the interview; open contract details are listed below.
@@ -159,7 +160,10 @@ spikes, and the wraparound corner of a closed subpath.
 The real WebGPU renderer fixture
 [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts)
 covers indexed triangle, prepared-stroke, concave polygon fill, and polygon
-outline submission with deterministic readback.
+outline submission with deterministic readback. Its public-seam fixture imports
+the public core entrypoint, creates and updates a polygon and path, prepares
+triangles and stroke subpaths, and verifies both revisions through GPU
+readback.
 Game-scoped geometry lifecycle is covered by
 [`src/lib/core/runtime/geometry_ownership.test.ts`](../../src/lib/core/runtime/geometry_ownership.test.ts)
 and the game disposal case in
@@ -172,7 +176,8 @@ real WebGPU fixture in
 The same fixture covers cached-buffer replacement after an owned update.
 
 Remaining planned verification includes curve endpoint tests, real GPU
-concavity/curve fixtures, and geometry reuse checks.
+concavity/curve fixtures, geometry reuse checks, and final package-level
+promotion decisions.
 
 Use `[paths-and-polygons]` in relevant suite names and add actual file/suite links as tests land.
 
