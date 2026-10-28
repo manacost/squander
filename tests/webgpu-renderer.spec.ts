@@ -2,6 +2,91 @@ import { expect, test } from "@playwright/test";
 import type { ResourceHandle } from "../src/lib/core/runtime/resource_ownership.js";
 import type { WebGpuTexture } from "../src/lib/core/runtime/webgpu_renderer.js";
 
+test("[visual-evidence] captures a readable renderer capability gallery", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 640, height: 360 });
+    const texture = renderer.create_texture(
+      new Uint8Array([
+        255, 228, 120, 255, 255, 180, 64, 255,
+        64, 160, 255, 255, 80, 220, 140, 255,
+      ]),
+      2,
+      2,
+      { filter: "nearest" },
+    );
+    const font = await renderer.create_font_from_url('local("Arial")', {
+      characters: "0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%",
+      size: 24,
+    });
+    await renderer.draw_commands([
+      { kind: "texture", draw: { texture, options: { x: 48, y: 48, width: 112, height: 112, rotation: 0.12, origin: { x: 0.5, y: 0.5 } } } },
+      { kind: "rectangle", draw: { rectangle: { x: 190, y: 40, width: 128, height: 96 }, color: colors.rgba(0.16, 0.42, 0.9, 1) } },
+      { kind: "circle", draw: { circle: { x: 408, y: 88, radius: 48 }, color: colors.rgba(0.85, 0.2, 0.24, 1) } },
+      {
+        kind: "polygon",
+        draw: {
+          points: [{ x: 510, y: 44 }, { x: 590, y: 44 }, { x: 550, y: 132 }],
+          color: colors.rgba(0.2, 0.9, 0.35, 1),
+        },
+      },
+      {
+        kind: "stroke",
+        draw: {
+          subpaths: [{ points: [{ x: 60, y: 220 }, { x: 180, y: 180 }, { x: 300, y: 220 }, { x: 420, y: 180 }], closed: false }],
+          width: 6,
+          color: colors.rgba(1, 1, 1, 1),
+        },
+      },
+      {
+        kind: "polygon_outline",
+        draw: {
+          points: [{ x: 470, y: 180 }, { x: 590, y: 180 }, { x: 590, y: 280 }, { x: 470, y: 280 }],
+          stroke_width: 5,
+          color: colors.rgba(1, 0.85, 0.2, 1),
+        },
+      },
+      {
+        kind: "text",
+        draw: {
+          font,
+          text: "0123456789 !@#$%",
+          options: { x: 48, y: 292, size: 24, color: colors.rgba(1, 1, 1, 1) },
+        },
+      },
+      {
+        kind: "text",
+        draw: {
+          font,
+          text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+          options: { x: 48, y: 322, size: 20, color: colors.rgba(0.4, 0.85, 1, 1) },
+        },
+      },
+    ]);
+    (window as unknown as { __renderer_gallery?: { renderer: typeof renderer; texture: typeof texture; font: typeof font } }).__renderer_gallery = {
+      renderer,
+      texture,
+      font,
+    };
+  });
+
+  const canvas = page.locator("canvas");
+  await expect(canvas).toHaveScreenshot("renderer-capability-gallery.png", { animations: "disabled" });
+  await page.evaluate(() => {
+    const gallery = (window as unknown as { __renderer_gallery?: { renderer: { dispose: () => void }; texture: { release: () => void }; font: { release: () => void } } }).__renderer_gallery;
+    gallery?.font.release();
+    gallery?.texture.release();
+    gallery?.renderer.dispose();
+    delete (window as unknown as { __renderer_gallery?: unknown }).__renderer_gallery;
+  });
+});
+
 test("[webgpu-runtime] clears and reads back a real canvas texture", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

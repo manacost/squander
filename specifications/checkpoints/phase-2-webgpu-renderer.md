@@ -23,6 +23,9 @@ Status: **First GPU-backed replacement slice verified**.
 - `npm run check`: passed with zero diagnostics.
 - Targeted ESLint and Prettier checks passed.
 - Existing unit suite remains passing; it does not prove GPU shader behavior.
+- `npx playwright test --config=playwright.webgpu.config.ts tests/webgpu-renderer.spec.ts -g visual-evidence` passed with a readable renderer gallery at
+  `tests/webgpu-renderer.spec.ts-snapshots/renderer-capability-gallery-darwin.png`.
+  The gallery supplements, rather than replaces, the per-test deterministic readback assertions.
 
 ## Trace
 
