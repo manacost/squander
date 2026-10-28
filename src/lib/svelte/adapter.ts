@@ -14,6 +14,7 @@ export type GameAdapterView<State, Commands extends BridgeCommands> = Readonly<{
 export type GameAdapterOptions<State, Commands extends BridgeCommands, Manifest extends AssetManifest = AssetManifest> = Readonly<{
   initial_state: State;
   commands: Commands;
+  notification_scheduler?: (notify: () => void) => void;
   create: (
     context: Readonly<{
       canvas: HTMLCanvasElement;
@@ -46,12 +47,21 @@ export const create_game_adapter = <State, Commands extends BridgeCommands, Mani
     commands: controller.bridge.commands,
   });
   const subscribers = new Set<(view: GameAdapterView<State, Commands>) => void>();
+  let notification_pending = false;
   const notify = (): void => {
     view = Object.freeze({ state: controller.bridge.state.get(), status, error, commands: controller.bridge.commands });
     for (const subscriber of subscribers) subscriber(view);
   };
+  const schedule_notify = (): void => {
+    if (notification_pending) return;
+    notification_pending = true;
+    (options.notification_scheduler ?? queueMicrotask)(() => {
+      notification_pending = false;
+      notify();
+    });
+  };
   controller.bridge.state.subscribe(() => {
-    notify();
+    schedule_notify();
   });
   const subscribe = (subscriber: (next_view: GameAdapterView<State, Commands>) => void): (() => void) => {
     subscribers.add(subscriber);

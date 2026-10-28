@@ -40,14 +40,16 @@ view and typed command wrappers → game disposal on effect cleanup.
   isolated hosts with independent scores and commands.
 - SSR unit rendering — passed; `GameHost.ssr.test.ts` imports and renders the
   component without invoking its browser-only game factory.
-- `npm run package` — reached packaging but `publint` was blocked by the
-  environment's root-owned `/Users/rory/.npm` cache; it also reports the
-  repository's pre-existing SvelteKit peer/dependency warning.
+- Notification scheduling unit coverage — passed; four adapter tests verify
+  readonly publication and injected microtask-style batching.
+- `npm_config_cache=/private/tmp/squander-npm-cache npm run package` — passed
+  through `svelte-package` and `publint`; publint reports repository/license
+  suggestions and the existing SvelteKit dependency warning.
 
 ## Evidence gaps
 
-`svelte-bridge` remains Draft. Notification scheduling and a Svelte-aware
-consumer import remain. The
+`svelte-bridge` remains Draft. A full isolated consumer import/type/runtime
+test remains. The
 component subpath is intentionally not claimed as
 Node-executable because its default module contains `.svelte` source.
 

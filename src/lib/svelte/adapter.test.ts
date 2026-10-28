@@ -36,14 +36,39 @@ describe("[svelte-bridge] game adapter", () => {
     await adapter.mount({} as HTMLCanvasElement);
     expect(adapter.view.status).toBe("ready");
     publish({ score: 3 });
+    await Promise.resolve();
     expect(adapter.view.state).toEqual({ score: 3 });
     expect(Object.isFrozen(adapter.view.state)).toBe(true);
     expect(adapter.view.commands.increment(4)).toBe(5);
-    expect(snapshots).toHaveLength(3);
+    expect(snapshots).toHaveLength(4);
     unsubscribe();
     await adapter.dispose();
     expect(adapter.view.status).toBe("disposed");
     expect(game.dispose).toHaveBeenCalledOnce();
+  });
+
+  it("batches publications through the injected notification scheduler", async () => {
+    const scheduled: Array<() => void> = [];
+    let publish!: (state: { score: number }) => void;
+    const adapter = create_game_adapter({
+      initial_state: { score: 0 },
+      commands: {},
+      notification_scheduler: (notify) => scheduled.push(notify),
+      create: ({ publish: publish_state }) => {
+        publish = publish_state;
+        return create_game();
+      },
+    });
+    const snapshots: number[] = [];
+    adapter.subscribe((view) => snapshots.push(view.state.score));
+    await adapter.mount({} as HTMLCanvasElement);
+    snapshots.length = 0;
+    publish({ score: 1 });
+    publish({ score: 2 });
+    expect(snapshots).toEqual([]);
+    expect(scheduled).toHaveLength(1);
+    scheduled[0]();
+    expect(snapshots).toEqual([2]);
   });
 
   it("reports setup failure and disposes the failed game", async () => {
