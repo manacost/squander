@@ -71,7 +71,8 @@ and recreates an isolated host instance.
 
 Planned verification for the remaining replacement-framework contract:
 
-Notification scheduling is covered by the adapter unit suite; the full package consumer test remains.
+Notification scheduling is covered by the adapter unit suite, and the isolated
+consumer smoke test covers published adapter import, runtime, and declarations.
 Two-host browser isolation is covered by
 [`tests/webgpu-svelte-adapter.spec.ts`](../../tests/webgpu-svelte-adapter.spec.ts),
 and SSR component import/rendering is covered by

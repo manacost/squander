@@ -45,11 +45,15 @@ view and typed command wrappers → game disposal on effect cleanup.
 - `npm_config_cache=/private/tmp/squander-npm-cache npm run package` — passed
   through `svelte-package` and `publint`; publint reports repository/license
   suggestions and the existing SvelteKit dependency warning.
+- Isolated consumer validation — passed: `npm pack` produced the package,
+  a clean temporary consumer imported `squander/svelte/adapter` and ran its
+  command wrapper, and TypeScript checked the same consumer against published
+  declarations.
 
 ## Evidence gaps
 
-`svelte-bridge` remains Draft. A full isolated consumer import/type/runtime
-test remains. The
+`svelte-bridge` remains Draft only pending broader final package migration and
+consumer coverage. The
 component subpath is intentionally not claimed as
 Node-executable because its default module contains `.svelte` source.
 
