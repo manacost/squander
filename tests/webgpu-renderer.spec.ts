@@ -195,6 +195,52 @@ test("[dynamic-assets] rejects malformed input while allowing a valid retry", as
   expect(result.state).toBe("running");
 });
 
+test("[viewport-sizing] exposes and updates the game-owned viewport", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const game_url = new URL("/src/lib/core/runtime/game.ts", location.origin).href;
+    const viewport_url = new URL("/src/lib/core/runtime/viewport_sizing.ts", location.origin).href;
+    const game_module = (await import(/* @vite-ignore */ game_url)) as typeof import("../src/lib/core/runtime/game.js");
+    const viewport_module = (await import(/* @vite-ignore */ viewport_url)) as typeof import("../src/lib/core/runtime/viewport_sizing.js");
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const initial_viewport = viewport_module.calculate_fixed_viewport({
+      logical_width: 2,
+      logical_height: 1,
+      css_width: 2,
+      css_height: 2,
+      device_pixel_ratio: 1,
+    });
+    const game = game_module.create_game({
+      renderer: { canvas, width: 2, height: 2, viewport: initial_viewport },
+      scheduler: {
+        request_frame: () => 0,
+        cancel_frame: () => undefined,
+        now_seconds: () => 0,
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+    await game.ready;
+    const before = game.get_viewport();
+    const after = viewport_module.calculate_responsive_viewport({ css_width: 3, css_height: 2, device_pixel_ratio: 2 });
+    game.resize(after);
+    const after_resize = game.get_viewport();
+    await game.dispose();
+    return { before, after_resize };
+  });
+
+  expect(result.before).toMatchObject({ logical_width: 2, logical_height: 1, offset_y: 0.5 });
+  expect(result.after_resize).toMatchObject({
+    logical_width: 3,
+    logical_height: 2,
+    physical_width: 6,
+    physical_height: 4,
+    offset_x: 0,
+    offset_y: 0,
+  });
+});
+
 test("[sprite-drawing] samples an atlas region with tint and opacity", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

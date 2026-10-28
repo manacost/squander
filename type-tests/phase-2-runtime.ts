@@ -63,3 +63,17 @@ const game = create_game({
 });
 
 void game;
+game.resize({
+  logical_width: 1,
+  logical_height: 1,
+  css_width: 1,
+  css_height: 1,
+  physical_width: 1,
+  physical_height: 1,
+  content_width: 1,
+  content_height: 1,
+  offset_x: 0,
+  offset_y: 0,
+});
+const viewport_width: number = game.get_viewport().logical_width;
+void viewport_width;

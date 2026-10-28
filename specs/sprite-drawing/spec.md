@@ -86,10 +86,11 @@ Current verification:
 
 Real GPU coverage now includes placement, origin anchoring, horizontal flipping,
 rotation-path execution, ordered sprite overlap, combined flipping, and
-source-over composition. One mixed sprite/rectangle ordering fixture now exists;
-mixed circles, lines, and text remain unverified. Shared color construction is
-covered at its CPU seam and sprite tinting now consumes the shared type
-internally.
+source-over composition. These capabilities are available through the
+game-owned renderer exposed after `game.ready`. One mixed sprite/rectangle
+ordering fixture now exists; mixed circles, lines, and text remain unverified.
+Shared color construction is covered at its CPU seam and sprite tinting now
+consumes the shared type internally.
 
 ## Notes
 

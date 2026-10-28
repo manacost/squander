@@ -4,6 +4,7 @@ import { create_geometry_owner, type GeometryOwner } from "./geometry_ownership.
 import { create_asset_cache, type AssetCache, type AssetManifest } from "./asset_loading.js";
 import type { UpdateTime } from "./timing.js";
 import { create_webgpu_renderer, type WebGpuRenderer, type WebGpuRendererOptions } from "./webgpu_renderer.js";
+import type { ViewportSize } from "./viewport_sizing.js";
 
 export class GameInitializationError extends Error {
   public constructor(cause: unknown) {
@@ -59,6 +60,8 @@ export type GameOptions<Manifest extends AssetManifest = AssetManifest> = Readon
 export type Game<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   ready: Promise<void>;
   readonly renderer: WebGpuRenderer;
+  resize: (viewport: ViewportSize) => void;
+  get_viewport: () => ViewportSize;
   resources: ResourceOwner;
   geometry: GeometryOwner;
   assets: AssetCache<Manifest>;
@@ -183,6 +186,20 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
 
   const get_state = (): FrameLoopState | "initializing" => loop?.get_state() ?? "initializing";
 
+  const resize = (viewport: ViewportSize): void => {
+    if (renderer === undefined) {
+      throw new Error("game renderer is not ready");
+    }
+    renderer.resize(viewport);
+  };
+
+  const get_viewport = (): ViewportSize => {
+    if (renderer === undefined) {
+      throw new Error("game renderer is not ready");
+    }
+    return renderer.get_viewport();
+  };
+
   return Object.freeze({
     ready,
     get renderer(): WebGpuRenderer {
@@ -191,6 +208,8 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
       }
       return renderer;
     },
+    resize,
+    get_viewport,
     resources,
     geometry,
     assets,

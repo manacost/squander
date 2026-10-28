@@ -13,11 +13,13 @@ import type { ResourceHandle } from "./resource_ownership.js";
 import { create_resource_owner } from "./resource_ownership.js";
 import type { AssetManifest } from "./asset_loading.js";
 import type { WebGpuRenderer } from "./webgpu_renderer.js";
+import { calculate_fixed_viewport, calculate_responsive_viewport, type ViewportSize } from "./viewport_sizing.js";
 
 const test_renderer_options = { canvas: {} as HTMLCanvasElement, width: 1, height: 1 };
 
 const create_fake_renderer = (): WebGpuRenderer => {
   const owner = create_resource_owner();
+  let viewport = calculate_responsive_viewport({ css_width: 1, css_height: 1, device_pixel_ratio: 1 });
   const create_texture = (pixels: Uint8Array, width: number, height: number) => {
     const resource = owner.acquire({} as GPUTexture, () => undefined);
     return {
@@ -37,7 +39,10 @@ const create_fake_renderer = (): WebGpuRenderer => {
     draw_texture: draw,
     draw_textures: draw,
     draw_commands: draw,
-    resize: () => undefined,
+    resize: (next_viewport: ViewportSize) => {
+      viewport = next_viewport;
+    },
+    get_viewport: () => viewport,
     dispose: owner.dispose,
   };
 };
@@ -99,6 +104,16 @@ describe("[game-lifecycle] game setup", () => {
     expect(factory).toHaveBeenCalledOnce();
     expect(setup_renderer).toBe(renderer);
     expect(game.renderer).toBe(renderer);
+    expect(game.get_viewport()).toMatchObject({ logical_width: 1, logical_height: 1 });
+    const resized = calculate_fixed_viewport({
+      logical_width: 100,
+      logical_height: 50,
+      css_width: 200,
+      css_height: 200,
+      device_pixel_ratio: 2,
+    });
+    game.resize(resized);
+    expect(game.get_viewport()).toBe(resized);
     await game.dispose();
   });
 
@@ -125,6 +140,10 @@ describe("[game-lifecycle] game setup", () => {
   it("does not start after disposal while setup is already pending", async () => {
     const scheduler = create_scheduler();
     const renderer = create_fake_renderer();
+    let resolve_setup_started!: () => void;
+    const setup_started = new Promise<void>((resolve) => {
+      resolve_setup_started = resolve;
+    });
     let resolve_setup!: () => void;
     const setup = new Promise<void>((resolve) => {
       resolve_setup = resolve;
@@ -133,13 +152,15 @@ describe("[game-lifecycle] game setup", () => {
       renderer: test_renderer_options,
       renderer_factory: async () => renderer,
       scheduler: scheduler.scheduler,
-      setup: async () => setup,
+      setup: async () => {
+        resolve_setup_started();
+        await setup;
+      },
       update: () => undefined,
       draw: () => undefined,
     });
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await setup_started;
     const disposal = game.dispose();
     resolve_setup();
     await expect(game.ready).rejects.toBeInstanceOf(GameDisposedError);
@@ -177,6 +198,10 @@ describe("[game-lifecycle] game setup", () => {
     });
 
     expect(() => game.renderer).toThrow("game renderer is not ready");
+    expect(() => game.resize(calculate_responsive_viewport({ css_width: 1, css_height: 1, device_pixel_ratio: 1 }))).toThrow(
+      "game renderer is not ready",
+    );
+    expect(() => game.get_viewport()).toThrow("game renderer is not ready");
     const disposal = game.dispose();
     resolve_renderer(renderer);
     await expect(game.ready).rejects.toBeInstanceOf(GameDisposedError);

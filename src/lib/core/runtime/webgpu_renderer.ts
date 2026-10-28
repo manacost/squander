@@ -3,7 +3,7 @@ import { decode_image_source } from "./image_loading.js";
 import { create_resource_owner, type ResourceHandle, type ResourceOwner } from "./resource_ownership.js";
 import type { Color } from "./colors.js";
 import { get_active_camera } from "./camera.js";
-import type { ViewportSize } from "./viewport_sizing.js";
+import { calculate_responsive_viewport, type ViewportSize } from "./viewport_sizing.js";
 import {
   has_drawable_area,
   normalize_rectangle,
@@ -90,6 +90,7 @@ export type WebGpuRenderer = Readonly<{
   draw_textures: (draws: readonly TextureDraw[]) => Promise<Uint8Array>;
   draw_commands: (commands: readonly RenderCommand[]) => Promise<Uint8Array>;
   resize: (viewport: ViewportSize) => void;
+  get_viewport: () => ViewportSize;
   dispose: () => void;
 }>;
 
@@ -193,13 +194,14 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     throw new WebGpuUnavailableError("canvas does not provide a WebGPU context");
   }
 
-  let current_viewport = options.viewport;
-  let surface_width = current_viewport?.physical_width ?? options.width;
-  let surface_height = current_viewport?.physical_height ?? options.height;
-  let logical_width = current_viewport?.logical_width ?? options.width;
-  let logical_height = current_viewport?.logical_height ?? options.height;
-  let device_scale_x = current_viewport === undefined ? 1 : current_viewport.physical_width / current_viewport.css_width;
-  let device_scale_y = current_viewport === undefined ? 1 : current_viewport.physical_height / current_viewport.css_height;
+  let current_viewport =
+    options.viewport ?? calculate_responsive_viewport({ css_width: options.width, css_height: options.height, device_pixel_ratio: 1 });
+  let surface_width = current_viewport.physical_width;
+  let surface_height = current_viewport.physical_height;
+  let logical_width = current_viewport.logical_width;
+  let logical_height = current_viewport.logical_height;
+  let device_scale_x = current_viewport.physical_width / current_viewport.css_width;
+  let device_scale_y = current_viewport.physical_height / current_viewport.css_height;
   options.canvas.width = surface_width;
   options.canvas.height = surface_height;
   const format = navigator.gpu.getPreferredCanvasFormat();
@@ -826,6 +828,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
   };
 
+  const get_viewport = (): ViewportSize => current_viewport;
+
   const dispose = (): void => {
     if (disposed) {
       return;
@@ -853,6 +857,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     draw_textures,
     draw_commands,
     resize,
+    get_viewport,
     dispose,
   });
 };

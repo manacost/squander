@@ -52,9 +52,11 @@ Current verification:
   verifies fixed-fit logical-to-physical placement and a clear letterbox bar in
   the `[viewport-sizing]` suite.
 
-Fixed-fit letterbox mapping is integrated into the low-level renderer; browser
-resize and DPR updates are now integrated through explicit renderer resize;
-responsive runtime policy and DOM overlay alignment remain unimplemented.
+Fixed-fit letterbox mapping is integrated into the renderer and game-owned
+viewport state is observable through `game.get_viewport()` and mutable through
+`game.resize(viewport)`. Browser resize and DPR updates are verified through the
+public game seam; automatic DOM observation and overlay alignment remain
+unimplemented.
 
 ## Notes
 
