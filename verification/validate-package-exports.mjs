@@ -1,4 +1,9 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const package_json = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+assert.equal(package_json.peerDependencies?.["pixi.js"], undefined);
+assert.equal(package_json.devDependencies?.["pixi.js"], undefined);
 
 const root = await import("squander");
 const core = await import("squander/core");

@@ -6,6 +6,9 @@ states that the complete acceptance evidence exists.
 
 ## Verified slices
 
+Open the [composition playground](/docs/phase-2/playground) to exercise the
+verified runtime capabilities together.
+
 - WebGPU runtime setup, deterministic readback, texture sampling, source-over
   blending, camera transforms, viewport mapping, and runtime resize.
 - CPU path command snapshots, curve flattening, polygon validation,
@@ -38,8 +41,9 @@ verified by deterministic texture readback.
 The `paths-and-polygons` capability remains Draft. Public game-facing draw
 ergonomics, final package migration, Svelte bridge integration, text, and the
 remaining Phase 2 capability work are not implied by the verified slices above.
-PixiJS removal and dependency metadata changes are reserved for the intentional
-breaking migration boundary.
+PixiJS runtime removal and dependency metadata cleanup are verified in the
+replacement package boundary slice. Isolated consumer validation and the final
+major-version release metadata remain before promotion.
 
 See the repository capability specs and `specifications/checkpoints/` for the
 contract decisions, code traces, exact commands, and known gaps for each slice.

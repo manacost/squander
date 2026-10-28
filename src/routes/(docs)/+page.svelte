@@ -3,8 +3,7 @@
 
 <p>It combines the tools below into an unfortunate beauty</p>
 <ul>
-  <li>pixi.js</li>
-  <li>pixi-viewport</li>
+  <li>WebGPU</li>
   <li>svelte</li>
   <li>typescript</li>
   <li class="muted">and it intended to be used with <a href="https://wails.io">wails.io</a></li>

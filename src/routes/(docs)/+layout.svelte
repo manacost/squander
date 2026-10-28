@@ -8,9 +8,7 @@
 
   const links = [["about", "/"]] as const;
 
-  const documentation = ["getting-started", "phase-2", "ui"] as const;
-
-  const scenes = ["pixi-demo", "test", "camera", "ui-test", "ui-bridge", "stack", "complex-example"] as const;
+  const documentation = ["phase-2"] as const;
   interface Props {
     data: LayoutData;
     children?: import("svelte").Snippet;
@@ -48,13 +46,6 @@
         <a class="link" class:active={link === page_path} href={resolve(`/(docs)/docs/${doc}`)}>{doc}</a>
       {/each}
 
-      <h5 class="sep subtitle">Scenes</h5>
-      <div data-sveltekit-reload>
-        {#each scenes as scene}
-          {@const link = `/scenes/${scene}` as const}
-          <a class="link" class:active={link === page_path} href={resolve(`/(game)/scenes/${scene}`)}>{scene}</a>
-        {/each}
-      </div>
     </nav>
     <div class="links">
       <a class="external-link" href="https://github.com/ancient-cat/squander" target="_blank">github</a>

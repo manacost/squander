@@ -1,6 +1,6 @@
 # Phase 2 package boundary checkpoint
 
-Status: **Replacement public boundary verified; final PixiJS migration remains Draft**.
+Status: **PixiJS dependency/demo cleanup and replacement public boundary verified; final release migration remains Draft**.
 
 ## Pre-slice contract checkpoint
 
@@ -16,8 +16,17 @@ Status: **Replacement public boundary verified; final PixiJS migration remains D
 - The optional Svelte adapter remains available through `squander/svelte` and
   `squander/svelte/adapter`; the package root no longer exports legacy `app` or
   `GameHost` symbols.
-- Legacy PixiJS demos are routed through an internal `src/lib/legacy` boundary
-  while demo cleanup and dependency removal remain in the final migration slice.
+- The remaining package surface is the replacement runtime and optional Svelte
+  adapter; PixiJS-era demos are no longer part of the source tree.
+
+## Migration cleanup slice
+
+- Removed the obsolete PixiJS runtime, viewport helpers, scenes, UI components,
+  old scene routes, and old getting-started/UI documentation.
+- Removed `pixi.js` from peer/development metadata and the lockfile.
+- Added `@webgpu/types` as an explicit development dependency instead of relying
+  on a transitive declaration package.
+- Updated navigation and integration coverage to target the Phase 2 docs library.
 
 ## Evidence
 
@@ -33,18 +42,23 @@ Status: **Replacement public boundary verified; final PixiJS migration remains D
 - `npm_config_cache=/tmp/squander-npm-cache npm run validate:package`: passed;
   root, `squander/core`, `squander/core/runtime`, and the Svelte adapter imports
   were validated from the generated package.
+- `npm run validate:consumer`: passed; an isolated consumer imported the root and
+  core entrypoints without Svelte, while a Svelte-aware isolated consumer imported
+  the adapter and compiled `GameHost.svelte`.
+- `npm run test:unit`: passed with 25 files and 110 tests after removing legacy
+  suites.
 
 ## Code trace
 
 `src/lib/index.ts` → `src/lib/core/index.ts` → generated `dist/index.js` and
 `dist/core/index.js` → Node package self-reference → verified root and explicit
-core/runtime factory symbols. Legacy route imports resolve through
-`src/lib/legacy/index.ts` and are not part of the replacement public entrypoint.
+core/runtime factory symbols. The generated package contains only replacement
+entrypoints; Svelte component compilation is verified separately in the
+Svelte-aware consumer.
 
 ## Known gaps and gate
 
-- Final package export cleanup, dependency metadata decisions, WebGPU type
-  declarations, PixiJS dependency removal, obsolete demo removal, and isolated
-  consumer validation without Svelte remain unimplemented.
-- Go/no-go: **continue with the intentional PixiJS/package migration; do not
-  promote the full Phase 2 package.**
+- Final major-version bump, repository/license metadata cleanup, and final
+  package documentation remain unimplemented.
+- Go/no-go: **continue with final package release validation; do not promote the
+  full Phase 2 package.**

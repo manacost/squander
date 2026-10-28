@@ -24,7 +24,8 @@
     "test:coverage:runtime": "vitest run --coverage --coverage.include='src/lib/core/runtime/**/*.ts' --coverage.exclude='src/lib/core/runtime/**/*.test.ts'",
     "check:coverage": "node verification/assert-coverage.mjs",
     "validate:specs": "node verification/validate-specs.mjs",
-    "validate:package": "node verification/validate-package-exports.mjs"
+    "validate:package": "node verification/validate-package-exports.mjs",
+    "validate:consumer": "node verification/validate-isolated-consumer.mjs"
   },
   "exports": {
     ".": {
@@ -57,7 +58,6 @@
     "!dist/**/*.spec.*"
   ],
   "peerDependencies": {
-    "pixi.js": "^8.5.1",
     "svelte": "^5.57.1"
   },
   "devDependencies": {
@@ -70,12 +70,12 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "^5.0.5",
+    "@webgpu/types": "^0.1.74",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-svelte": "^3.23.1",
     "globals": "^17.13.0",
     "mdsvex": "^0.12.8",
-    "pixi.js": "8.5.1",
     "prettier": "^3.9.10",
     "prettier-plugin-svelte": "^4.1.1",
     "publint": "^0.3.25",
