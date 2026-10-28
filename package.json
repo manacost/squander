@@ -22,6 +22,7 @@
     "test:webgpu": "playwright test --config=playwright.webgpu.config.ts",
     "test:coverage": "vitest run --coverage",
     "test:coverage:runtime": "vitest run --coverage --coverage.include='src/lib/core/runtime/**/*.ts' --coverage.exclude='src/lib/core/runtime/**/*.test.ts'",
+    "check:coverage": "node verification/assert-coverage.mjs",
     "validate:specs": "node verification/validate-specs.mjs",
     "validate:package": "node verification/validate-package-exports.mjs"
   },
