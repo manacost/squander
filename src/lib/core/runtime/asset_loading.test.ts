@@ -40,6 +40,21 @@ describe("[asset-loading] manifest cache", () => {
     cache.dispose();
   });
 
+  it("rejects malformed texture data and permits an explicit retry", async () => {
+    const texture = create_texture();
+    const load = vi.fn().mockRejectedValueOnce(new Error("malformed image")).mockResolvedValueOnce(texture);
+    const renderer = create_texture_renderer(load);
+    const cache = create_asset_cache({}, create_resource_owner(), Promise.resolve(renderer));
+
+    await expect(cache.load_texture(new Blob(["malformed"]))).rejects.toThrow("malformed image");
+    const retry = await cache.load_texture(new Blob(["valid on retry"]));
+    expect(retry.read()).toBe(texture);
+    expect(load).toHaveBeenCalledTimes(2);
+    retry.release();
+    expect(texture.release).toHaveBeenCalledOnce();
+    cache.dispose();
+  });
+
   it("aborts a late dynamic texture without returning a handle", async () => {
     let resolve_texture!: (texture: WebGpuTexture) => void;
     let abort_seen = false;

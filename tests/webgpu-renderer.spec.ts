@@ -148,6 +148,53 @@ test("[dynamic-assets] loads Blob and File textures through a game-owned rendere
   expect(result.file).toEqual([255, 0, 0, 255]);
 });
 
+test("[dynamic-assets] rejects malformed input while allowing a valid retry", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const source = document.createElement("canvas");
+    source.width = 1;
+    source.height = 1;
+    const source_context = source.getContext("2d");
+    if (source_context === null) throw new Error("Canvas 2D is unavailable");
+    source_context.fillStyle = "rgb(0 255 0)";
+    source_context.fillRect(0, 0, 1, 1);
+    const valid_blob = await new Promise<Blob>((resolve, reject) => {
+      source.toBlob((value) => (value === null ? reject(new Error("could not encode image")) : resolve(value)), "image/png");
+    });
+    const game_url = new URL("/src/lib/core/runtime/game.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ game_url)) as typeof import("../src/lib/core/runtime/game.js");
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const game = module.create_game({
+      renderer: { canvas, width: 1, height: 1 },
+      scheduler: {
+        request_frame: () => 0,
+        cancel_frame: () => undefined,
+        now_seconds: () => 0,
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+    await game.ready;
+    let error_name = "";
+    try {
+      await game.assets.load_texture(new Blob(["not an image"], { type: "image/png" }));
+    } catch (error) {
+      error_name = error instanceof Error ? error.name : "unknown";
+    }
+    const texture = await game.assets.load_texture(valid_blob);
+    const pixels = await game.renderer.draw_texture(texture.read());
+    texture.release();
+    const state = game.get_state();
+    await game.dispose();
+    return { error_name, pixels: Array.from(pixels.slice(0, 4)), state };
+  });
+
+  expect(result.error_name).toBe("ImageDecodeError");
+  expect(result.pixels).toEqual([0, 255, 0, 255]);
+  expect(result.state).toBe("running");
+});
+
 test("[sprite-drawing] samples an atlas region with tint and opacity", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
