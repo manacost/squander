@@ -65,6 +65,10 @@ const accepts_renderer = (renderer: WebGpuRenderer): void => {
 
 void accepts_renderer;
 
+// @ts-expect-error -- Resource handles are opaque and cannot be forged from ordinary objects.
+const forged_texture_handle: ResourceHandle<WebGpuTexture> = {};
+void forged_texture_handle;
+
 // @ts-expect-error -- path handles are opaque and not indexable.
 path[0] = move_to(2, 2);
 // @ts-expect-error -- polygon handles are opaque and not indexable.

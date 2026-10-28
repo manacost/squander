@@ -6,14 +6,14 @@ Connect Svelte UI to game state and actions with strong inferred types and per-i
 
 ## Status
 
-Draft. Target: Phase 2. The first Svelte 5 adapter seam is implemented with a
+Implemented. The Svelte 5 adapter seam is implemented with a
 typed `create_game_adapter` factory and `<GameHost>` render-prop component.
 The adapter exposes one readonly view containing `state`, lifecycle `status`,
 an initialization `error`, and typed `commands`; game code receives the only
 `publish` function.
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+The Phase 2 contract is implemented and verified below. Scene overlay
+management remains deferred.
 
 ## Requirements
 
@@ -52,11 +52,11 @@ Illustrative: bridge.state.health.subscribe(...) and bridge.commands.use_item(it
 
 ## Test references
 
-The Svelte-independent bridge core is currently covered by
+The Svelte-independent bridge core is covered by
 [`src/lib/core/runtime/bridge.test.ts`](../../src/lib/core/runtime/bridge.test.ts)
 in the `[svelte-bridge] core bridge` suite, with public command inference in
-[`type-tests/bridge.ts`](../../type-tests/bridge.ts). These tests do not claim
-Svelte mounting, SSR, or host isolation.
+[`type-tests/bridge.ts`](../../type-tests/bridge.ts). The adapter and browser
+suites provide the Svelte mounting, SSR, and host-isolation evidence.
 
 The adapter unit suite
 [`src/lib/svelte/adapter.test.ts`](../../src/lib/svelte/adapter.test.ts) covers
@@ -68,8 +68,6 @@ The real browser fixture
 [`tests/webgpu-svelte-adapter.spec.ts`](../../tests/webgpu-svelte-adapter.spec.ts)
 mounts the host, observes ready state, invokes a typed command, navigates away,
 and recreates an isolated host instance.
-
-Planned verification for the remaining replacement-framework contract:
 
 Notification scheduling is covered by the adapter unit suite, and the isolated
 consumer smoke test covers published adapter import, runtime, and declarations.
@@ -85,11 +83,14 @@ The composition route at `src/routes/(docs)/docs/examples/playground/+page.svelt
 and its browser fixture provide composition evidence across the adapter and
 runtime capabilities.
 
-Use `[svelte-bridge]` in relevant suite names and add actual file/suite links as tests land.
+The adapter remains intentionally optional; core consumers do not require
+Svelte, and the component entry is compiled by Svelte-aware consumers.
 
 ## Notes
 
-AD-017. Open: exact subscription shape, SSR factory boundary, nested-readonly/runtime aliasing policy, command behavior after disposal, and notification scheduling.
+AD-017. The Phase 2 subscription shape, SSR boundary, readonly view, command
+disposal behavior, and notification scheduling are implemented as documented;
+nested scene overlays remain outside this phase.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

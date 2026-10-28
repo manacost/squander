@@ -52,12 +52,12 @@ view and typed command wrappers → game disposal on effect cleanup.
 
 ## Evidence gaps
 
-`svelte-bridge` remains Draft pending complete adapter coverage and final
-package promotion. The
-component subpath is intentionally not claimed as
-Node-executable because its default module contains `.svelte` source.
+The component subpath is intentionally not claimed as Node-executable because
+its default module contains `.svelte` source; SSR behavior is covered through
+the Svelte SSR test and Svelte-aware packaging.
 
 ## Go/no-go
 
-**Continue.** The API/DX seam and disposal race are unit/type/check verified.
-Proceed to browser host evidence and package-consumer validation.
+**Promote `svelte-bridge`.** The API/DX seam, disposal race, browser host
+mount/unmount, two-host isolation, SSR import/rendering, package consumers, and
+adapter coverage are evidenced.

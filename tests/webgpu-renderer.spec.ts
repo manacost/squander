@@ -222,6 +222,37 @@ test("[sprite-drawing] uploads and draws a persistent texture", async ({ page })
   expect(result).toEqual([12, 34, 56, 255]);
 });
 
+test("[resource-ownership] keeps an accepted draw alive after handle release", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const owner_url = new URL("/src/lib/core/runtime/resource_ownership.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const owner_module = (await import(/* @vite-ignore */ owner_url)) as typeof import("../src/lib/core/runtime/resource_ownership.js");
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
+    const texture = renderer.create_texture(new Uint8Array([12, 34, 56, 255]), 1, 1);
+    const owner = owner_module.create_resource_owner();
+    const handle = owner.acquire(texture, (resource) => resource.release());
+    const drawing = renderer.draw_texture(handle.read());
+    handle.release();
+    const pixels = await drawing;
+    let stale_error = "";
+    try {
+      handle.read();
+    } catch (error) {
+      stale_error = error instanceof Error ? error.message : String(error);
+    }
+    owner.dispose();
+    renderer.dispose();
+    return { pixels: Array.from(pixels.slice(0, 4)), stale_error };
+  });
+
+  expect(result.pixels).toEqual([12, 34, 56, 255]);
+  expect(result.stale_error).toMatch(/released/);
+});
+
 test("[dynamic-assets] prepares a canvas image source and uploads its pixels", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
