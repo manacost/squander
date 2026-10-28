@@ -23,6 +23,27 @@ describe("[viewport-sizing] logical viewport math", () => {
       offset_x: 0,
       offset_y: 218.75,
     });
+
+    expect(
+      calculate_fixed_viewport({
+        logical_width: 320,
+        logical_height: 200,
+        css_width: 1000,
+        css_height: 400,
+        device_pixel_ratio: 1.25,
+      }),
+    ).toEqual({
+      logical_width: 320,
+      logical_height: 200,
+      css_width: 1000,
+      css_height: 400,
+      physical_width: 1250,
+      physical_height: 500,
+      content_width: 640,
+      content_height: 400,
+      offset_x: 180,
+      offset_y: 0,
+    });
   });
 
   it("uses CSS dimensions as logical dimensions in responsive mode", () => {
@@ -41,5 +62,9 @@ describe("[viewport-sizing] logical viewport math", () => {
       calculate_fixed_viewport({ logical_width: 0, logical_height: 1, css_width: 1, css_height: 1, device_pixel_ratio: 1 }),
     ).toThrow(RangeError);
     expect(() => calculate_responsive_viewport({ css_width: 1, css_height: 1, device_pixel_ratio: 0 })).toThrow(RangeError);
+    expect(() =>
+      calculate_fixed_viewport({ logical_width: 1, logical_height: 1, css_width: -1, css_height: 1, device_pixel_ratio: 1 }),
+    ).toThrow(/css_width/i);
+    expect(() => calculate_responsive_viewport({ css_width: Number.NaN, css_height: 1, device_pixel_ratio: 1 })).toThrow(/css_width/i);
   });
 });

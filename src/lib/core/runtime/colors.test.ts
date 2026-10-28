@@ -18,6 +18,16 @@ describe("[color] shared color helpers", () => {
     expect_color(hex("#ff000080"), rgba(1, 0, 0, 128 / 255));
   });
 
+  it("covers every HSL hue sector and achromatic colors", () => {
+    expect_color(hsl(60, 1, 0.5), rgb(1, 1, 0));
+    expect_color(hsl(120, 1, 0.5), rgb(0, 1, 0));
+    expect_color(hsl(180, 1, 0.5), rgb(0, 1, 1));
+    expect_color(hsl(240, 1, 0.5), rgb(0, 0, 1));
+    expect_color(hsl(300, 1, 0.5), rgb(1, 0, 1));
+    expect_color(hsl(-60, 1, 0.5), rgb(1, 0, 1));
+    expect_color(hsl(180, 0, 0.25), rgb(0.25, 0.25, 0.25));
+  });
+
   it("accepts shorthand hex and freezes the returned value", () => {
     const color = hex("#0f08");
 
@@ -32,5 +42,7 @@ describe("[color] shared color helpers", () => {
     expect(() => hsl(Number.POSITIVE_INFINITY, 1, 0.5)).toThrow(/hue.*finite/i);
     expect(() => hex("red")).toThrow(/hex/i);
     expect(() => hex("#12345")).toThrow(/hex/i);
+    expect(() => rgba(0, 0, 0, Number.NEGATIVE_INFINITY)).toThrow(/alpha.*finite/i);
+    expect(() => hsl(0, 1, Number.NaN)).toThrow(/lightness.*finite/i);
   });
 });

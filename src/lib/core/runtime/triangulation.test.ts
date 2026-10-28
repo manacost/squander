@@ -56,4 +56,34 @@ describe("[paths-and-polygons] polygon triangulation", () => {
       ]),
     ).toThrow(RangeError);
   });
+
+  it("handles boundary points while preserving the polygon area", () => {
+    const result = triangulate_polygon([
+      { x: 0, y: 0 },
+      { x: 4, y: 0 },
+      { x: 4, y: 4 },
+      { x: 2, y: 2 },
+      { x: 0, y: 4 },
+    ]);
+
+    expect(indexed_area(result)).toBe(12);
+  });
+
+  it("rejects degenerate and self-intersecting polygons before triangulation", () => {
+    expect(() =>
+      triangulate_polygon([
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        { x: 2, y: 0 },
+      ]),
+    ).toThrow(/area/i);
+    expect(() =>
+      triangulate_polygon([
+        { x: 0, y: 0 },
+        { x: 2, y: 2 },
+        { x: 0, y: 2 },
+        { x: 2, y: 0 },
+      ]),
+    ).toThrow(/self-intersect/i);
+  });
 });
