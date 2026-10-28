@@ -49,7 +49,10 @@ decode failure. GPU texture upload and readback remain unimplemented.
 Canvas-image preparation and upload are exercised by the
 `[dynamic-assets] prepares a canvas image source and uploads its pixels` suite in
 [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts). Direct
-Blob/File-to-GPU evidence remains unverified in the current Chromium fixture.
+Blob/File decoding and GPU upload are now exercised by the
+`[dynamic-assets] decodes Blob and File sources and uploads their pixels` suite
+in the same file. The higher-level game-owned texture-loading integration and
+malformed-input browser fixture remain unimplemented.
 
 Planned verification for the remaining replacement-framework contract:
 

@@ -18,3 +18,4 @@ export * from "./texture_filtering.js";
 export * from "./timing.js";
 export * from "./triangulation.js";
 export * from "./viewport_sizing.js";
+export * from "./webgpu_renderer.js";

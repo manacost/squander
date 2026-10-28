@@ -65,6 +65,39 @@ test("[dynamic-assets] prepares a canvas image source and uploads its pixels", a
   expect(result).toEqual([255, 0, 0, 255]);
 });
 
+test("[dynamic-assets] decodes Blob and File sources and uploads their pixels", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const source = document.createElement("canvas");
+    source.width = 1;
+    source.height = 1;
+    const source_context = source.getContext("2d");
+    if (source_context === null) throw new Error("Canvas 2D is unavailable");
+    source_context.fillStyle = "rgb(255 0 0)";
+    source_context.fillRect(0, 0, 1, 1);
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      source.toBlob((value) => (value === null ? reject(new Error("could not encode image")) : resolve(value)), "image/png");
+    });
+    const file = new File([blob], "pixel.png", { type: "image/png" });
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
+    const blob_texture = await renderer.create_texture_from_blob(blob);
+    const file_texture = await renderer.create_texture_from_blob(file);
+    const blob_pixels = await renderer.draw_texture(blob_texture);
+    const file_pixels = await renderer.draw_texture(file_texture);
+    blob_texture.release();
+    file_texture.release();
+    renderer.dispose();
+    return { blob: Array.from(blob_pixels.slice(0, 4)), file: Array.from(file_pixels.slice(0, 4)) };
+  });
+
+  expect(result.blob).toEqual([255, 0, 0, 255]);
+  expect(result.file).toEqual([255, 0, 0, 255]);
+});
+
 test("[sprite-drawing] samples an atlas region with tint and opacity", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
@@ -575,13 +608,8 @@ test("[shape-drawing] places a clockwise corner join on the outer side", async (
     const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
     const path = (await import(/* @vite-ignore */ path_url)) as typeof import("../src/lib/core/runtime/path_flattening.js");
     const renderer = await module.create_webgpu_renderer({ canvas, width: 12, height: 12 });
-    const subpaths = path.flatten_path(
-      [path.move_to(3.5, 3.5), path.line_to(7.5, 3.5), path.line_to(7.5, 7.5)],
-      0.25,
-    );
-    const pixels = await renderer.draw_commands([
-      { kind: "stroke", draw: { subpaths, width: 4, color: colors.rgba(0, 1, 0, 1) } },
-    ]);
+    const subpaths = path.flatten_path([path.move_to(3.5, 3.5), path.line_to(7.5, 3.5), path.line_to(7.5, 7.5)], 0.25);
+    const pixels = await renderer.draw_commands([{ kind: "stroke", draw: { subpaths, width: 4, color: colors.rgba(0, 1, 0, 1) } }]);
     renderer.dispose();
     const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
     return { outer: pixel_at(8, 1), inner: pixel_at(7, 4) };

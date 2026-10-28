@@ -10,6 +10,7 @@ import {
   type GeometryHandle,
   type Path,
   type Polygon,
+  type WebGpuRenderer,
 } from "../src/lib/index.js";
 
 const path: Path = create_path([move_to(0, 0), line_to(1, 1), close()]);
@@ -26,6 +27,14 @@ void path;
 void polygon;
 void color;
 void geometry;
+
+const accepts_renderer = (renderer: WebGpuRenderer): void => {
+  void renderer.create_texture_from_blob(new Blob());
+  // @ts-expect-error Dynamic texture loading accepts only Blob/File values.
+  void renderer.create_texture_from_blob("not-an-image");
+};
+
+void accepts_renderer;
 
 // @ts-expect-error -- path handles are opaque and not indexable.
 path[0] = move_to(2, 2);
