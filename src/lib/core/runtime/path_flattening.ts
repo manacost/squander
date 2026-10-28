@@ -107,7 +107,7 @@ export const flatten_path = (input: PathInput, tolerance: number): readonly Flat
       current = end;
     } else {
       const active = subpaths.at(-1)!;
-      if (distance(current, start) > 0) active.points.push(start);
+      if (distance(current!, start!) > 0) active.points.push(start!);
       active.closed = true;
       current = undefined;
       start = undefined;
