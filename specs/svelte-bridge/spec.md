@@ -81,6 +81,10 @@ and SSR component import/rendering is covered by
 contains the Svelte component entry and must be compiled by a Svelte-aware
 consumer.
 
+The composition route at `src/routes/(docs)/docs/phase-2/playground/+page.svelte`
+and its browser fixture provide composition evidence across the adapter and
+runtime capabilities.
+
 Use `[svelte-bridge]` in relevant suite names and add actual file/suite links as tests land.
 
 ## Notes
