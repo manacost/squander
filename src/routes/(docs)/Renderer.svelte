@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { app, initialize } from "#lib/core/index.js";
+  import { app, initialize } from "#lib/legacy/index.js";
   import { Scenes, type Scene } from "#lib/core/scene.js";
   import { Assets, Container, Sprite } from "pixi.js";
   import { onMount } from "svelte";

@@ -1,3 +1,5 @@
+/// <reference types="@webgpu/types" />
+
 import { resolve_texture_filtering, type TextureFilteringOptions } from "./texture_filtering.js";
 import { decode_image_source } from "./image_loading.js";
 import { create_resource_owner, type ResourceHandle, type ResourceOwner } from "./resource_ownership.js";

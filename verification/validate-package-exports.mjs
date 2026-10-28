@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 
+const root = await import("squander");
 const core = await import("squander/core");
 const runtime = await import("squander/core/runtime");
 const svelte_adapter = await import("squander/svelte/adapter");
 
+assert.equal(typeof root.create_game, "function");
+assert.equal("app" in root, false);
+assert.equal("GameHost" in root, false);
 assert.equal(typeof core.create_game, "function");
 assert.equal(typeof core.create_path, "function");
 assert.equal(typeof core.create_polygon, "function");

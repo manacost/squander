@@ -3,7 +3,7 @@ import Battle from "./Battle.svelte";
 
 import { create_player, type BattleQueueItem } from "./index.js";
 
-import { app, mount_all, Scenes } from "#lib/index.js";
+import { app, mount_all, Scenes } from "#lib/legacy/index.js";
 import { create_ui } from "#lib/ui/ui.svelte.js";
 import { battle_system } from "./instance.ts";
 

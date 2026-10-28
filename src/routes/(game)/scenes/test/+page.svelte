@@ -2,7 +2,7 @@
   import Game from "#lib/ui/Game.svelte";
   import test from "#lib/scenes/test.js";
   import projection from "#lib/scenes/projection.ts";
-  import { Scenes } from "#lib/index.js";
+  import { Scenes } from "#lib/legacy/index.js";
 
   async function initialize() {
     Scenes.switch(projection);
