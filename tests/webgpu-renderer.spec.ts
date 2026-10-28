@@ -565,10 +565,12 @@ test("[text-drawing] loads a font, reuses prepared glyphs, and renders text", as
     const font = await renderer.create_font_from_url('local("Arial")', { characters: "A", size: 24 });
     const first = await renderer.draw_text(font, "A", { x: 8, y: 8, color: { red: 1, green: 0, blue: 0, alpha: 1 } });
     const first_atlas = font.atlas;
-    const second = await renderer.draw_text(font, "A", { x: 32, y: 8, color: { red: 0, green: 1, blue: 0, alpha: 1 } });
+    const second = await renderer.draw_text(font, "B", { x: 32, y: 8, color: { red: 0, green: 1, blue: 0, alpha: 1 } });
     const second_atlas = font.atlas;
-    const has_ink = (pixels: Uint8Array, channel: number, left: number, right: number): boolean => {
-      for (let y = 8; y < 44; y += 1) {
+    await renderer.draw_text(font, "B", { x: 32, y: 8, color: { red: 0, green: 1, blue: 0, alpha: 1 } });
+    const third_atlas = font.atlas;
+    const has_ink = (pixels: Uint8Array, channel: number, left: number, right: number, top = 8, bottom = 44): boolean => {
+      for (let y = top; y < bottom; y += 1) {
         for (let x = left; x < right; x += 1) {
           if (pixels[y * 256 + x * 4 + channel] > 0) return true;
         }
@@ -579,12 +581,15 @@ test("[text-drawing] loads a font, reuses prepared glyphs, and renders text", as
     renderer.dispose();
     return {
       first_atlas_reused: first_atlas === second_atlas,
+      additional_glyph_added: first_atlas !== second_atlas,
+      prepared_glyph_reused: second_atlas === third_atlas,
       first_has_ink: has_ink(first, 0, 8, 29),
       second_has_ink: has_ink(second, 1, 32, 53),
     };
   });
 
-  expect(result.first_atlas_reused).toBe(true);
+  expect(result.additional_glyph_added).toBe(true);
+  expect(result.prepared_glyph_reused).toBe(true);
   expect(result.first_has_ink).toBe(true);
   expect(result.second_has_ink).toBe(true);
 });

@@ -68,10 +68,10 @@ Illustrative: labels: font(font_url), then draw.text(labels, "Treasure", { x: 10
 The asset-loading unit suite covers owned font handles. The real WebGPU fixture
 [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts) covers
 font creation from a browser font source, glyph atlas sampling, repeated text
-rendering, and atlas reuse. Existing legacy tests are not claimed as coverage.
-Remaining planned verification includes bundled URL loading, automatic new-glyph
-preparation, typed capacity failure, font-load failure, and camera/readback
-tolerances.
+rendering, automatic preparation of a newly requested glyph, and atlas reuse.
+Existing legacy tests are not claimed as coverage. Remaining planned
+verification includes bundled URL loading, typed capacity failure, font-load
+failure, camera integration, and readback tolerances.
 
 The public type coverage is in [`type-tests/phase-2-runtime.ts`](../../type-tests/phase-2-runtime.ts).
 

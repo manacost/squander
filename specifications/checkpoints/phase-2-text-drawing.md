@@ -25,7 +25,8 @@ over WebGPU sampling and deterministic readback.
 - Focused asset/game unit tests — passed, 26 tests.
 - `npm run test:webgpu -- --grep 'text-drawing'` — passed, one real Chromium
   WebGPU test covering font loading, glyph sampling, repeated rendering, and
-  atlas identity reuse.
+  atlas identity reuse, including automatic preparation of a newly requested
+  glyph.
 - `npm run test:coverage:runtime` — passed its 113 tests and recorded
   `font_loading.ts` at 7.61% statements, 0% branches, 0% functions, and
   8.88% lines. The repository threshold command remains blocked by the
