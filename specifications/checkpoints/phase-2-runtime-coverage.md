@@ -36,8 +36,15 @@ The renderer-specific result was:
 Focused and complementary evidence:
 
 - `npm run test:unit`: passed, 27 files and 126 tests.
+- `npm run test:type`: passed.
+- `npm run check`: passed with zero diagnostics.
+- `npm run test:integration`: passed, 2 tests.
 - `npm run test:webgpu`: real Chromium WebGPU readback suite remains required
   for shader, sampling, blending, tessellation, and draw-order correctness.
+- `npm run package`: passed; Publint reported `All good!`.
+- `npm run validate:package`: passed.
+- `npm run validate:consumer`: passed with and without Svelte.
+- `npm run validate:specs`: passed, 16 capability directories.
 
 ## Code trace
 
