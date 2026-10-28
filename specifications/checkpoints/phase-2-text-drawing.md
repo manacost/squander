@@ -55,4 +55,5 @@ binary.
 ## Go/no-go
 
 **Continue.** The core font/atlas/text rendering seam is verified. Proceed with
-the remaining text evidence and then lifecycle/Svelte or documentation work.
+the remaining bundled-font, capacity, camera, and coverage evidence before
+capability promotion.

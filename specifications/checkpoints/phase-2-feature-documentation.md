@@ -5,8 +5,8 @@ Status: **Evidence-first Phase 2 documentation route verified; full capability p
 ## Pre-slice contract checkpoint
 
 - Documentation must distinguish verified slices from promoted capabilities.
-- The route may link evidence commands and repository checkpoints, but must not
-  imply unsupported Svelte, text, migration, or final package behavior.
+- The route may link evidence commands and repository checkpoints, but must
+  distinguish verified implementation seams from Draft capability promotion.
 - The docs navigation must expose the route without changing legacy examples.
 
 ## Implemented slice
@@ -15,6 +15,9 @@ Status: **Evidence-first Phase 2 documentation route verified; full capability p
   explicit deferred work.
 - Added the route to the documentation navigation.
 - Linked the page language to the repository checkpoint protocol.
+- Added runnable links for the composition playground and Svelte adapter example.
+- Added an evidence map connecting capability contracts to focused tests and
+  checkpoints, plus the integration, consumer, and coverage commands.
 
 ## Evidence
 
@@ -34,7 +37,8 @@ measured commands and checkpoint directory.
 
 ## Known gaps and gate
 
-- Per-capability runnable demos, Svelte bridge documentation, final migration
-  guide, and package metadata cleanup remain deferred.
+- Per-capability runnable demos beyond the composition/Svelte examples, final
+  migration guide, final release metadata, and complete coverage promotion
+  remain deferred.
 - Go/no-go: **continue with final migration review; do not promote the full
   Phase 2 package.**

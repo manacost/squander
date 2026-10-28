@@ -52,8 +52,8 @@ view and typed command wrappers → game disposal on effect cleanup.
 
 ## Evidence gaps
 
-`svelte-bridge` remains Draft only pending broader final package migration and
-consumer coverage. The
+`svelte-bridge` remains Draft pending complete adapter coverage and final
+package promotion. The
 component subpath is intentionally not claimed as
 Node-executable because its default module contains `.svelte` source.
 

@@ -48,7 +48,8 @@ tests/webgpu-phase-2-playground.spec.ts` — passed, one real Chromium WebGPU
 
 The playground is composition evidence and does not promote any Draft
 capability. Text bundled-font, capacity, and camera-specific evidence remain
-separate, as do final docs navigation and the intentional package migration.
+separate. Documentation navigation and the intentional package migration are
+now verified; final release metadata and capability promotion remain separate.
 
 ## Go/no-go
 
