@@ -23,6 +23,14 @@ shared resource owner handle → game disposal → cache release → underlying 
   - Lines: 100%
 - `npm run check` — passed with zero diagnostics.
 - `npm run validate:specs` — passed for 16 capability directories.
+- Asset-cache edge tests now cover already-aborted requests, all-requester
+  cancellation, disposal during loading, retry, shared completed handles, and
+  post-disposal rejection.
+- Focused asset-cache coverage — passed:
+  - Statements: 100%
+  - Branches: 100%
+  - Functions: 100%
+  - Lines: 100%
 
 ## Evidence gaps and go/no-go
 

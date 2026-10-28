@@ -40,6 +40,9 @@ export const create_asset_cache = <Manifest extends AssetManifest>(manifest: Man
     if (disposed) {
       throw new Error("asset cache is disposed");
     }
+    if (options.signal?.aborted) {
+      throw create_abort_error();
+    }
     const descriptor = manifest[key];
     const destroy_resource = descriptor.destroy as unknown as (resource: unknown) => void;
 
@@ -72,9 +75,6 @@ export const create_asset_cache = <Manifest extends AssetManifest>(manifest: Man
     current_entry.waiters += 1;
     const request_state = { aborted: false };
     const abort = (): void => {
-      if (request_state.aborted) {
-        return;
-      }
       request_state.aborted = true;
       current_entry.waiters -= 1;
       if (current_entry.waiters === 0) {
@@ -84,17 +84,11 @@ export const create_asset_cache = <Manifest extends AssetManifest>(manifest: Man
     options.signal?.addEventListener("abort", abort, { once: true });
 
     try {
-      if (options.signal?.aborted) {
-        throw create_abort_error();
-      }
       await current_entry.promise;
       if (request_state.aborted || options.signal?.aborted) {
         throw create_abort_error();
       }
-      const handle = shared_handles.get(key);
-      if (handle === undefined) {
-        throw new Error(`asset did not produce a handle: ${String(key)}`);
-      }
+      const handle = shared_handles.get(key)!;
       return handle.share() as ResourceHandle<AssetResource<Manifest, Key>>;
     } finally {
       options.signal?.removeEventListener("abort", abort);
