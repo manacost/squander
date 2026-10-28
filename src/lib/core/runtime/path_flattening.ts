@@ -86,29 +86,27 @@ export const flatten_path = (input: PathInput, tolerance: number): readonly Flat
       start = point;
       continue;
     }
-    if (!current || !start) throw new RangeError("path command has no active subpath");
     if (command.kind === "line") {
       current = snapshot_point(command);
-      subpaths.at(-1)?.points.push(current);
+      subpaths.at(-1)!.points.push(current);
     } else if (command.kind === "quadratic") {
       const end = snapshot_point(command);
-      flatten_quadratic(current, { x: command.control_x, y: command.control_y }, end, flatness, subpaths.at(-1)?.points ?? [], 0);
+      flatten_quadratic(current!, { x: command.control_x, y: command.control_y }, end, flatness, subpaths.at(-1)!.points, 0);
       current = end;
     } else if (command.kind === "cubic") {
       const end = snapshot_point(command);
       flatten_cubic(
-        current,
+        current!,
         { x: command.control_1_x, y: command.control_1_y },
         { x: command.control_2_x, y: command.control_2_y },
         end,
         flatness,
-        subpaths.at(-1)?.points ?? [],
+        subpaths.at(-1)!.points,
         0,
       );
       current = end;
     } else {
-      const active = subpaths.at(-1);
-      if (!active) throw new RangeError("path close has no active subpath");
+      const active = subpaths.at(-1)!;
       if (distance(current, start) > 0) active.points.push(start);
       active.closed = true;
       current = undefined;

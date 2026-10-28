@@ -23,8 +23,8 @@ const point_in_triangle = (point: PolygonPoint, a: PolygonPoint, b: PolygonPoint
   const first = cross(a, b, point);
   const second = cross(b, c, point);
   const third = cross(c, a, point);
-  const has_negative = first < 0 || second < 0 || third < 0;
-  const has_positive = first > 0 || second > 0 || third > 0;
+  const has_negative = [first, second, third].some((value) => value < 0);
+  const has_positive = [first, second, third].some((value) => value > 0);
   return (
     !(has_negative && has_positive) &&
     is_between(point.x, Math.min(a.x, b.x, c.x), Math.max(a.x, b.x, c.x)) &&

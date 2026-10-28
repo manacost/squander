@@ -30,6 +30,33 @@ describe("[paths-and-polygons] polygon triangulation", () => {
     expect(indexed_area(result)).toBe(7);
   });
 
+  it("rejects candidate ears that contain another polygon point", () => {
+    const result = triangulate_polygon([
+      { x: 0, y: 0 },
+      { x: 6, y: 0 },
+      { x: 6, y: 6 },
+      { x: 4, y: 4 },
+      { x: 3, y: 5 },
+      { x: 2, y: 4 },
+      { x: 0, y: 6 },
+    ]);
+
+    expect(result.indices).toHaveLength(15);
+    expect(indexed_area(result)).toBe(29);
+  });
+
+  it("handles collinear boundary candidates while clipping ears", () => {
+    const result = triangulate_polygon([
+      { x: 0, y: 0 },
+      { x: 2, y: 0 },
+      { x: 4, y: 0 },
+      { x: 4, y: 4 },
+      { x: 0, y: 4 },
+    ]);
+
+    expect(indexed_area(result)).toBe(16);
+  });
+
   it("produces the same area for either winding and does not mutate input", () => {
     const clockwise = [
       { x: 0, y: 0 },
