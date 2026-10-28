@@ -49,3 +49,11 @@ We never allow documentation to go stale. Update affected documentation and exam
 ## Agent-Specific Instructions
 
 Inspect `git status` before editing and preserve unrelated work in a dirty tree. Prefer source code over stale examples when behavior differs. Keep changes scoped and report pre-existing check failures separately.
+
+For multi-slice plans or requests to continue working, use the repository workflow in
+[`.agents/skills/plan-execution/SKILL.md`](.agents/skills/plan-execution/SKILL.md).
+Before editing, read the plan and its progress ledger when one exists. Continue through
+independent work after a blocked gate, record the blocker and exact next action, and stop
+only for an unresolved contract decision, missing authority, or an exhausted independent
+work queue. Every completed slice needs its acceptance evidence, coverage where applicable,
+code trace, and commit recorded before promotion.
