@@ -51,6 +51,12 @@ Current verification:
 The current cache is renderer-independent. Manifest type tests, real image
 decode/upload, and final descriptor policy remain unimplemented.
 
+The game-owned typed manifest seam is currently exercised by
+[`src/lib/core/runtime/game.test.ts`](../../src/lib/core/runtime/game.test.ts) in
+the `[game-lifecycle] game setup` suite, and public inference is checked by
+[`type-tests/runtime-assets.ts`](../../type-tests/runtime-assets.ts). These tests
+do not yet claim image decoding or GPU upload behavior.
+
 ## Notes
 
 AD-005 and AD-013. The current kernel uses manifest keys as cache identity,

@@ -29,7 +29,7 @@ export type {
   PreparedGeometry,
   Color,
 } from "./runtime/index.js";
-export { create_game, GameDisposedError, GameInitializationError, GameRuntimeError } from "./runtime/index.js";
+export { create_game, GameDeviceLostError, GameDisposedError, GameInitializationError, GameRuntimeError } from "./runtime/index.js";
 export type { Game as RuntimeGame, GameOptions, GameSetupContext } from "./runtime/index.js";
 
 // The application will create a renderer using WebGL, if possible,

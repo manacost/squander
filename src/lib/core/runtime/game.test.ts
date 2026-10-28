@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { create_game, GameDisposedError, GameInitializationError, GameRuntimeError } from "./game.js";
+import { create_game, GameDeviceLostError, GameDisposedError, GameInitializationError, GameRuntimeError } from "./game.js";
 import { type FrameScheduler } from "./frame_loop.js";
 import type { GeometryHandle } from "./geometry_ownership.js";
+import type { ResourceHandle } from "./resource_ownership.js";
 
 const create_scheduler = () => {
   let now_seconds = 0;
@@ -37,6 +38,43 @@ const create_scheduler = () => {
 };
 
 describe("[game-lifecycle] game setup", () => {
+  it("applies controls requested before setup completes", async () => {
+    const scheduler = create_scheduler();
+    let resolve_setup!: () => void;
+    const setup = new Promise<void>((resolve) => {
+      resolve_setup = resolve;
+    });
+    let updates = 0;
+    let draws = 0;
+    const game = create_game({
+      scheduler: scheduler.scheduler,
+      setup: async () => setup,
+      update: () => {
+        updates += 1;
+      },
+      draw: () => {
+        draws += 1;
+      },
+    });
+
+    game.pause();
+    game.set_visibility(false);
+    resolve_setup();
+    await game.ready;
+    expect(game.get_state()).toBe("hidden");
+    game.set_visibility(true);
+    expect(game.get_state()).toBe("paused");
+    scheduler.tick();
+    expect(updates).toBe(0);
+    expect(draws).toBe(1);
+    game.resume();
+    scheduler.advance(0.05);
+    scheduler.tick();
+    expect(updates).toBe(1);
+    expect(draws).toBe(2);
+    await game.dispose();
+  });
+
   it("does not start callbacks until asynchronous setup succeeds", async () => {
     const scheduler = create_scheduler();
     let resolve_setup!: () => void;
@@ -128,5 +166,87 @@ describe("[game-lifecycle] game setup", () => {
     expect(runtime_errors[0]).toBeInstanceOf(GameRuntimeError);
     expect(running.get_state()).toBe("stopped");
     await running.dispose();
+  });
+
+  it("releases setup resources when initialization fails", async () => {
+    const scheduler = create_scheduler();
+    let destroyed = 0;
+    let handle!: ResourceHandle<string>;
+    const failed = create_game({
+      scheduler: scheduler.scheduler,
+      setup: ({ resources }) => {
+        handle = resources.acquire("asset", () => {
+          destroyed += 1;
+        });
+        throw new Error("asset setup failed");
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+
+    await expect(failed.ready).rejects.toBeInstanceOf(GameInitializationError);
+    expect(destroyed).toBe(1);
+    expect(() => handle.read()).toThrow("resource handle is released");
+    await failed.dispose();
+  });
+
+  it("supports repeated disposal while running", async () => {
+    const scheduler = create_scheduler();
+    const game = create_game({ scheduler: scheduler.scheduler, update: () => undefined, draw: () => undefined });
+    await game.ready;
+    const first = game.dispose();
+    expect(game.dispose()).toBe(first);
+    await first;
+    expect(game.get_state()).toBe("disposed");
+    expect(scheduler.pending()).toBe(0);
+  });
+
+  it("stops with a distinct device-loss error", async () => {
+    const scheduler = create_scheduler();
+    let lose_device!: (cause: unknown) => void;
+    const device_lost = new Promise<unknown>((resolve) => {
+      lose_device = resolve;
+    });
+    const errors: unknown[] = [];
+    const game = create_game({
+      scheduler: scheduler.scheduler,
+      device_lost,
+      update: () => undefined,
+      draw: () => undefined,
+      on_error: (error) => errors.push(error),
+    });
+
+    await game.ready;
+    lose_device(new Error("device removed"));
+    await Promise.resolve();
+    expect(errors[0]).toBeInstanceOf(GameDeviceLostError);
+    expect(game.get_state()).toBe("stopped");
+    await game.dispose();
+  });
+
+  it("exposes a typed manifest cache through setup and disposes it with the game", async () => {
+    let destroyed = 0;
+    const game = create_game({
+      scheduler: create_scheduler().scheduler,
+      manifest: {
+        hero: {
+          load: async () => "hero-texture",
+          destroy: () => {
+            destroyed += 1;
+          },
+        },
+      },
+      setup: async ({ assets }) => {
+        const hero = await assets.load("hero");
+        expect(hero.read()).toBe("hero-texture");
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+
+    await game.ready;
+    expect(game.assets.load).toBeTypeOf("function");
+    await game.dispose();
+    expect(destroyed).toBe(1);
   });
 });

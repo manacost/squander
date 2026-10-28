@@ -1,6 +1,7 @@
 import { create_frame_loop, type FrameLoop, type FrameLoopOptions, type FrameLoopState, type FrameScheduler } from "./frame_loop.js";
 import { create_resource_owner, type ResourceOwner } from "./resource_ownership.js";
 import { create_geometry_owner, type GeometryOwner } from "./geometry_ownership.js";
+import { create_asset_cache, type AssetCache, type AssetManifest } from "./asset_loading.js";
 import type { UpdateTime } from "./timing.js";
 
 export class GameInitializationError extends Error {
@@ -17,6 +18,13 @@ export class GameRuntimeError extends Error {
   }
 }
 
+export class GameDeviceLostError extends Error {
+  public constructor(cause: unknown) {
+    super("WebGPU device was lost", { cause });
+    this.name = "GameDeviceLostError";
+  }
+}
+
 export class GameDisposedError extends Error {
   public constructor() {
     super("game was disposed during initialization");
@@ -24,25 +32,29 @@ export class GameDisposedError extends Error {
   }
 }
 
-export type GameSetupContext = Readonly<{
+export type GameSetupContext<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   signal: AbortSignal;
   resources: ResourceOwner;
   geometry: GeometryOwner;
+  assets: AssetCache<Manifest>;
 }>;
 
-export type GameOptions = Readonly<{
+export type GameOptions<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   scheduler: FrameScheduler;
-  setup?: (context: GameSetupContext) => void | Promise<void>;
+  manifest?: Manifest;
+  setup?: (context: GameSetupContext<Manifest>) => void | Promise<void>;
   update: (time: UpdateTime) => void;
   draw: () => void;
-  on_error?: (error: GameInitializationError | GameRuntimeError) => void;
+  device_lost?: PromiseLike<unknown>;
+  on_error?: (error: GameDeviceLostError | GameInitializationError | GameRuntimeError) => void;
   max_delta_seconds?: number;
 }>;
 
-export type Game = Readonly<{
+export type Game<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   ready: Promise<void>;
   resources: ResourceOwner;
   geometry: GeometryOwner;
+  assets: AssetCache<Manifest>;
   pause: () => void;
   resume: () => void;
   set_visibility: (visible: boolean) => void;
@@ -58,9 +70,10 @@ const create_loop_options = (options: GameOptions, on_error: (error: unknown) =>
   max_delta_seconds: options.max_delta_seconds,
 });
 
-export const create_game = (options: GameOptions): Game => {
+export const create_game = <Manifest extends AssetManifest = AssetManifest>(options: GameOptions<Manifest>): Game<Manifest> => {
   const resources = create_resource_owner();
   const geometry = create_geometry_owner();
+  const assets = create_asset_cache((options.manifest ?? {}) as Manifest, resources);
   const abort_controller = new AbortController();
   let loop: FrameLoop | undefined;
   const lifecycle = { disposed: false, manually_paused: false, visible: true };
@@ -68,23 +81,31 @@ export const create_game = (options: GameOptions): Game => {
 
   const ready = (async (): Promise<void> => {
     try {
-      await options.setup?.({ signal: abort_controller.signal, resources, geometry });
+      await options.setup?.({ signal: abort_controller.signal, resources, geometry, assets });
       if (lifecycle.disposed || abort_controller.signal.aborted) {
         throw new GameDisposedError();
       }
       loop = create_frame_loop(
         create_loop_options(options, (cause) => {
+          if (cause instanceof GameDeviceLostError) {
+            options.on_error?.(cause);
+            return;
+          }
           options.on_error?.(new GameRuntimeError(cause));
         }),
       );
+      loop.start();
       if (lifecycle.manually_paused) {
         loop.pause();
       }
       if (!lifecycle.visible) {
         loop.set_visibility(false);
       }
-      loop.start();
+      options.device_lost?.then((cause) => {
+        loop?.fail(new GameDeviceLostError(cause));
+      });
     } catch (cause) {
+      assets.dispose();
       resources.dispose();
       geometry.dispose();
       if (cause instanceof GameDisposedError) {
@@ -118,6 +139,7 @@ export const create_game = (options: GameOptions): Game => {
     lifecycle.disposed = true;
     abort_controller.abort();
     disposal_promise = (loop?.dispose() ?? Promise.resolve()).then(() => {
+      assets.dispose();
       resources.dispose();
       geometry.dispose();
     });
@@ -126,5 +148,5 @@ export const create_game = (options: GameOptions): Game => {
 
   const get_state = (): FrameLoopState | "initializing" => loop?.get_state() ?? "initializing";
 
-  return Object.freeze({ ready, resources, geometry, pause, resume, set_visibility, dispose, get_state });
+  return Object.freeze({ ready, resources, geometry, assets, pause, resume, set_visibility, dispose, get_state });
 };

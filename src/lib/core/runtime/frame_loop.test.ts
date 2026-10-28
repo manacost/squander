@@ -38,10 +38,31 @@ const create_scheduler = () => {
     pending() {
       return callbacks.size;
     },
+    peek() {
+      return callbacks.values().next().value as (() => void) | undefined;
+    },
   };
 };
 
 describe("[game-lifecycle] frame loop", () => {
+  it("ignores repeated starts and controls that do not apply to an idle loop", () => {
+    const scheduler = create_scheduler();
+    const loop = create_frame_loop({ scheduler: scheduler.scheduler, update: () => undefined, draw: () => undefined });
+
+    loop.start();
+    loop.start();
+    expect(scheduler.pending()).toBe(1);
+    loop.pause();
+    loop.resume();
+    loop.set_visibility(false);
+    loop.set_visibility(false);
+    loop.set_visibility(true);
+    expect(loop.get_state()).toBe("running");
+    loop.set_visibility(false);
+    loop.set_visibility(true);
+    expect(scheduler.pending()).toBe(1);
+  });
+
   it("updates before drawing and stops drawing after an update failure", () => {
     const scheduler = create_scheduler();
     const events: string[] = [];
@@ -123,5 +144,94 @@ describe("[game-lifecycle] frame loop", () => {
     expect(updates).toBe(1);
     expect(draws).toBe(1);
     expect(loop.get_state()).toBe("disposed");
+  });
+
+  it("preserves an explicit pause across visibility changes", () => {
+    const scheduler = create_scheduler();
+    let updates = 0;
+    let draws = 0;
+    const loop = create_frame_loop({
+      scheduler: scheduler.scheduler,
+      update: () => {
+        updates += 1;
+      },
+      draw: () => {
+        draws += 1;
+      },
+    });
+
+    loop.start();
+    scheduler.tick();
+    loop.pause();
+    loop.set_visibility(false);
+    expect(loop.get_state()).toBe("hidden");
+    loop.set_visibility(true);
+    expect(loop.get_state()).toBe("paused");
+    scheduler.tick();
+    expect(updates).toBe(1);
+    expect(draws).toBe(2);
+  });
+
+  it("ignores a callback that arrives after the loop becomes inactive", () => {
+    const scheduler = create_scheduler();
+    let draws = 0;
+    const loop = create_frame_loop({
+      scheduler: scheduler.scheduler,
+      update: () => undefined,
+      draw: () => {
+        draws += 1;
+      },
+    });
+
+    loop.start();
+    const stale_callback = scheduler.peek();
+    loop.set_visibility(false);
+    stale_callback?.();
+    expect(draws).toBe(0);
+  });
+
+  it("stops when drawing fails and ignores callbacks after disposal", async () => {
+    const scheduler = create_scheduler();
+    const errors: unknown[] = [];
+    const loop = create_frame_loop({
+      scheduler: scheduler.scheduler,
+      update: () => undefined,
+      draw: () => {
+        throw new Error("draw failed");
+      },
+      on_error: (error) => errors.push(error),
+    });
+
+    loop.start();
+    scheduler.tick();
+    expect(errors).toHaveLength(1);
+    expect(loop.get_state()).toBe("stopped");
+    loop.pause();
+    loop.resume();
+    loop.set_visibility(false);
+    loop.set_visibility(true);
+    await loop.dispose();
+    await loop.dispose();
+    expect(loop.get_state()).toBe("disposed");
+  });
+
+  it("fails an active loop and ignores a later failure after disposal", async () => {
+    const scheduler = create_scheduler();
+    const errors: unknown[] = [];
+    const loop = create_frame_loop({
+      scheduler: scheduler.scheduler,
+      update: () => undefined,
+      draw: () => undefined,
+      on_error: (error) => errors.push(error),
+    });
+
+    loop.start();
+    loop.fail("device lost");
+    expect(loop.get_state()).toBe("stopped");
+    expect(errors).toEqual(["device lost"]);
+    loop.fail("ignored");
+    await loop.dispose();
+    loop.fail("ignored after dispose");
+    expect(errors).toEqual(["device lost"]);
   });
 });

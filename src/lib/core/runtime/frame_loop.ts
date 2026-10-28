@@ -22,6 +22,7 @@ export type FrameLoop = Readonly<{
   resume: () => void;
   set_visibility: (visible: boolean) => void;
   dispose: () => Promise<void>;
+  fail: (error: unknown) => void;
   get_state: () => FrameLoopState;
 }>;
 
@@ -34,10 +35,6 @@ export const create_frame_loop = (options: FrameLoopOptions): FrameLoop => {
 
   const report_error = (error: unknown): void => {
     state = "stopped";
-    if (frame_handle !== undefined) {
-      options.scheduler.cancel_frame(frame_handle);
-      frame_handle = undefined;
-    }
     options.on_error?.(error);
   };
 
@@ -122,5 +119,12 @@ export const create_frame_loop = (options: FrameLoopOptions): FrameLoop => {
     return cleanup_promise;
   };
 
-  return Object.freeze({ start, pause, resume, set_visibility, dispose, get_state: () => state });
+  const fail = (error: unknown): void => {
+    if (state === "disposed" || state === "stopped") {
+      return;
+    }
+    report_error(error);
+  };
+
+  return Object.freeze({ start, pause, resume, set_visibility, dispose, fail, get_state: () => state });
 };
