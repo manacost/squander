@@ -48,8 +48,13 @@ Illustrative: bridge.state.health.subscribe(...) and bridge.commands.use_item(it
 
 ## Test references
 
-No tests currently verify this replacement-framework contract. Existing legacy
-tests are not claimed as coverage. Planned verification (not existing test links):
+The Svelte-independent bridge core is currently covered by
+[`src/lib/core/runtime/bridge.test.ts`](../../src/lib/core/runtime/bridge.test.ts)
+in the `[svelte-bridge] core bridge` suite, with public command inference in
+[`type-tests/bridge.ts`](../../type-tests/bridge.ts). These tests do not claim
+Svelte mounting, SSR, or host isolation.
+
+Planned verification for the remaining replacement-framework contract:
 
 Public API type tests, real Svelte mount/unmount and action tests, SSR/package-consumer smoke tests.
 
