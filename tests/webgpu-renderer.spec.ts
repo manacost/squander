@@ -40,6 +40,31 @@ test("[sprite-drawing] uploads and draws a persistent texture", async ({ page })
   expect(result).toEqual([12, 34, 56, 255]);
 });
 
+test("[dynamic-assets] prepares a canvas image source and uploads its pixels", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const source = document.createElement("canvas");
+    source.width = 1;
+    source.height = 1;
+    const source_context = source.getContext("2d");
+    if (source_context === null) throw new Error("Canvas 2D preparation is unavailable");
+    source_context.fillStyle = "red";
+    source_context.fillRect(0, 0, 1, 1);
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
+    const texture = renderer.create_texture_from_image(source, 1, 1);
+    const pixels = await renderer.draw_texture(texture);
+    texture.release();
+    renderer.dispose();
+    return Array.from(pixels.slice(0, 4));
+  });
+
+  expect(result).toEqual([255, 0, 0, 255]);
+});
+
 test("[sprite-drawing] samples an atlas region with tint and opacity", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

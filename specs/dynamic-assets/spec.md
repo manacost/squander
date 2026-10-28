@@ -46,6 +46,11 @@ in the `[dynamic-assets] image source decoding` suite. It covers Blob/File
 acceptance, cancellation, late-result cleanup, unavailable decoding, and typed
 decode failure. GPU texture upload and readback remain unimplemented.
 
+Canvas-image preparation and upload are exercised by the
+`[dynamic-assets] prepares a canvas image source and uploads its pixels` suite in
+[`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts). Direct
+Blob/File-to-GPU evidence remains unverified in the current Chromium fixture.
+
 Planned verification for the remaining replacement-framework contract:
 
 Browser File/Blob decode and rendering tests, malformed-data tests, public API type tests.

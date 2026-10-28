@@ -83,6 +83,12 @@ export type RenderCommand = Readonly<
 export type WebGpuRenderer = Readonly<{
   clear: (color: ClearColor) => Promise<Uint8Array>;
   create_texture: (pixels: Uint8Array, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
+  create_texture_from_image: (
+    image: CanvasImageSource,
+    width: number,
+    height: number,
+    options?: TextureFilteringOptions,
+  ) => WebGpuTexture;
   draw_texture: (texture: WebGpuTexture, options?: TextureDrawOptions) => Promise<Uint8Array>;
   draw_textures: (draws: readonly TextureDraw[]) => Promise<Uint8Array>;
   draw_commands: (commands: readonly RenderCommand[]) => Promise<Uint8Array>;
@@ -316,6 +322,25 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       filtering: resolved_filtering,
       release: handle.release,
     });
+  };
+
+  const create_texture_from_image = (
+    image: CanvasImageSource,
+    width: number,
+    height: number,
+    filtering: TextureFilteringOptions = {},
+  ): WebGpuTexture => {
+    const preparation_canvas = document.createElement("canvas");
+    preparation_canvas.width = width;
+    preparation_canvas.height = height;
+    const preparation_context = preparation_canvas.getContext("2d");
+    if (preparation_context === null) {
+      throw new Error("Canvas 2D image preparation is unavailable");
+    }
+    preparation_context.clearRect(0, 0, width, height);
+    preparation_context.drawImage(image, 0, 0, width, height);
+    const pixels = preparation_context.getImageData(0, 0, width, height).data;
+    return create_texture(new Uint8Array(pixels), width, height, filtering);
   };
 
   const draw_texture = async (texture: WebGpuTexture, draw_options: TextureDrawOptions = {}): Promise<Uint8Array> => {
@@ -809,5 +834,5 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     device.destroy();
   };
 
-  return Object.freeze({ clear, create_texture, draw_texture, draw_textures, draw_commands, resize, dispose });
+  return Object.freeze({ clear, create_texture, create_texture_from_image, draw_texture, draw_textures, draw_commands, resize, dispose });
 };
