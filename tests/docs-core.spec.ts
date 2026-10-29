@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("core documentation is present in the sidebar and links to focused guides", async ({ page }) => {
   await page.goto("/docs/core");
+  await expect(page.getByRole("link", { name: "v8.0.0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "core" })).toHaveAttribute("href", "/docs/core");
   await expect(page.getByRole("link", { name: "demos" })).toHaveAttribute("href", "/docs/examples/playground");
   const text_link = page.locator('a.nested[href="/docs/examples/text"]');

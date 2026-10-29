@@ -6,7 +6,7 @@ assets, sprites, primitives, paths, polygons, cameras, viewports, filtering,
 fonts, and typed UI state bridges.
 
 This checkout contains the npm package and the SvelteKit documentation site.
-The package version is `2.0.0`.
+The package version is `8.0.0`.
 
 ## Develop locally
 
@@ -31,7 +31,7 @@ The package root and `squander/core` expose the same replacement runtime. The
 core package has no Svelte dependency.
 
 ```sh
-npm install squander@^2 svelte@^5
+npm install squander@^8 svelte@^5
 ```
 
 ```ts
