@@ -1,5 +1,6 @@
 <script lang="ts">
   import CoreGuideExample from "../../../../../lib/docs/CoreGuideExample.svelte";
+  import CodeBlock from "../../../../../lib/docs/CodeBlock.svelte";
   import type { PageData } from "./$types.js";
 
   let { data }: { data: PageData } = $props();
@@ -37,7 +38,7 @@
   </ul>
 
   <h2>Minimum viable example</h2>
-  <pre><code>{guide.sample}</code></pre>
+  <CodeBlock code={guide.sample} />
 
   <h2>Scope and limitations</h2>
   <p>{guide.limitations}</p>
@@ -82,10 +83,5 @@
   }
   .example-link:hover {
     background: #4a5a7b;
-  }
-  pre {
-    overflow: auto;
-    padding: 1rem 0;
-    border-block: 1px solid #39435b;
   }
 </style>

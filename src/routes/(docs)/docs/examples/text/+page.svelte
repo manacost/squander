@@ -1,5 +1,6 @@
 <script lang="ts">
   import GameHost from "../../../../../lib/svelte/GameHost.svelte";
+  import CodeBlock from "../../../../../lib/docs/CodeBlock.svelte";
   import { create_game, rgba, type RuntimeGame } from "../../../../../lib/core/index.js";
   import type { GameBridge } from "../../../../../lib/core/runtime/bridge.js";
   import type { WebGpuFont } from "../../../../../lib/core/runtime/index.js";
@@ -85,18 +86,18 @@
   </ul>
 
   <h2>Load a font</h2>
-  <pre><code
-      >{`const font_handle = await assets.load_font(
+  <CodeBlock
+    code={`const font_handle = await assets.load_font(
   'url("/fonts/GeostarFill-Regular.ttf")',
   { characters: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", size: 28 },
 );
 
-const font = font_handle.read();`}</code
-    ></pre>
+const font = font_handle.read();`}
+  />
 
   <h2>Draw text</h2>
-  <pre><code
-      >{`renderer.draw_commands([
+  <CodeBlock
+    code={`renderer.draw_commands([
   {
     kind: "text",
     draw: {
@@ -111,8 +112,8 @@ const font = font_handle.read();`}</code
       },
     },
   },
-]);`}</code
-    ></pre>
+]);`}
+  />
 
   <h2>Text API</h2>
   <p>
@@ -140,10 +141,5 @@ const font = font_handle.read();`}</code
     aspect-ratio: 12 / 7;
     background: #05070d;
     border: 1px solid #39435b;
-  }
-  pre {
-    overflow: auto;
-    padding: 1rem 0;
-    border-block: 1px solid #39435b;
   }
 </style>

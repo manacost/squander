@@ -57,6 +57,9 @@
     "!dist/**/*.test.*",
     "!dist/**/*.spec.*"
   ],
+  "dependencies": {
+    "prismjs": "^1.30.0"
+  },
   "peerDependencies": {
     "svelte": "^5.57.1"
   },

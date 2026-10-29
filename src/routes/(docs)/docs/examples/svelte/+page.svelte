@@ -1,5 +1,6 @@
 <script lang="ts">
   import GameHost from "../../../../../lib/svelte/GameHost.svelte";
+  import CodeBlock from "../../../../../lib/docs/CodeBlock.svelte";
   import type { Game } from "../../../../../lib/core/runtime/game.js";
 
   type State = Readonly<{ score: number }>;
@@ -88,8 +89,9 @@
   </ul>
 
   <h2>Use the host component</h2>
-  <pre><code
-      >{`type State = Readonly<{ score: number }>;
+  <CodeBlock
+    language="svelte"
+    code={`type State = Readonly<{ score: number }>;
 const commands = { increment: (amount: number) => score += amount };
 
 <GameHost initial_state={{ score: 0 }} {commands} {create}>
@@ -97,16 +99,16 @@ const commands = { increment: (amount: number) => score += amount };
     <output>{view.state.score}</output>
     <button onclick={() => view.commands.increment(1)}>+1</button>
   {/snippet}
-{/GameHost>`}</code
-    ></pre>
+{/GameHost>`}
+  />
 
   <h2>Use the adapter directly</h2>
-  <pre><code
-      >{`const adapter = create_game_adapter({ initial_state: { score: 0 }, commands, create });
+  <CodeBlock
+    code={`const adapter = create_game_adapter({ initial_state: { score: 0 }, commands, create });
 const unsubscribe = adapter.subscribe((view) => render(view));
 await adapter.mount(canvas);
-await adapter.dispose();`}</code
-    ></pre>
+await adapter.dispose();`}
+  />
 
   <h2>Public types</h2>
   <ul>
@@ -166,11 +168,6 @@ await adapter.dispose();`}</code
     flex-basis: 100%;
     color: #aab8d8;
     font-size: 0.9rem;
-  }
-  pre {
-    overflow: auto;
-    padding: 1rem 0;
-    border-block: 1px solid #39435b;
   }
   .note {
     margin-top: 2rem;

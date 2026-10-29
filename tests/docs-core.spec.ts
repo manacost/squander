@@ -44,6 +44,7 @@ test("Core exposes a focused guide for every remaining runtime area", async ({ p
   await expect(page.getByRole("heading", { level: 2, name: "Minimum viable example" })).toBeVisible();
   await expect(page.getByText("live rendering")).toBeVisible();
   await expect(page.getByTestId("core-example-status-camera-2d")).toBeVisible();
+  await expect(page.locator("pre code span.token").first()).toBeVisible();
 
   for (const slug of slugs) {
     await page.goto(`/docs/core/${slug}`);
