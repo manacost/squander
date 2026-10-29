@@ -15,5 +15,5 @@ test("documentation navigation opens the Core API guides", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/docs\/core$/);
   await expect(page.getByRole("heading", { level: 1, name: "Core" })).toBeVisible();
-  await expect(page.locator("a.nested", { hasText: "text" })).toBeVisible();
+  await expect(page.locator('a.nested[href="/docs/examples/text"]')).toBeVisible();
 });

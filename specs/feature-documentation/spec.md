@@ -52,8 +52,12 @@ The Core sidebar and focused text guide are covered by
 [`tests/text-example.spec.ts`](../../tests/text-example.spec.ts), and the real
 WebGPU proof in
 [`tests/webgpu-text-example.spec.ts`](../../tests/webgpu-text-example.spec.ts).
-The remaining capability pages are explicitly listed as follow-up work in the
-audit; the composition playground remains supplementary evidence.
+The generated Core guide registry covers every remaining runtime area, and the
+guide inventory is browser-verified by
+[`tests/docs-core.spec.ts`](../../tests/docs-core.spec.ts). Each guide links to
+the live playground or Svelte demo, explains scope and limitations, lists public
+types, and includes a usage sample. The composition playground remains
+supplementary evidence.
 
 Use `[feature-documentation]` in relevant suite names and add actual file/suite links as tests land.
 

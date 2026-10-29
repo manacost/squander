@@ -2,6 +2,7 @@
   import { afterNavigate } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { page } from "$app/state";
+  import { core_guides } from "../../lib/docs/core-guides.js";
   import type { LayoutData } from "./$types.js";
 
   let page_path = $derived(page.url.pathname);
@@ -13,7 +14,10 @@
       label: "core",
       href: "/docs/core",
       target: "/(docs)/docs/core",
-      children: [{ label: "text", href: "/docs/examples/text", target: "/(docs)/docs/examples/text" }],
+      children: [
+        { label: "text", href: "/docs/examples/text" },
+        ...core_guides.map((guide) => ({ label: guide.label, href: `/docs/core/${guide.slug}` })),
+      ],
     },
     {
       label: "demos",
@@ -61,7 +65,7 @@
         <a class="link" class:active={doc.href === page_path} href={resolve(doc.target)}>{doc.label}</a>
         {#if doc.children}
           {#each doc.children as child}
-            <a class="link nested" class:active={child.href === page_path} href={resolve(child.target)}>{child.label}</a>
+            <a class="link nested" class:active={child.href === page_path} href={child.href}>{child.label}</a>
           {/each}
         {/if}
       {/each}

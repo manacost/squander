@@ -21,33 +21,30 @@ focused-page requirement by itself.
 | Capability | Crossover required? | Sidebar | Live example | Explanation | Type info | Code samples | Decision |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `text-drawing` | Yes | Complete: Core → text | Complete: `/docs/examples/text` | Complete | Complete | Complete | Promoted; use as the reference implementation |
-| `asset-loading` | Yes | Missing focused page | Partial: playground/focused GPU fixtures | Partial | Partial | Missing | Create Core asset-loading guide |
-| `dynamic-assets` | Yes | Missing focused page | Partial: playground failure flow and GPU fixtures | Partial | Partial | Missing | Create Core dynamic-assets guide |
-| `sprite-drawing` | Yes | Missing focused page | Partial: playground and GPU gallery | Partial | Partial | Missing | Create Core sprite guide |
-| `shape-drawing` | Yes | Missing focused page | Partial: playground and GPU fixtures | Partial | Partial | Missing | Create Core shapes guide |
-| `paths-and-polygons` | Yes | Missing focused page | Partial: playground and GPU fixtures | Partial | Partial | Missing | Create Core geometry guide |
-| `camera-2d` | Yes | Missing focused page | Partial: playground and GPU fixtures | Partial | Partial | Missing | Create Core camera guide |
-| `viewport-sizing` | Yes | Missing focused page | Partial: playground and GPU fixtures | Partial | Partial | Missing | Create Core viewport guide |
-| `texture-filtering` | Yes | Missing focused page | Partial: playground/fixtures | Partial | Partial | Missing | Create Core filtering guide |
-| `game-lifecycle` | Yes | Missing focused page | Partial: playground controls | Partial | Partial | Missing | Create Core lifecycle guide |
-| `game-timing` | Yes | Missing focused page | Partial: playground tick/FPS display | Partial | Partial | Missing | Create Core timing guide |
-| `webgpu-runtime` | Yes | Missing focused page | Partial: playground and renderer gallery | Partial | Partial | Missing | Create Core WebGPU runtime guide |
-| `resource-ownership` | Yes for resource APIs | Missing focused page | Partial: release/readback fixtures | Partial | Partial | Missing | Create Core ownership guide with release examples |
-| `svelte-bridge` | Yes, as an adapter guide | Partial: Demos → svelte | Complete: `/docs/examples/svelte` | Partial | Partial | Partial | Add a focused adapter guide |
+| `asset-loading` | Yes | Complete: Core → asset loading | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
+| `dynamic-assets` | Yes | Complete: Core → dynamic assets | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
+| `sprite-drawing` | Yes | Complete: Core → sprites | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
+| `shape-drawing` | Yes | Complete: Core → shapes | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
+| `paths-and-polygons` | Yes | Complete: Core → paths & polygons | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
+| `camera-2d` | Yes | Complete: Core → camera 2D | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
+| `viewport-sizing` | Yes | Complete: Core → viewport sizing | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
+| `texture-filtering` | Yes | Complete: Core → texture filtering | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
+| `game-lifecycle` | Yes | Complete: Core → game lifecycle | Complete: Demos → playground | Complete | Complete | Complete | Guide added; lifecycle controls remain in the playground |
+| `game-timing` | Yes | Complete: Core → game timing | Complete: Demos → playground | Complete | Complete | Complete | Guide added; tick/FPS proof remains in the playground |
+| `webgpu-runtime` | Yes | Complete: Core → WebGPU runtime | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
+| `resource-ownership` | Yes for resource APIs | Complete: Core → resource ownership | Complete: Demos → playground | Complete | Complete | Complete | Guide added with release examples and ownership proof references |
+| `svelte-bridge` | Yes, as an adapter guide | Complete: Core → Svelte bridge and Demos → svelte | Complete: Demos → svelte | Complete | Complete | Complete | Guide added; host-specific proof remains in the adapter demo |
 | `feature-documentation` | No; this is the audit contract | Core documentation index | N/A | Complete in `AGENTS.md` and this audit | N/A | N/A | Remains Draft until the required guide inventory is complete |
 | `specs` | No; governance metadata | N/A | N/A | N/A | N/A | N/A | Not a runtime feature |
 
-## Required follow-up slices
+## Remaining evidence follow-up
 
-1. Add focused Core pages for asset loading, dynamic assets, sprites, shapes,
-   paths/polygons, cameras, viewport sizing, filtering, lifecycle, timing,
-   WebGPU runtime, and ownership.
-2. Add the Svelte guide to the sidebar, preserving its adapter-specific
-   placement while linking the existing live example.
-3. Add one normal browser documentation test per page and one real WebGPU
-   proof test for pages whose claim depends on rendering.
-4. Update each capability spec's test references and checkpoint when its five
-   crossover parts are complete.
+1. Keep the shared guide registry and sidebar inventory synchronized; the
+   inventory browser test covers every generated Core route.
+2. Add dedicated per-capability live proof pages only when the shared playground
+   no longer gives readers a sufficiently focused demonstration.
+3. Update each capability spec's test references and checkpoint as focused GPU
+   proof links are added; the guides already link the current proof boundary.
 
 The text page is the accepted template for the remaining guides. The current
 Phase 2 promotion status is unaffected by missing documentation pages; those

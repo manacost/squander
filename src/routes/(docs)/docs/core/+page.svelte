@@ -1,3 +1,7 @@
+<script lang="ts">
+  import { core_guides } from "../../../../lib/docs/core-guides.js";
+</script>
+
 <svelte:head><title>Core documentation</title></svelte:head>
 
 <article>
@@ -10,6 +14,9 @@
   <h2>Available guides</h2>
   <ul>
     <li><a href="/docs/examples/text">Text drawing</a> — load a bundled font, prepare glyphs, and render changing labels with WebGPU.</li>
+    {#each core_guides as guide}
+      <li><a href={`/docs/core/${guide.slug}`}>{guide.title}</a> — {guide.summary}</li>
+    {/each}
   </ul>
 
   <h2>Documentation contract</h2>

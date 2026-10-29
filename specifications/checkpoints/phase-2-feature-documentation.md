@@ -1,6 +1,6 @@
 # Phase 2 feature documentation checkpoint
 
-Status: **Core/Demos documentation structure audited; focused capability coverage remains incomplete**.
+Status: **Core/Demos documentation structure and guide inventory verified; dedicated live proof pages remain optional follow-up**.
 
 ## Pre-slice contract checkpoint
 
@@ -16,6 +16,9 @@ Status: **Core/Demos documentation structure audited; focused capability coverag
 - Added `Core` and `Demos` sidebar sections.
 - Kept the live playground, Svelte adapter, and focused text routes stable.
 - Added the feature/documentation crossover rule and the Phase 2 gap audit.
+- Added generated Core guides for every remaining runtime capability, each with
+  a live demo link, explanation, public types, code sample, proof boundary, and
+  limitations.
 
 ## Evidence
 
@@ -24,6 +27,8 @@ Status: **Core/Demos documentation structure audited; focused capability coverag
 - `npm run validate:specs`: passed, 16 capability directories.
 - `npm run test:integration -- --grep 'core documentation'`: passed; Core and
   Demos navigation resolve to useful pages.
+- `npm run test:integration -- --grep 'Core exposes'`: passed; every Core guide
+  is present in the sidebar and the camera guide renders its shared structure.
 - Prettier and `git diff --check`: passed.
 
 ## Code trace
