@@ -9,12 +9,20 @@
   const links = [["about", "/"]] as const;
 
   const documentation = [
-    { label: "examples", href: "/docs/examples", target: "/(docs)/docs/examples", children: [] },
     {
       label: "core",
       href: "/docs/core",
       target: "/(docs)/docs/core",
       children: [{ label: "text", href: "/docs/examples/text", target: "/(docs)/docs/examples/text" }],
+    },
+    {
+      label: "demos",
+      href: "/docs/examples/playground",
+      target: "/(docs)/docs/examples/playground",
+      children: [
+        { label: "playground", href: "/docs/examples/playground", target: "/(docs)/docs/examples/playground" },
+        { label: "svelte", href: "/docs/examples/svelte", target: "/(docs)/docs/examples/svelte" },
+      ],
     },
   ] as const;
   interface Props {

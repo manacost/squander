@@ -41,7 +41,7 @@ The playground combines geometry, sprites, labels, camera/viewport behavior, ass
 
 ## Usage description
 
-Browse focused examples by capability, then use the playground to explore features together. Documentation should identify unsupported behavior rather than implying it works.
+Browse focused Core guides by capability, then use the Demos to explore features together. Documentation should identify unsupported behavior rather than implying it works.
 
 ## Test references
 

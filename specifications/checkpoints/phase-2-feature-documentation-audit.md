@@ -8,6 +8,16 @@ a live example, an explanation, public type information, and copyable code
 samples. A composition playground is supplementary and does not satisfy the
 focused-page requirement by itself.
 
+## Site structure decision
+
+- `Core` is for framework-independent API guides: types, ownership, usage, and
+  focused rendering proofs.
+- `Demos` is for live composition and adapter experiences: the playground and
+  Svelte host example.
+- The former `/docs/examples` evidence index was removed because it repeated
+  repository-oriented checkpoint information without helping readers choose a
+  feature or run a focused example.
+
 | Capability | Crossover required? | Sidebar | Live example | Explanation | Type info | Code samples | Decision |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `text-drawing` | Yes | Complete: Core → text | Complete: `/docs/examples/text` | Complete | Complete | Complete | Promoted; use as the reference implementation |
@@ -23,7 +33,7 @@ focused-page requirement by itself.
 | `game-timing` | Yes | Missing focused page | Partial: playground tick/FPS display | Partial | Partial | Missing | Create Core timing guide |
 | `webgpu-runtime` | Yes | Missing focused page | Partial: playground and renderer gallery | Partial | Partial | Missing | Create Core WebGPU runtime guide |
 | `resource-ownership` | Yes for resource APIs | Missing focused page | Partial: release/readback fixtures | Partial | Partial | Missing | Create Core ownership guide with release examples |
-| `svelte-bridge` | Yes, as an adapter guide | Partial: examples only | Complete: `/docs/examples/svelte` | Partial | Partial | Partial | Add a focused adapter guide or promote the existing page into the sidebar |
+| `svelte-bridge` | Yes, as an adapter guide | Partial: Demos → svelte | Complete: `/docs/examples/svelte` | Partial | Partial | Partial | Add a focused adapter guide |
 | `feature-documentation` | No; this is the audit contract | Core documentation index | N/A | Complete in `AGENTS.md` and this audit | N/A | N/A | Remains Draft until the required guide inventory is complete |
 | `specs` | No; governance metadata | N/A | N/A | N/A | N/A | N/A | Not a runtime feature |
 
