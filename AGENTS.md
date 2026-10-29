@@ -65,6 +65,22 @@ Record an explicit rationale in the Phase 2 documentation audit when a feature
 is internal, non-visual, deferred, or otherwise does not require this set.
 Composition playgrounds supplement focused pages; they do not replace them.
 
+### Writing style
+
+Use the [Microsoft Writing Style Guide](https://learn.microsoft.com/en-us/style-guide/) as the default for documentation, UI copy, examples, release notes, and agent-facing explanations. Apply this local adaptation:
+
+- Lead with the outcome, decision, or next action. Keep sentences short, direct, and easy to scan.
+- Write in a warm, human, technically precise voice. Use contractions when they sound natural, and explain jargon before relying on it.
+- Prefer active voice and imperative verbs for procedures. Tell the reader what to do and what success looks like.
+- Use sentence-style capitalization for headings, labels, and list items. Omit terminal periods from headings and UI labels.
+- Prefer plain words, concrete verbs, and consistent terms. Use one term for one concept; do not rotate synonyms for variety.
+- Use lists or tables when they make choices, comparisons, or sequences easier to scan. Keep each list item parallel and purposeful.
+- Use the serial comma, one space after punctuation, and standard punctuation around code and UI labels.
+- Avoid idioms, culture-specific references, modifier stacks, vague claims, and unnecessary throat-clearing. Preserve necessary technical detail and caveats.
+- Use inclusive, bias-free language. Name the person or system performing an action when it improves clarity.
+
+Keep API names, file names, code, test names, and established product names exactly as required by the implementation. When repository conventions conflict with this style, preserve the code convention and apply the style to the surrounding explanation.
+
 ## Agent-Specific Instructions
 
 Inspect `git status` before editing and preserve unrelated work in a dirty tree. Prefer source code over stale examples when behavior differs. Keep changes scoped and report pre-existing check failures separately.
