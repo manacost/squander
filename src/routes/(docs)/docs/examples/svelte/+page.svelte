@@ -110,14 +110,14 @@ await adapter.dispose();`}</code></pre>
 </article>
 
 <style>
-  .svelte-guide { max-width: 960px; }
+  .svelte-guide { width: 100%; max-width: 960px; min-width: 0; }
   .eyebrow { margin: 0 0 0.5rem; color: var(--gray-6); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
   .summary { max-width: 52rem; font-size: 1.25rem; }
-  .flow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 2rem 0; padding: 1.25rem; border: 1px solid #39435b; border-radius: 0.6rem; background: #151923; }
-  .flow-card { display: grid; gap: 0.25rem; min-width: 8rem; padding: 0.75rem; border-radius: 0.4rem; background: #39435b; }
+  .flow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; min-width: 0; margin: 2rem 0; padding: 1.25rem 0; border-block: 1px solid #39435b; }
+  .flow-card { display: grid; gap: 0.25rem; min-width: min(8rem, 100%); max-width: 100%; padding: 0.75rem 0; }
   .flow-card span { color: #cad5ef; font-size: 0.85rem; }
   .flow-arrow { color: #aab8d8; font-size: 1.5rem; }
   .flow-return { flex-basis: 100%; color: #aab8d8; font-size: 0.9rem; }
-  pre { overflow: auto; padding: 1rem; border-radius: 0.5rem; background: #151923; }
-  .note { margin-top: 2rem; padding: 1rem; border-left: 3px solid #6076a8; background: #eef2fb; color: #26334e; }
+  pre { overflow: auto; padding: 1rem 0; border-block: 1px solid #39435b; }
+  .note { margin-top: 2rem; padding: 1rem 0; border-block: 1px solid #6076a8; color: #26334e; }
 </style>

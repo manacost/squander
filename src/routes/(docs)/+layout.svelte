@@ -101,18 +101,65 @@
   }
   .content {
     display: grid;
+    min-width: 0;
+    width: 100%;
   }
 
   .page {
     padding: 2rem 2rem;
+    min-width: 0;
+    max-width: 100%;
     min-height: 100vh;
+    overflow-wrap: anywhere;
+  }
+
+  :global(.page :where(pre, table)) {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  :global(.page pre) {
+    box-sizing: border-box;
+    min-width: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  :global(.page code) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  :global(.page :not(pre) > code) {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  :global(.page pre > code) {
+    display: block;
+    max-width: 100%;
+    min-width: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  :global(.page :where(img, canvas, svg, video)) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  :global(.page :where(a, code, output)) {
+    overflow-wrap: anywhere;
   }
 
   @media screen and (min-width: 64rem) {
     .content {
       padding: 0rem 0rem;
       display: grid;
-      grid-template-columns: 14rem auto;
+      grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
       gap: 2.5vw;
       height: 100vh;
     }
@@ -143,7 +190,6 @@
     padding: 0.25em 0.5em;
     text-decoration: none;
     background-color: hsla(0, 0, 100, 0);
-    border-radius: 9px;
     gap: 0.5rem;
   }
   .link:hover {

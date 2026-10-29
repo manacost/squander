@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "fira mono",
+        "createdAt": "2026-10-29T08:43:02.622Z",
+        "reason": "Existing implementation and DESIGN.md: Fira Mono is the intentional code font for syntax examples."
+      }
+    ]
+  }
+}

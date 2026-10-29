@@ -39,14 +39,15 @@
 </article>
 
 <style>
-  .guide { max-width: 900px; }
+  .guide { width: 100%; max-width: 900px; min-width: 0; }
   .eyebrow { margin: 0 0 0.5rem; color: var(--gray-6); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
   .summary { font-size: 1.25rem; max-width: 48rem; }
-  .proof { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin: 2rem 0; padding: 1.25rem; border: 1px solid #39435b; border-radius: 0.6rem; background: #151923; }
+  .proof { display: flex; align-items: end; justify-content: space-between; gap: 2rem; min-width: 0; margin: 2rem 0; padding: 1.25rem 0; border-block: 1px solid #39435b; }
+  .proof > :where(*) { min-width: 0; }
   .proof h2 { margin: 0 0 0.5rem; }
   .proof p { margin: 0; }
-  .button { display: inline-block; flex: 0 0 auto; padding: 0.65rem 0.9rem; border-radius: 0.4rem; background: #39435b; color: white; text-decoration: none; }
+  .button { display: inline-block; flex: 0 0 auto; padding: 0.65rem 0.9rem; background: #39435b; color: white; text-decoration: none; }
   .button:hover { background: #4a5a7b; }
-  pre { overflow: auto; padding: 1rem; border-radius: 0.5rem; background: #151923; }
+  pre { overflow: auto; padding: 1rem 0; border-block: 1px solid #39435b; }
   @media (max-width: 40rem) { .proof { align-items: start; flex-direction: column; } }
 </style>

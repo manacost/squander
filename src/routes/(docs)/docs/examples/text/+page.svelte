@@ -128,7 +128,7 @@ const font = font_handle.read();`}</code></pre>
 </article>
 
 <style>
-  .text-example { max-width: 960px; }
+  .text-example { width: 100%; max-width: 960px; min-width: 0; }
   :global(.text-canvas) { display: block; width: min(100%, 720px); height: auto; aspect-ratio: 12 / 7; background: #05070d; border: 1px solid #39435b; }
-  pre { overflow: auto; padding: 1rem; border-radius: 0.5rem; background: #151923; }
+  pre { overflow: auto; padding: 1rem 0; border-block: 1px solid #39435b; }
 </style>
