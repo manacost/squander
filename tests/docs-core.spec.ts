@@ -44,3 +44,13 @@ test("Core exposes a focused guide for every remaining runtime area", async ({ p
   await expect(page.getByRole("heading", { level: 2, name: "Usage" })).toBeVisible();
   await expect(page.locator("a.button")).toBeVisible();
 });
+
+test("Svelte bridge samples render source syntax instead of HTML entities", async ({ page }) => {
+  await page.goto("/docs/examples/svelte");
+  const host_sample = page.locator("pre code").first();
+  await expect(host_sample).toContainText("Readonly<{ score: number }>");
+  await expect(host_sample).toContainText("<GameHost initial_state={{ score: 0 }}");
+  await expect(host_sample).toContainText("=>");
+  await expect(host_sample).not.toContainText("&lt;");
+  await expect(host_sample).not.toContainText("=&gt;");
+});

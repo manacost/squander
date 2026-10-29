@@ -83,19 +83,19 @@
   </ul>
 
   <h2>Use the host component</h2>
-  <pre><code>{`type State = Readonly&lt;{ score: number }&gt;;
-const commands = { increment: (amount: number) =&gt; score += amount };
+  <pre><code>{`type State = Readonly<{ score: number }>;
+const commands = { increment: (amount: number) => score += amount };
 
-&lt;GameHost initial_state={{ score: 0 }} {commands} {create}&gt;
+<GameHost initial_state={{ score: 0 }} {commands} {create}>
   {#snippet children(view)}
-    &lt;output&gt;{view.state.score}&lt;/output&gt;
-    &lt;button onclick={() =&gt; view.commands.increment(1)}&gt;+1&lt;/button&gt;
+    <output>{view.state.score}</output>
+    <button onclick={() => view.commands.increment(1)}>+1</button>
   {/snippet}
-&lt;/GameHost&gt;`}</code></pre>
+{/GameHost>`}</code></pre>
 
   <h2>Use the adapter directly</h2>
   <pre><code>{`const adapter = create_game_adapter({ initial_state: { score: 0 }, commands, create });
-const unsubscribe = adapter.subscribe((view) =&gt; render(view));
+const unsubscribe = adapter.subscribe((view) => render(view));
 await adapter.mount(canvas);
 await adapter.dispose();`}</code></pre>
 
