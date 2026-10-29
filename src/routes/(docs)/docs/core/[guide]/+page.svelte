@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CoreGuideExample from "../../../../../lib/docs/CoreGuideExample.svelte";
   import type { PageData } from "./$types.js";
 
   let { data }: { data: PageData } = $props();
@@ -12,13 +13,16 @@
   <h1>{guide.title}</h1>
   <p class="summary">{guide.summary}</p>
 
-  <section class="proof">
+  <section class="live-example">
     <div>
       <p class="eyebrow">Live example</p>
-      <h2>Run it</h2>
-      <p>{guide.proof}</p>
+      <h2>See {guide.title} in action</h2>
+      <p>
+        The canvas below is a focused version of the minimum example. It is intentionally smaller than the composition playground so you can
+        connect each line of code to one visible result.
+      </p>
     </div>
-    <a class="button" href={guide.live_href}>{guide.live_label} →</a>
+    <CoreGuideExample slug={guide.slug} />
   </section>
 
   <h2>How it works</h2>
@@ -31,7 +35,8 @@
     {/each}
   </ul>
 
-  <h2>Usage</h2>
+  <h2>Minimum viable example</h2>
+  <p>Start with this smallest useful version of the feature, then add the options described above.</p>
   <pre><code>{guide.sample}</code></pre>
 
   <h2>Scope and limitations</h2>
@@ -39,15 +44,37 @@
 </article>
 
 <style>
-  .guide { width: 100%; max-width: 900px; min-width: 0; }
-  .eyebrow { margin: 0 0 0.5rem; color: var(--gray-6); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
-  .summary { font-size: 1.25rem; max-width: 48rem; }
-  .proof { display: flex; align-items: end; justify-content: space-between; gap: 2rem; min-width: 0; margin: 2rem 0; padding: 1.25rem 0; border-block: 1px solid #39435b; }
-  .proof > :where(*) { min-width: 0; }
-  .proof h2 { margin: 0 0 0.5rem; }
-  .proof p { margin: 0; }
-  .button { display: inline-block; flex: 0 0 auto; padding: 0.65rem 0.9rem; background: #39435b; color: white; text-decoration: none; }
-  .button:hover { background: #4a5a7b; }
-  pre { overflow: auto; padding: 1rem 0; border-block: 1px solid #39435b; }
-  @media (max-width: 40rem) { .proof { align-items: start; flex-direction: column; } }
+  .guide {
+    width: 100%;
+    max-width: 900px;
+    min-width: 0;
+  }
+  .eyebrow {
+    margin: 0 0 0.5rem;
+    color: var(--gray-6);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .summary {
+    font-size: 1.25rem;
+    max-width: 48rem;
+  }
+  .live-example {
+    min-width: 0;
+    margin: 2rem 0;
+    padding: 1.25rem 0;
+    border-block: 1px solid #39435b;
+  }
+  .live-example h2 {
+    margin: 0 0 0.5rem;
+  }
+  .live-example p {
+    margin: 0;
+  }
+  pre {
+    overflow: auto;
+    padding: 1rem 0;
+    border-block: 1px solid #39435b;
+  }
 </style>

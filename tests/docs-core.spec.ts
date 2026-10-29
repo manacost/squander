@@ -41,8 +41,14 @@ test("Core exposes a focused guide for every remaining runtime area", async ({ p
   await page.goto("/docs/core/camera-2d");
   await expect(page.getByRole("heading", { level: 1, name: "2D cameras" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 2, name: "Public types" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "Usage" })).toBeVisible();
-  await expect(page.locator("a.button")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Minimum viable example" })).toBeVisible();
+  await expect(page.getByText("live rendering")).toBeVisible();
+  await expect(page.getByTestId("core-example-status-camera-2d")).toBeVisible();
+
+  for (const slug of slugs) {
+    await page.goto(`/docs/core/${slug}`);
+    await expect(page.getByTestId(`core-example-status-${slug}`)).toBeVisible();
+  }
 });
 
 test("Svelte bridge samples render source syntax instead of HTML entities", async ({ page }) => {
