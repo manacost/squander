@@ -64,7 +64,7 @@
   </section>
 
   <h2>Live proof: one host</h2>
-  <p>This focused example keeps the common path visible: one host owns an adapter and game instance. The status becomes <code>ready</code> after <code>game.ready</code>, and disposal occurs when the host unmounts. Multi-host isolation is an advanced capability covered by the adapter test suite.</p>
+  <p>This example focuses on the common path. One host owns one adapter and game instance. The status becomes <code>ready</code> after <code>game.ready</code>, and disposal occurs when the host unmounts. The adapter test suite covers advanced multi-host isolation.</p>
 
 <GameHost initial_state={{ score: 0 }} {commands} {create}>
   {#snippet children(view)}

@@ -66,8 +66,8 @@
 <article class="text-example">
   <h1>Text drawing</h1>
   <p>
-    This page is a live proof that Squander can load a bundled font, prepare glyphs with Canvas 2D,
-    upload reusable glyph textures to WebGPU, and draw changing labels without rebuilding a whole label texture.
+    This page proves that Squander can load a bundled font, prepare glyphs with Canvas 2D, and upload
+    reusable glyph textures to WebGPU. The live label changes without rebuilding one large label texture.
   </p>
 
   <GameHost class="text-canvas" initial_state={{ status: "loading", ticks: 0 }} commands={{}} create={create_text_game}>

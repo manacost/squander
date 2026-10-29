@@ -1,5 +1,10 @@
 # <capability-name>
 
+Write for a developer who needs to make a decision or complete a task. Lead with
+the outcome, use short active sentences, prefer plain terms, and keep one term
+for one concept. Use sentence-style capitalization for headings. Keep API
+names, file names, and test names exact.
+
 ## Goal
 
 Describe the feature, the problem it solves, and the intended outcome in plain language.

@@ -20,9 +20,10 @@ npm run dev
 
 Useful routes:
 
-- `/docs/examples` — verification notes and runnable examples.
+- `/docs/core` — focused runtime guides with types, code samples, and proof links.
 - `/docs/examples/playground` — the composed WebGPU playground.
-- `/docs/examples/svelte` — the Svelte 5 adapter and two-host isolation example.
+- `/docs/examples/svelte` — the Svelte 5 adapter and UI bridge example.
+- `/docs/examples/text` — bundled-font loading and text rendering.
 
 ## Use the core runtime
 
@@ -73,8 +74,8 @@ Node-safe; Svelte components must be compiled by a Svelte-aware consumer.
 
 ## Evidence and verification
 
-The replacement runtime is documented as verified slices, not as fully promoted
-capabilities. The capability contracts and exact evidence live in `specs/` and
+The replacement runtime is documented as verified slices. Capability contracts
+live in `specs/`, and detailed evidence lives in
 `specifications/checkpoints/`.
 
 ```sh
@@ -101,7 +102,8 @@ screenshots are supplemental visual evidence.
 | ---------------------------------- | -------------------------------------------------------------------------- |
 | `src/lib/core/runtime/`            | Replacement lifecycle, assets, geometry, camera, text, and WebGPU runtime. |
 | `src/lib/svelte/`                  | Optional Svelte 5 adapter and `GameHost` component.                        |
-| `src/routes/(docs)/docs/examples/` | Runnable examples and verification notes.                                  |
+| `src/routes/(docs)/docs/core/`    | Focused runtime guides and usage examples.                                |
+| `src/routes/(docs)/docs/examples/` | Runnable composition and feature examples.                               |
 | `tests/`                           | Playwright integration and real WebGPU fixtures.                           |
 | `specs/`                           | Capability contracts and promotion criteria.                               |
 | `specifications/checkpoints/`      | Evidence records, gaps, and go/no-go decisions.                            |

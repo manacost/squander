@@ -1,34 +1,39 @@
 # Capability specifications
 
 Each capability uses `specs/{capability}/spec.md`; the directory name is its
-stable ID. The [spec-system capability](specs/spec.md) defines structure and
+stable ID. The [spec-system capability](specs/specs/spec.md) defines structure and
 lifecycle. Use the [template](spec_template.md) for additions.
 
-## Phase 2 drafts
+## Phase 2 capabilities
 
-The following are Draft, not implemented or verified. Each records the accepted
-direction, observable acceptance criteria, planned test layers, and open details.
+Each specification records the capability status, requirements, observable
+acceptance criteria, test layers, and open details. Read the status in the
+individual specification before treating a capability as complete.
 
-- [game-lifecycle](game-lifecycle/spec.md)
-- [game-timing](game-timing/spec.md)
-- [webgpu-runtime](webgpu-runtime/spec.md)
+### Implemented
+
 - [asset-loading](asset-loading/spec.md)
 - [dynamic-assets](dynamic-assets/spec.md)
-- [resource-ownership](resource-ownership/spec.md)
-- [sprite-drawing](sprite-drawing/spec.md)
-- [shape-drawing](shape-drawing/spec.md)
+- [game-lifecycle](game-lifecycle/spec.md)
+- [game-timing](game-timing/spec.md)
 - [paths-and-polygons](paths-and-polygons/spec.md)
-- [viewport-sizing](viewport-sizing/spec.md)
-- [camera-2d](camera-2d/spec.md)
-- [texture-filtering](texture-filtering/spec.md)
-- [text-drawing](text-drawing/spec.md)
+- [resource-ownership](resource-ownership/spec.md)
 - [svelte-bridge](svelte-bridge/spec.md)
+- [text-drawing](text-drawing/spec.md)
+- [texture-filtering](texture-filtering/spec.md)
+- [webgpu-runtime](webgpu-runtime/spec.md)
+
+### Draft
+
+- [camera-2d](camera-2d/spec.md)
+- [shape-drawing](shape-drawing/spec.md)
+- [sprite-drawing](sprite-drawing/spec.md)
+- [viewport-sizing](viewport-sizing/spec.md)
 - [feature-documentation](feature-documentation/spec.md)
 
-Existing PixiJS-era tests are not evidence of these replacement contracts. Add
-actual test-file and tagged-suite links as implementation proceeds. Future
-candidates remain in the phase backlogs rather than being presented as accepted
-capability contracts.
+Existing PixiJS-era tests are not evidence of replacement contracts. Add actual
+test-file and tagged-suite links as implementation proceeds. Future candidates
+remain in the phase backlogs rather than appearing as accepted contracts.
 
 ## Before implementation
 
