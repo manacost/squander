@@ -63,7 +63,24 @@
   };
 </script>
 
-<svelte:head><title>Svelte 5 adapter</title></svelte:head>
+<svelte:head><title>Svelte 5 UI bridge</title></svelte:head>
+
+<article class="svelte-guide">
+  <p class="eyebrow">Demos · Svelte bridge</p>
+  <h1>Svelte 5 UI bridge</h1>
+  <p class="summary">This demo shows Svelte observing readonly game snapshots and invoking typed commands without making the core runtime depend on Svelte.</p>
+
+  <section class="flow" aria-label="Svelte bridge data flow">
+    <div class="flow-card"><strong>Game code</strong><span>publish(state)</span></div>
+    <div class="flow-arrow" aria-hidden="true">→</div>
+    <div class="flow-card"><strong>GameAdapter</strong><span>readonly view</span></div>
+    <div class="flow-arrow" aria-hidden="true">→</div>
+    <div class="flow-card"><strong>Svelte UI</strong><span>render snapshot</span></div>
+    <div class="flow-return">UI event → typed command → game code</div>
+  </section>
+
+  <h2>Live proof: two isolated hosts</h2>
+  <p>Each host owns an adapter and game instance. Incrementing one score does not change the other. The status becomes <code>ready</code> after <code>game.ready</code>, and disposal occurs when the host unmounts.</p>
 
 <GameHost initial_state={{ score: 0 }} {commands} {create}>
   {#snippet children(view)}
@@ -80,3 +97,51 @@
     <button data-testid="adapter-right-increment" onclick={() => view.commands.increment(3)}>Increment</button>
   {/snippet}
 </GameHost>
+
+  <h2>What the bridge owns</h2>
+  <ul>
+    <li><strong>Game → UI:</strong> game code is the only publisher; Svelte receives readonly snapshots.</li>
+    <li><strong>UI → game:</strong> commands are inferred from the command object and preserve sync or async returns.</li>
+    <li><strong>Lifecycle:</strong> <code>GameHost</code> mounts one adapter per canvas and disposes it on unmount.</li>
+    <li><strong>Isolation:</strong> the two hosts keep state, commands, subscriptions, and games separate.</li>
+  </ul>
+
+  <h2>Use the host component</h2>
+  <pre><code>{`type State = Readonly&lt;{ score: number }&gt;;
+const commands = { increment: (amount: number) =&gt; score += amount };
+
+&lt;GameHost initial_state={{ score: 0 }} {commands} {create}&gt;
+  {#snippet children(view)}
+    &lt;output&gt;{view.state.score}&lt;/output&gt;
+    &lt;button onclick={() =&gt; view.commands.increment(1)}&gt;+1&lt;/button&gt;
+  {/snippet}
+&lt;/GameHost&gt;`}</code></pre>
+
+  <h2>Use the adapter directly</h2>
+  <pre><code>{`const adapter = create_game_adapter({ initial_state: { score: 0 }, commands, create });
+const unsubscribe = adapter.subscribe((view) =&gt; render(view));
+await adapter.mount(canvas);
+await adapter.dispose();`}</code></pre>
+
+  <h2>Public types</h2>
+  <ul>
+    <li><code>GameAdapterView&lt;State, Commands&gt;</code> — readonly state, lifecycle status, error, and typed commands.</li>
+    <li><code>GameAdapterOptions&lt;State, Commands&gt;</code> — initial state, command map, scheduler, and game factory.</li>
+    <li><code>GameBridge&lt;State, Commands&gt;</code> — the game-owned publisher and readonly bridge surface.</li>
+    <li><code>GameHost</code> — Svelte 5 render-prop host that owns mount and disposal.</li>
+  </ul>
+  <p class="note">The demo uses a deterministic fake game so bridge behavior is easy to inspect. The browser adapter suite separately verifies real mount, navigation disposal, SSR import, and two-host isolation.</p>
+</article>
+
+<style>
+  .svelte-guide { max-width: 960px; }
+  .eyebrow { margin: 0 0 0.5rem; color: var(--gray-6); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .summary { max-width: 52rem; font-size: 1.25rem; }
+  .flow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 2rem 0; padding: 1.25rem; border: 1px solid #39435b; border-radius: 0.6rem; background: #151923; }
+  .flow-card { display: grid; gap: 0.25rem; min-width: 8rem; padding: 0.75rem; border-radius: 0.4rem; background: #39435b; }
+  .flow-card span { color: #cad5ef; font-size: 0.85rem; }
+  .flow-arrow { color: #aab8d8; font-size: 1.5rem; }
+  .flow-return { flex-basis: 100%; color: #aab8d8; font-size: 0.9rem; }
+  pre { overflow: auto; padding: 1rem; border-radius: 0.5rem; background: #151923; }
+  .note { margin-top: 2rem; padding: 1rem; border-left: 3px solid #6076a8; background: #eef2fb; color: #26334e; }
+</style>
