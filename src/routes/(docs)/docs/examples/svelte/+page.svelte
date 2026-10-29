@@ -4,7 +4,6 @@
 
   type State = Readonly<{ score: number }>;
   let left_publish: ((state: State) => void) | undefined;
-  let right_publish: ((state: State) => void) | undefined;
   const commands = {
     increment: (amount: number) => {
       const next_score = (current_score += amount);
@@ -12,15 +11,7 @@
       return next_score;
     },
   };
-  const right_commands = {
-    increment: (amount: number) => {
-      const next_score = (right_score += amount);
-      right_publish?.({ score: next_score });
-      return next_score;
-    },
-  };
   let current_score = 0;
-  let right_score = 10;
   const create_game_instance = (publish: (state: State) => void, on_dispose: () => void): Game =>
     ({
       ready: Promise.resolve(),
@@ -54,13 +45,6 @@
       left_publish = undefined;
     });
   };
-  const create_right = ({ publish }: { publish: (state: State) => void; canvas: HTMLCanvasElement; bridge: unknown }): Game => {
-    right_publish = publish;
-    publish({ score: right_score });
-    return create_game_instance(publish, () => {
-      right_publish = undefined;
-    });
-  };
 </script>
 
 <svelte:head><title>Svelte 5 UI bridge</title></svelte:head>
@@ -79,8 +63,8 @@
     <div class="flow-return">UI event → typed command → game code</div>
   </section>
 
-  <h2>Live proof: two isolated hosts</h2>
-  <p>Each host owns an adapter and game instance. Incrementing one score does not change the other. The status becomes <code>ready</code> after <code>game.ready</code>, and disposal occurs when the host unmounts.</p>
+  <h2>Live proof: one host</h2>
+  <p>This focused example keeps the common path visible: one host owns an adapter and game instance. The status becomes <code>ready</code> after <code>game.ready</code>, and disposal occurs when the host unmounts. Multi-host isolation is an advanced capability covered by the adapter test suite.</p>
 
 <GameHost initial_state={{ score: 0 }} {commands} {create}>
   {#snippet children(view)}
@@ -90,20 +74,12 @@
   {/snippet}
 </GameHost>
 
-<GameHost initial_state={{ score: 10 }} commands={right_commands} create={create_right}>
-  {#snippet children(view)}
-    <output data-testid="adapter-right-status">{view.status}</output>
-    <output data-testid="adapter-right-score">{view.state.score}</output>
-    <button data-testid="adapter-right-increment" onclick={() => view.commands.increment(3)}>Increment</button>
-  {/snippet}
-</GameHost>
-
   <h2>What the bridge owns</h2>
   <ul>
     <li><strong>Game → UI:</strong> game code is the only publisher; Svelte receives readonly snapshots.</li>
     <li><strong>UI → game:</strong> commands are inferred from the command object and preserve sync or async returns.</li>
     <li><strong>Lifecycle:</strong> <code>GameHost</code> mounts one adapter per canvas and disposes it on unmount.</li>
-    <li><strong>Isolation:</strong> the two hosts keep state, commands, subscriptions, and games separate.</li>
+    <li><strong>Isolation:</strong> each host keeps its state, commands, subscriptions, and game separate from other hosts.</li>
   </ul>
 
   <h2>Use the host component</h2>
@@ -130,7 +106,7 @@ await adapter.dispose();`}</code></pre>
     <li><code>GameBridge&lt;State, Commands&gt;</code> — the game-owned publisher and readonly bridge surface.</li>
     <li><code>GameHost</code> — Svelte 5 render-prop host that owns mount and disposal.</li>
   </ul>
-  <p class="note">The demo uses a deterministic fake game so bridge behavior is easy to inspect. The browser adapter suite separately verifies real mount, navigation disposal, SSR import, and two-host isolation.</p>
+  <p class="note">The demo uses a deterministic fake game so bridge behavior is easy to inspect. Advanced multi-host isolation is kept in the adapter unit suite, while the browser fixture verifies real mount, navigation disposal, and recreation.</p>
 </article>
 
 <style>

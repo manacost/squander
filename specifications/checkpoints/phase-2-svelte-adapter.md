@@ -36,8 +36,9 @@ view and typed command wrappers → game disposal on effect cleanup.
   `squander/core/runtime`, and `squander/svelte/adapter`.
 - `npx playwright test --config=playwright.webgpu.config.ts
   tests/webgpu-svelte-adapter.spec.ts` — passed, one browser mount/command/
-  navigation recreation test against the trusted Vite origin, including two
-  isolated hosts with independent scores and commands.
+  navigation recreation test against the trusted Vite origin. The primary
+  demo intentionally shows one host; advanced multi-host isolation is covered
+  by the adapter unit suite.
 - SSR unit rendering — passed; `GameHost.ssr.test.ts` imports and renders the
   component without invoking its browser-only game factory.
 - Notification scheduling unit coverage — passed; four adapter tests verify
@@ -59,5 +60,5 @@ the Svelte SSR test and Svelte-aware packaging.
 ## Go/no-go
 
 **Promote `svelte-bridge`.** The API/DX seam, disposal race, browser host
-mount/unmount, two-host isolation, SSR import/rendering, package consumers, and
-adapter coverage are evidenced.
+mount/unmount, advanced multi-host isolation, SSR import/rendering, package
+consumers, and adapter coverage are evidenced.

@@ -103,4 +103,57 @@ describe("[svelte-bridge] game adapter", () => {
     await mounting;
     expect(adapter.view.status).toBe("disposed");
   });
+
+  it("keeps multiple adapter instances isolated", async () => {
+    const first_game = create_game();
+    const second_game = create_game();
+    let first_publish!: (state: { score: number }) => void;
+    let second_publish!: (state: { score: number }) => void;
+    let first_score = 1;
+    let second_score = 10;
+    const first = create_game_adapter({
+      initial_state: { score: first_score },
+      commands: {
+        increment: (amount: number) => {
+          first_score += amount;
+          first_publish({ score: first_score });
+          return first_score;
+        },
+      },
+      create: ({ publish }) => {
+        first_publish = publish;
+        return first_game;
+      },
+    });
+    const second = create_game_adapter({
+      initial_state: { score: second_score },
+      commands: {
+        increment: (amount: number) => {
+          second_score += amount;
+          second_publish({ score: second_score });
+          return second_score;
+        },
+      },
+      create: ({ publish }) => {
+        second_publish = publish;
+        return second_game;
+      },
+    });
+
+    await Promise.all([first.mount({} as HTMLCanvasElement), second.mount({} as HTMLCanvasElement)]);
+    expect(first.view.state.score).toBe(1);
+    expect(second.view.state.score).toBe(10);
+    expect(first.view.commands.increment(2)).toBe(3);
+    await Promise.resolve();
+    expect(first.view.state.score).toBe(3);
+    expect(second.view.state.score).toBe(10);
+    expect(second.view.commands.increment(5)).toBe(15);
+    await Promise.resolve();
+    expect(first.view.state.score).toBe(3);
+    expect(second.view.state.score).toBe(15);
+
+    await Promise.all([first.dispose(), second.dispose()]);
+    expect(first_game.dispose).toHaveBeenCalledOnce();
+    expect(second_game.dispose).toHaveBeenCalledOnce();
+  });
 });

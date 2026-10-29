@@ -177,11 +177,11 @@ export const core_guides = [
     title: "Svelte 5 bridge",
     summary: "Expose readonly snapshots and typed commands to Svelte without making core depend on Svelte.",
     live_href: "/docs/examples/svelte",
-    live_label: "Open the two-host Svelte adapter demo",
+    live_label: "Open the Svelte adapter demo",
     explanation: "The adapter owns a game instance, publishes readonly views, wires sync and async commands, and disposes subscriptions and the game on unmount.",
     types: ["GameBridge<State, Commands>", "GameAdapterView<State, Commands>", "GameHost", "create_game_adapter"],
     sample: 'const bridge = create_game_adapter({\n  initial_state: { score: 0 },\n  commands: { increment: (amount: number) => score += amount },\n  create: ({ publish, canvas }) => create_game({ canvas, publish }),\n});',
-    proof: "Adapter unit, SSR, package-consumer, and browser tests cover typed commands, snapshots, unmount, SSR, and two-host isolation.",
+    proof: "Adapter unit, SSR, package-consumer, and browser tests cover typed commands, snapshots, unmount, SSR, and advanced multi-host isolation.",
     limitations: "Core remains Svelte-independent; scene overlays and richer reactive helpers are deferred.",
   },
 ] as const satisfies readonly CoreGuide[];

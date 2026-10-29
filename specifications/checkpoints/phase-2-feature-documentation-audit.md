@@ -33,7 +33,7 @@ focused-page requirement by itself.
 | `game-timing` | Yes | Complete: Core → game timing | Complete: Demos → playground | Complete | Complete | Complete | Guide added; tick/FPS proof remains in the playground |
 | `webgpu-runtime` | Yes | Complete: Core → WebGPU runtime | Complete: Demos → playground | Complete | Complete | Complete | Guide added; focused GPU proof remains linked from the guide |
 | `resource-ownership` | Yes for resource APIs | Complete: Core → resource ownership | Complete: Demos → playground | Complete | Complete | Complete | Guide added with release examples and ownership proof references |
-| `svelte-bridge` | Yes, as an adapter guide | Complete: Core → Svelte bridge and Demos → svelte | Complete: Demos → svelte | Complete | Complete | Complete | Guide added; host-specific proof remains in the adapter demo |
+| `svelte-bridge` | Yes, as an adapter guide | Complete: Core → Svelte bridge and Demos → svelte | Complete: Demos → svelte | Complete | Complete | Complete | Guide added; the primary demo shows one host and advanced multi-host isolation remains in adapter tests |
 | `feature-documentation` | No; this is the audit contract | Core documentation index | N/A | Complete in `AGENTS.md` and this audit | N/A | N/A | Remains Draft until the required guide inventory is complete |
 | `specs` | No; governance metadata | N/A | N/A | N/A | N/A | N/A | Not a runtime feature |
 

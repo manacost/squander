@@ -9,11 +9,8 @@ test.describe("[svelte-bridge] GameHost", () => {
     await expect(page.getByText("create_game_adapter", { exact: false })).toBeVisible();
     await expect(page.getByTestId("adapter-status")).toHaveText("ready");
     await expect(page.getByTestId("adapter-score")).toHaveText("0");
-    await expect(page.getByTestId("adapter-right-status")).toHaveText("ready");
-    await expect(page.getByTestId("adapter-right-score")).toHaveText("10");
     await page.getByTestId("adapter-increment").click();
     await expect(page.getByTestId("adapter-score")).toHaveText("2");
-    await expect(page.getByTestId("adapter-right-score")).toHaveText("10");
     await page.goto("/");
     await page.goto("/docs/examples/svelte");
     await expect(page.getByTestId("adapter-status")).toHaveText("ready");
