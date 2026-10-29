@@ -47,7 +47,11 @@ test("Core exposes a focused guide for every remaining runtime area", async ({ p
 
   for (const slug of slugs) {
     await page.goto(`/docs/core/${slug}`);
-    await expect(page.getByTestId(`core-example-status-${slug}`)).toBeVisible();
+    if (slug === "svelte-bridge") {
+      await expect(page.getByRole("link", { name: "Open the focused Svelte bridge example →" })).toBeVisible();
+    } else {
+      await expect(page.getByTestId(`core-example-status-${slug}`)).toBeVisible();
+    }
   }
 });
 

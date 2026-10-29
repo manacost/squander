@@ -52,7 +52,9 @@
 <article class="svelte-guide">
   <p class="eyebrow">Demos · Svelte bridge</p>
   <h1>Svelte 5 UI bridge</h1>
-  <p class="summary">This demo shows Svelte observing readonly game snapshots and invoking typed commands without making the core runtime depend on Svelte.</p>
+  <p class="summary">
+    This demo shows Svelte observing readonly game snapshots and invoking typed commands without making the core runtime depend on Svelte.
+  </p>
 
   <section class="flow" aria-label="Svelte bridge data flow">
     <div class="flow-card"><strong>Game code</strong><span>publish(state)</span></div>
@@ -63,16 +65,19 @@
     <div class="flow-return">UI event → typed command → game code</div>
   </section>
 
-  <h2>Live proof: one host</h2>
-  <p>This example focuses on the common path. One host owns one adapter and game instance. The status becomes <code>ready</code> after <code>game.ready</code>, and disposal occurs when the host unmounts. The adapter test suite covers advanced multi-host isolation.</p>
+  <h2>Try one host</h2>
+  <p>
+    This example focuses on the common path. One host owns one adapter and game instance. The status becomes <code>ready</code> after
+    <code>game.ready</code>, and disposal occurs when the host unmounts.
+  </p>
 
-<GameHost initial_state={{ score: 0 }} {commands} {create}>
-  {#snippet children(view)}
-    <output data-testid="adapter-status">{view.status}</output>
-    <output data-testid="adapter-score">{view.state.score}</output>
-    <button data-testid="adapter-increment" onclick={() => view.commands.increment(2)}>Increment</button>
-  {/snippet}
-</GameHost>
+  <GameHost initial_state={{ score: 0 }} {commands} {create}>
+    {#snippet children(view)}
+      <output data-testid="adapter-status">{view.status}</output>
+      <output data-testid="adapter-score">{view.state.score}</output>
+      <button data-testid="adapter-increment" onclick={() => view.commands.increment(2)}>Increment</button>
+    {/snippet}
+  </GameHost>
 
   <h2>What the bridge owns</h2>
   <ul>
@@ -83,7 +88,8 @@
   </ul>
 
   <h2>Use the host component</h2>
-  <pre><code>{`type State = Readonly<{ score: number }>;
+  <pre><code
+      >{`type State = Readonly<{ score: number }>;
 const commands = { increment: (amount: number) => score += amount };
 
 <GameHost initial_state={{ score: 0 }} {commands} {create}>
@@ -91,13 +97,16 @@ const commands = { increment: (amount: number) => score += amount };
     <output>{view.state.score}</output>
     <button onclick={() => view.commands.increment(1)}>+1</button>
   {/snippet}
-{/GameHost>`}</code></pre>
+{/GameHost>`}</code
+    ></pre>
 
   <h2>Use the adapter directly</h2>
-  <pre><code>{`const adapter = create_game_adapter({ initial_state: { score: 0 }, commands, create });
+  <pre><code
+      >{`const adapter = create_game_adapter({ initial_state: { score: 0 }, commands, create });
 const unsubscribe = adapter.subscribe((view) => render(view));
 await adapter.mount(canvas);
-await adapter.dispose();`}</code></pre>
+await adapter.dispose();`}</code
+    ></pre>
 
   <h2>Public types</h2>
   <ul>
@@ -106,18 +115,67 @@ await adapter.dispose();`}</code></pre>
     <li><code>GameBridge&lt;State, Commands&gt;</code> — the game-owned publisher and readonly bridge surface.</li>
     <li><code>GameHost</code> — Svelte 5 render-prop host that owns mount and disposal.</li>
   </ul>
-  <p class="note">The demo uses a deterministic fake game so bridge behavior is easy to inspect. Advanced multi-host isolation is kept in the adapter unit suite, while the browser fixture verifies real mount, navigation disposal, and recreation.</p>
+  <p class="note">
+    The demo uses a deterministic fake game so you can focus on state snapshots, commands, and disposal without unrelated rendering code.
+  </p>
 </article>
 
 <style>
-  .svelte-guide { width: 100%; max-width: 960px; min-width: 0; }
-  .eyebrow { margin: 0 0 0.5rem; color: var(--gray-6); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
-  .summary { max-width: 52rem; font-size: 1.25rem; }
-  .flow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; min-width: 0; margin: 2rem 0; padding: 1.25rem 0; border-block: 1px solid #39435b; }
-  .flow-card { display: grid; gap: 0.25rem; min-width: min(8rem, 100%); max-width: 100%; padding: 0.75rem 0; }
-  .flow-card span { color: #cad5ef; font-size: 0.85rem; }
-  .flow-arrow { color: #aab8d8; font-size: 1.5rem; }
-  .flow-return { flex-basis: 100%; color: #aab8d8; font-size: 0.9rem; }
-  pre { overflow: auto; padding: 1rem 0; border-block: 1px solid #39435b; }
-  .note { margin-top: 2rem; padding: 1rem 0; border-block: 1px solid #6076a8; color: #26334e; }
+  .svelte-guide {
+    width: 100%;
+    max-width: 960px;
+    min-width: 0;
+  }
+  .eyebrow {
+    margin: 0 0 0.5rem;
+    color: var(--gray-6);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .summary {
+    max-width: 52rem;
+    font-size: 1.25rem;
+  }
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    min-width: 0;
+    margin: 2rem 0;
+    padding: 1.25rem 0;
+    border-block: 1px solid #39435b;
+  }
+  .flow-card {
+    display: grid;
+    gap: 0.25rem;
+    min-width: min(8rem, 100%);
+    max-width: 100%;
+    padding: 0.75rem 0;
+  }
+  .flow-card span {
+    color: #cad5ef;
+    font-size: 0.85rem;
+  }
+  .flow-arrow {
+    color: #aab8d8;
+    font-size: 1.5rem;
+  }
+  .flow-return {
+    flex-basis: 100%;
+    color: #aab8d8;
+    font-size: 0.9rem;
+  }
+  pre {
+    overflow: auto;
+    padding: 1rem 0;
+    border-block: 1px solid #39435b;
+  }
+  .note {
+    margin-top: 2rem;
+    padding: 1rem 0;
+    border-block: 1px solid #6076a8;
+    color: #26334e;
+  }
 </style>

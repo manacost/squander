@@ -7,6 +7,7 @@ export type CoreGuide = Readonly<{
   evidence_label: string;
   evidence_href?: string;
   test_file?: string;
+  example_description: string;
   explanation: string;
   types: readonly string[];
   sample: string;
@@ -19,44 +20,48 @@ export const core_guides = [
     slug: "asset-loading",
     label: "asset loading",
     title: "Asset loading",
-    summary: "Load manifest resources and owned fonts or textures through the game asset cache.",
+    summary: "Load textures and fonts through the game-owned asset cache.",
     evidence_kind: "test",
     evidence_label: "Read the asset cache tests",
     test_file: "src/lib/core/runtime/asset_loading.test.ts",
+    example_description: "Watch a checkerboard texture arrive through the game asset cache before frames begin.",
     explanation:
-      "The game owns its asset cache. Setup can await assets before the frame loop starts. Cancellation and disposal prevent late resources from becoming usable.",
+      "Load assets during setup, before the frame loop starts. The cache connects each handle to the game's abort and disposal lifecycle, so canceled or disposed games cannot publish late resources.",
     types: ["AssetCache<Manifest>", "ResourceHandle<T>", "GameSetupContext<Manifest>", "GameInitializationError"],
     sample:
       'const texture = await assets.load_texture(blob, { magnification: "nearest" });\nconst pixels = texture.read();\ntexture.release();',
     proof: "CPU tests cover cancellation, retry, and ownership. Real Blob and File fixtures verify texture readback.",
-    limitations: "Typed manifest texture descriptors and atlas manifests are deferred; generic manifest loading remains available.",
+    limitations:
+      "Manifest-specific texture descriptors and atlas manifests are not part of Phase 2. Generic manifest loading is supported.",
   },
   {
     slug: "dynamic-assets",
     label: "dynamic assets",
     title: "Dynamic assets",
-    summary: "Decode Blob and File values and upload them to WebGPU without a canvas-only shortcut.",
+    summary: "Turn Blob and File values into GPU textures at runtime.",
     evidence_kind: "test",
     evidence_label: "Read the image loading tests",
     test_file: "src/lib/core/runtime/image_loading.test.ts",
+    example_description: "Watch a File created at runtime decode into a texture and move across the canvas.",
     explanation:
-      "Dynamic image inputs pass through browser decoding and the game-owned renderer. Blob and File values use the same typed loading path, which supports abort and retry.",
+      "Use the same loading API for generated images and user-provided files. Decoding and upload honor AbortSignal, while the returned handle controls access and release.",
     types: ["Blob", "File", "AbortSignal", "ResourceHandle<WebGpuTexture>", "ImageDecodeError"],
     sample:
       'const file = new File([png_bytes], "hero.png", { type: "image/png" });\nconst handle = await game.assets.load_texture(file, { signal });\nrenderer.draw_texture(handle.read());',
     proof: "Real Chromium tests load both Blob and File sources and read back deterministic pixels.",
-    limitations: "Identical Blob/File inputs are not deduplicated in Phase 2.",
+    limitations: "Identical Blob and File values are loaded independently in Phase 2.",
   },
   {
     slug: "sprite-drawing",
     label: "sprites",
     title: "Sprite drawing",
-    summary: "Draw textures and atlas regions with predictable transforms, tint, opacity, and order.",
+    summary: "Place textures and atlas regions with explicit transforms, tint, opacity, and draw order.",
     evidence_kind: "test",
     evidence_label: "Read the renderer texture tests",
     test_file: "tests/webgpu-renderer.spec.ts",
+    example_description: "Compare transformed sprites that share one texture but use different tint, flip, opacity, and position settings.",
     explanation:
-      "Sprites use logical screen or camera-space coordinates. Each draw specifies its region, origin, flips, rotation, scale, tint, opacity, and source-over order.",
+      "Sprite draws use logical screen or camera-space coordinates. Each draw can specify a source region, origin, flip, rotation, scale, tint, opacity, and submission order.",
     types: ["WebGpuTexture", "TextureDrawOptions", "TextureRegion", "TextureFilteringOptions", "Color"],
     sample:
       "renderer.draw_texture(texture, {\n  x: 120, y: 80, width: 64, height: 64,\n  origin: { x: 0.5, y: 0.5 }, rotation: degrees(15), flip_x: true,\n  tint: rgba(1, 0.8, 0.8, 1), opacity: 0.9,\n});",
@@ -67,12 +72,13 @@ export const core_guides = [
     slug: "shape-drawing",
     label: "shapes",
     title: "Shape drawing",
-    summary: "Draw rectangles, circles, lines, and outlines without creating per-call resources.",
+    summary: "Draw rectangles, circles, lines, and outlines as frame-local commands.",
     evidence_kind: "test",
     evidence_label: "Read the shape validation tests",
     test_file: "src/lib/core/runtime/shapes.test.ts",
+    example_description: "See rectangles, circles, and lines drawn as frame-local value commands.",
     explanation:
-      "Shapes are frame-local value commands. The renderer normalizes signed rectangle dimensions. Invalid geometry throws, and valid zero-area shapes draw nothing.",
+      "Shapes are frame-local commands, so you can submit them without allocating per-call GPU resources. Signed rectangles are normalized; invalid geometry throws, and valid zero-area shapes draw nothing.",
     types: ["RectangleDraw", "CircleDraw", "LineDraw", "RectangleOutlineDraw", "CircleOutlineDraw", "Color"],
     sample:
       'renderer.draw_commands([\n  { kind: "rectangle", draw: { rectangle: { x: 20, y: 20, width: 80, height: 40 }, color: rgba(0.2, 0.5, 1, 1) } },\n  { kind: "circle", draw: { circle: { x: 140, y: 40, radius: 20 }, color: rgba(1, 0.3, 0.3, 1) } },\n]);',
@@ -84,12 +90,13 @@ export const core_guides = [
     slug: "paths-and-polygons",
     label: "paths & polygons",
     title: "Paths and polygons",
-    summary: "Prepare reusable polygon fills and curved stroke geometry with explicit update and release semantics.",
+    summary: "Build reusable polygon fills and curved stroke geometry from copied input data.",
     evidence_kind: "test",
     evidence_label: "Read the geometry preparation tests",
     test_file: "src/lib/core/runtime/paths.test.ts",
+    example_description: "See a curved stroke and polygon fill prepared from reusable geometry.",
     explanation:
-      "Path and polygon handles snapshot caller data. Updates validate before replacing geometry. Handles remain scoped to the game that created them.",
+      "Path and polygon constructors copy caller data. Updates validate before replacing geometry, and handles remain scoped to the game that created them.",
     types: ["PathHandle", "PolygonHandle", "FlattenedSubpath", "TriangulatedPolygon", "GeometryHandle"],
     sample:
       "const route = create_path([move_to(0, 0), quadratic_to(40, -30, 80, 0)]);\nconst marker = create_polygon([{ x: 0, y: 0 }, { x: 40, y: 0 }, { x: 20, y: 30 }]);\nroute.update([move_to(0, 0), line_to(100, 20)]);",
@@ -101,12 +108,13 @@ export const core_guides = [
     slug: "camera-2d",
     label: "camera 2D",
     title: "2D cameras",
-    summary: "Apply synchronous position, zoom, and rotation scopes to world-space drawing.",
+    summary: "Transform world-space drawing with synchronous position, zoom, and rotation scopes.",
     evidence_kind: "test",
     evidence_label: "Read the camera transform tests",
     test_file: "src/lib/core/runtime/camera.test.ts",
+    example_description: "See world-space shapes rendered through a rotated and zoomed camera scope.",
     explanation:
-      "A camera scope temporarily maps world coordinates into the logical viewport. The scope restores synchronously, even when the callback throws. Unscoped drawing remains in screen space.",
+      "camera.draw temporarily maps world coordinates into the logical viewport. It restores the previous camera synchronously, even when the callback throws. Drawing outside the scope remains in screen space.",
     types: ["Camera", "CameraOptions", "CameraViewport", "Bounds", "Point"],
     sample:
       "const camera = create_camera({ x: 400, y: 225, zoom: 2, rotation: degrees(10), viewport });\ncamera.draw(() => {\n  renderer.draw_texture(hero, { x: 400, y: 225 });\n});",
@@ -118,12 +126,13 @@ export const core_guides = [
     slug: "viewport-sizing",
     label: "viewport sizing",
     title: "Viewport sizing",
-    summary: "Map logical coordinates into responsive or fixed-fit CSS and physical pixel viewports.",
+    summary: "Keep logical coordinates stable as CSS size, letterboxing, and device pixels change.",
     evidence_kind: "test",
     evidence_label: "Read the viewport sizing tests",
     test_file: "src/lib/core/runtime/viewport_sizing.test.ts",
+    example_description: "See a logical frame and centered marker stay stable inside the responsive viewport.",
     explanation:
-      "Viewport policy keeps logical coordinates stable. It separates CSS size, letterboxing, device pixel ratio, and physical surface dimensions.",
+      "Choose a fixed-fit or responsive policy to separate logical size from CSS size, letterboxing, device pixel ratio, and physical surface dimensions.",
     types: ["ViewportSize", "FixedViewportOptions", "ResponsiveViewportOptions", "Game.resize"],
     sample:
       "game.resize(calculate_fixed_viewport({\n  logical_width: 800, logical_height: 450,\n  css_width: container.clientWidth, css_height: container.clientHeight,\n  device_pixel_ratio: devicePixelRatio,\n}));\nconst bounds = game.get_viewport();",
@@ -135,12 +144,13 @@ export const core_guides = [
     slug: "texture-filtering",
     label: "texture filtering",
     title: "Texture filtering",
-    summary: "Choose nearest or linear magnification and minification behavior per texture.",
+    summary: "Choose nearest or linear sampling for each texture.",
     evidence_kind: "test",
     evidence_label: "Read the filtering policy tests",
     test_file: "src/lib/core/runtime/texture_filtering.test.ts",
+    example_description: "Compare nearest sampling on the left with linear sampling on the right.",
     explanation:
-      "The renderer selects filtering when it creates a texture or font glyph texture. It reuses samplers internally and does not generate mipmaps in Phase 2.",
+      "Set filtering when a texture or font atlas is created. The renderer reuses samplers internally; Phase 2 does not generate mipmaps.",
     types: ["TextureFilteringOptions", 'TextureFilter = "nearest" | "linear"', "WebGpuTexture"],
     sample: 'const handle = await assets.load_texture(blob, {\n  magnification: "nearest",\n  minification: "linear",\n});',
     proof: "Real GPU fixtures distinguish nearest and linear sampling. They also verify minification policy without mipmaps.",
@@ -150,12 +160,13 @@ export const core_guides = [
     slug: "game-lifecycle",
     label: "game lifecycle",
     title: "Game lifecycle",
-    summary: "Create, await, pause, resume, suspend, and dispose an isolated game instance.",
+    summary: "Start, pause, resume, suspend, and dispose an isolated game instance.",
     evidence_kind: "test",
     evidence_label: "Read the game lifecycle tests",
     test_file: "src/lib/core/runtime/game.test.ts",
+    example_description: "Watch a game-owned object advance while the game loop is running.",
     explanation:
-      "Renderer creation and setup gate the frame loop. Disposal is idempotent. It aborts setup, cleans late resources, and never revives a disposed game.",
+      "Renderer creation and setup must finish before the frame loop starts. Disposal is idempotent: it aborts setup, cleans late resources, and never revives the game.",
     types: ["Game", "GameOptions", "GameSetupContext", "GameInitializationError", "GameDisposedError"],
     sample:
       "const game = create_game({ renderer, scheduler, setup, update, draw });\nawait game.ready;\ngame.pause();\ngame.resume();\nawait game.dispose();",
@@ -167,12 +178,13 @@ export const core_guides = [
     slug: "game-timing",
     label: "game timing",
     title: "Game timing",
-    summary: "Run deterministic update/draw loops with bounded deltas and observable pause behavior.",
+    summary: "Drive deterministic update and draw loops with bounded deltas.",
     evidence_kind: "test",
     evidence_label: "Read the frame loop tests",
     test_file: "src/lib/core/runtime/frame_loop.test.ts",
+    example_description: "Watch motion advance from frame deltas supplied by the scheduler.",
     explanation:
-      "The scheduler supplies monotonic time to update callbacks. The frame loop resets timing after suspension. It does not advance simulation while paused.",
+      "The scheduler supplies monotonic time to update callbacks. The frame loop clamps large deltas, resets timing after suspension, and does not advance simulation while paused.",
     types: ["FrameScheduler", "UpdateTime", "FrameLoopState", "max_delta_seconds"],
     sample:
       "const scheduler: FrameScheduler = {\n  request_frame: requestAnimationFrame,\n  cancel_frame: cancelAnimationFrame,\n  now_seconds: () => performance.now() / 1000,\n};",
@@ -183,12 +195,13 @@ export const core_guides = [
     slug: "webgpu-runtime",
     label: "WebGPU runtime",
     title: "WebGPU runtime",
-    summary: "Initialize a secure-context WebGPU renderer and read deterministic pixels back for verification.",
+    summary: "Create a secure-context WebGPU renderer and draw deterministic frames.",
     evidence_kind: "test",
     evidence_label: "Read the real WebGPU browser tests",
     test_file: "tests/webgpu-renderer.spec.ts",
+    example_description: "See the production WebGPU renderer create a surface and draw a frame.",
     explanation:
-      "The production renderer owns the adapter, device, canvas context, pipelines, textures, samplers, and readback path. It reports device loss as a typed game error.",
+      "The renderer owns the adapter, device, canvas context, pipelines, textures, samplers, and readback path. Device loss is reported as a typed game error.",
     types: ["WebGpuRenderer", "WebGpuRendererOptions", "WebGpuUnavailableError", "GameDeviceLostError"],
     sample:
       "const renderer = await create_webgpu_renderer({ canvas, width: 800, height: 450 });\nconst pixels = await renderer.clear({ red: 0, green: 0, blue: 0, alpha: 1 });\nrenderer.dispose();",
@@ -200,12 +213,13 @@ export const core_guides = [
     slug: "resource-ownership",
     label: "resource ownership",
     title: "Resource ownership",
-    summary: "Use opaque handles and leases so resources survive accepted draws and release exactly once.",
+    summary: "Keep GPU resources alive across accepted draws with opaque handles and leases.",
     evidence_kind: "test",
     evidence_label: "Read the resource ownership tests",
     test_file: "src/lib/core/runtime/resource_ownership.test.ts",
+    example_description: "See a texture acquired through a resource owner remain usable for the game lifetime.",
     explanation:
-      "Releasing a handle invalidates only that handle for future reads. Accepted draws retain a lease until safe completion. Owner disposal cleans the remaining acquisitions.",
+      "Releasing a handle invalidates that handle for future reads. An accepted draw keeps its resource lease until the renderer is safe to release it, while owner disposal cleans up remaining acquisitions.",
     types: ["ResourceOwner", "ResourceHandle<T>", "GeometryOwner", "GeometryHandle"],
     sample:
       "const handle = game.resources.acquire(texture, (resource) => resource.release());\nrenderer.draw_texture(handle.read());\nhandle.release();",
@@ -216,13 +230,14 @@ export const core_guides = [
     slug: "svelte-bridge",
     label: "Svelte bridge",
     title: "Svelte 5 bridge",
-    summary: "Expose readonly snapshots and typed commands to Svelte without making core depend on Svelte.",
+    summary: "Connect game state and typed commands to Svelte without coupling core to Svelte.",
     evidence_kind: "example",
     evidence_label: "Open the Svelte adapter example",
     evidence_href: "/docs/examples/svelte",
     test_file: "tests/webgpu-svelte-adapter.spec.ts",
+    example_description: "Use the focused Svelte example to observe readonly state snapshots and invoke typed commands.",
     explanation:
-      "The adapter owns a game instance and publishes readonly views. It wires synchronous and asynchronous commands, then disposes subscriptions and the game on unmount.",
+      "The adapter owns one game instance and publishes readonly views. Commands preserve synchronous or asynchronous return types, and unmounting disposes subscriptions and the game.",
     types: ["GameBridge<State, Commands>", "GameAdapterView<State, Commands>", "GameHost", "create_game_adapter"],
     sample:
       "const bridge = create_game_adapter({\n  initial_state: { score: 0 },\n  commands: { increment: (amount: number) => score += amount },\n  create: ({ publish, canvas }) => create_game({ canvas, publish }),\n});",

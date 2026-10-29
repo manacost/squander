@@ -17,12 +17,13 @@
     <div>
       <p class="eyebrow">Live example</p>
       <h2>See {guide.title} in action</h2>
-      <p>
-        The canvas below is a focused version of the minimum example. It is intentionally smaller than the composition playground so you can
-        connect each line of code to one visible result.
-      </p>
+      <p>{guide.example_description}</p>
     </div>
-    <CoreGuideExample slug={guide.slug} />
+    {#if guide.slug === "svelte-bridge"}
+      <a class="example-link" href="/docs/examples/svelte">Open the focused Svelte bridge example →</a>
+    {:else}
+      <CoreGuideExample slug={guide.slug} />
+    {/if}
   </section>
 
   <h2>How it works</h2>
@@ -36,7 +37,6 @@
   </ul>
 
   <h2>Minimum viable example</h2>
-  <p>Start with this smallest useful version of the feature, then add the options described above.</p>
   <pre><code>{guide.sample}</code></pre>
 
   <h2>Scope and limitations</h2>
@@ -71,6 +71,17 @@
   }
   .live-example p {
     margin: 0;
+  }
+  .example-link {
+    display: inline-block;
+    margin-top: 1.25rem;
+    padding: 0.65rem 0.9rem;
+    background: #39435b;
+    color: white;
+    text-decoration: none;
+  }
+  .example-link:hover {
+    background: #4a5a7b;
   }
   pre {
     overflow: auto;

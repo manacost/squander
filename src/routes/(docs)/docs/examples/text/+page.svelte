@@ -10,12 +10,7 @@
   let active_game: RuntimeGame | undefined;
   let font: WebGpuFont | undefined;
   let ticks = 0;
-  const character_rows = [
-    "0123456789",
-    "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|~`",
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    "abcdefghijklmnopqrstuvwxyz",
-  ];
+  const character_rows = ["0123456789", "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|~`", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"];
 
   const create_text_game = ({
     canvas,
@@ -66,37 +61,42 @@
 <article class="text-example">
   <h1>Text drawing</h1>
   <p>
-    This page proves that Squander can load a bundled font, prepare glyphs with Canvas 2D, and upload
-    reusable glyph textures to WebGPU. The live label changes without rebuilding one large label texture.
+    This example loads a bundled font, prepares glyphs with Canvas 2D, and uploads reusable glyph textures to WebGPU. The live label changes
+    without rebuilding one large label texture.
   </p>
 
   <GameHost class="text-canvas" initial_state={{ status: "loading", ticks: 0 }} commands={{}} create={create_text_game}>
     {#snippet children(view)}
       <p data-testid="text-example-status">status: {view.state.status}</p>
       <p data-testid="text-example-ticks">ticks: {view.state.ticks}</p>
-      {#if view.error}<p data-testid="text-example-error">{view.error instanceof Error ? view.error.message : "unknown text initialization error"}</p>{/if}
+      {#if view.error}<p data-testid="text-example-error">
+          {view.error instanceof Error ? view.error.message : "unknown text initialization error"}
+        </p>{/if}
     {/snippet}
   </GameHost>
 
-  <h2>What is verified here?</h2>
+  <h2>What you'll see</h2>
   <ul>
-    <li>Bundled URL loading from <code>/fonts/GeostarFill-Regular.ttf</code>.</li>
-    <li>Digits, common symbols, uppercase letters, and lowercase letters.</li>
+    <li>A bundled font loaded from <code>/fonts/GeostarFill-Regular.ttf</code>.</li>
+    <li>Digits, common symbols, uppercase letters, and lowercase letters rendered as glyphs.</li>
     <li>Typed font ownership through <code>assets.load_font</code>.</li>
-    <li>Reusable glyph preparation and live WebGPU rendering.</li>
-    <li>Changing text: the tick label updates every frame.</li>
+    <li>Reusable glyph preparation in a live WebGPU canvas.</li>
+    <li>A tick label that changes every frame.</li>
   </ul>
 
   <h2>Load a font</h2>
-  <pre><code>{`const font_handle = await assets.load_font(
+  <pre><code
+      >{`const font_handle = await assets.load_font(
   'url("/fonts/GeostarFill-Regular.ttf")',
   { characters: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", size: 28 },
 );
 
-const font = font_handle.read();`}</code></pre>
+const font = font_handle.read();`}</code
+    ></pre>
 
   <h2>Draw text</h2>
-  <pre><code>{`renderer.draw_commands([
+  <pre><code
+      >{`renderer.draw_commands([
   {
     kind: "text",
     draw: {
@@ -111,24 +111,39 @@ const font = font_handle.read();`}</code></pre>
       },
     },
   },
-]);`}</code></pre>
+]);`}</code
+    ></pre>
 
   <h2>Text API</h2>
   <p>
     <code>FontOptions</code> accepts <code>characters</code>, <code>size</code>, <code>weight</code>,
-    <code>style</code>, and filtering options. <code>TextDrawOptions</code> accepts position, size,
-    color, opacity, and the active camera transform. Font handles are owned resources: release the
-    handle when the font is no longer needed, or let the game-owned asset cache clean it up during disposal.
+    <code>style</code>, and filtering options. <code>TextDrawOptions</code> accepts position, size, color, opacity, and the active camera transform.
+    Font handles are owned resources: release the handle when the font is no longer needed, or let the game-owned asset cache clean it up during
+    disposal.
   </p>
   <p>
-    Phase 2 intentionally does not promise wrapping, rich layout, shaping, fallback, or arbitrary-script
-    coverage. Supported glyphs requested later are added to the non-evicting atlas until its typed
-    4096×4096 capacity limit is reached.
+    Phase 2 intentionally does not promise wrapping, rich layout, shaping, fallback, or arbitrary-script coverage. Supported glyphs
+    requested later are added to the non-evicting atlas until its typed 4096×4096 capacity limit is reached.
   </p>
 </article>
 
 <style>
-  .text-example { width: 100%; max-width: 960px; min-width: 0; }
-  :global(.text-canvas) { display: block; width: min(100%, 720px); height: auto; aspect-ratio: 12 / 7; background: #05070d; border: 1px solid #39435b; }
-  pre { overflow: auto; padding: 1rem 0; border-block: 1px solid #39435b; }
+  .text-example {
+    width: 100%;
+    max-width: 960px;
+    min-width: 0;
+  }
+  :global(.text-canvas) {
+    display: block;
+    width: min(100%, 720px);
+    height: auto;
+    aspect-ratio: 12 / 7;
+    background: #05070d;
+    border: 1px solid #39435b;
+  }
+  pre {
+    overflow: auto;
+    padding: 1rem 0;
+    border-block: 1px solid #39435b;
+  }
 </style>

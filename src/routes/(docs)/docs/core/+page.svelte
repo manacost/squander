@@ -8,7 +8,7 @@
   <h1>Core</h1>
   <p>
     Focused documentation for Squander's framework-independent runtime APIs. Each page in this section pairs a use case with a minimum
-    viable code sample, public type details, and the most direct available proof.
+    viable code sample, public type details, and a focused live example.
   </p>
 
   <h2>Available guides</h2>
