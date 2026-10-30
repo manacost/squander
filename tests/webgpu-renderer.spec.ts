@@ -88,6 +88,7 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
         },
       },
     ]);
+    /* eslint-disable @typescript-eslint/naming-convention -- browser-only diagnostic property */
     (
       window as unknown as { __renderer_gallery?: { renderer: typeof renderer; texture: typeof texture; font: typeof font } }
     ).__renderer_gallery = {
@@ -95,11 +96,13 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
       texture,
       font,
     };
+    /* eslint-enable @typescript-eslint/naming-convention -- browser-only diagnostic property */
   });
 
   const canvas = page.locator("canvas");
   await expect(canvas).toHaveScreenshot("renderer-capability-gallery.png", { animations: "disabled" });
   await page.evaluate(() => {
+    /* eslint-disable @typescript-eslint/naming-convention -- browser-only diagnostic property */
     const gallery = (
       window as unknown as {
         __renderer_gallery?: { renderer: { dispose: () => void }; texture: { release: () => void }; font: { release: () => void } };
@@ -109,6 +112,7 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
     gallery?.texture.release();
     gallery?.renderer.dispose();
     delete (window as unknown as { __renderer_gallery?: unknown }).__renderer_gallery;
+    /* eslint-enable @typescript-eslint/naming-convention -- browser-only diagnostic property */
   });
 });
 
@@ -234,7 +238,9 @@ test("[resource-ownership] keeps an accepted draw alive after handle release", a
     const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
     const texture = renderer.create_texture(new Uint8Array([12, 34, 56, 255]), 1, 1);
     const owner = owner_module.create_resource_owner();
-    const handle = owner.acquire(texture, (resource) => resource.release());
+    const handle = owner.acquire(texture, (resource) => {
+      resource.release();
+    });
     const drawing = renderer.draw_texture(handle.read());
     handle.release();
     const pixels = await drawing;
@@ -289,7 +295,10 @@ test("[dynamic-assets] decodes Blob and File sources and uploads their pixels", 
     source_context.fillStyle = "rgb(255 0 0)";
     source_context.fillRect(0, 0, 1, 1);
     const blob = await new Promise<Blob>((resolve, reject) => {
-      source.toBlob((value) => (value === null ? reject(new Error("could not encode image")) : resolve(value)), "image/png");
+      source.toBlob((value) => {
+        if (value === null) reject(new Error("could not encode image"));
+        else resolve(value);
+      }, "image/png");
     });
     const file = new File([blob], "pixel.png", { type: "image/png" });
     const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
@@ -322,7 +331,10 @@ test("[dynamic-assets] loads Blob and File textures through a game-owned rendere
     source_context.fillStyle = "rgb(255 0 0)";
     source_context.fillRect(0, 0, 1, 1);
     const blob = await new Promise<Blob>((resolve, reject) => {
-      source.toBlob((value) => (value === null ? reject(new Error("could not encode image")) : resolve(value)), "image/png");
+      source.toBlob((value) => {
+        if (value === null) reject(new Error("could not encode image"));
+        else resolve(value);
+      }, "image/png");
     });
     const file = new File([blob], "pixel.png", { type: "image/png" });
     const game_url = new URL("/src/lib/core/runtime/game.ts", location.origin).href;
@@ -370,7 +382,10 @@ test("[dynamic-assets] rejects malformed input while allowing a valid retry", as
     source_context.fillStyle = "rgb(0 255 0)";
     source_context.fillRect(0, 0, 1, 1);
     const valid_blob = await new Promise<Blob>((resolve, reject) => {
-      source.toBlob((value) => (value === null ? reject(new Error("could not encode image")) : resolve(value)), "image/png");
+      source.toBlob((value) => {
+        if (value === null) reject(new Error("could not encode image"));
+        else resolve(value);
+      }, "image/png");
     });
     const game_url = new URL("/src/lib/core/runtime/game.ts", location.origin).href;
     const module = (await import(/* @vite-ignore */ game_url)) as typeof import("../src/lib/core/runtime/game.js");
@@ -857,16 +872,10 @@ test("[paths-and-polygons] renders quadratic and cubic path curves", async ({ pa
     const path_module = (await import(/* @vite-ignore */ path_url)) as typeof import("../src/lib/core/runtime/path_flattening.js");
     const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 32, height: 24 });
     const subpaths = path_module.flatten_path(
-      [
-        path_module.move_to(2, 18),
-        path_module.quadratic_to(8, 2, 14, 18),
-        path_module.cubic_to(18, 4, 26, 4, 30, 18),
-      ],
+      [path_module.move_to(2, 18), path_module.quadratic_to(8, 2, 14, 18), path_module.cubic_to(18, 4, 26, 4, 30, 18)],
       0.25,
     );
-    const pixels = await renderer.draw_commands([
-      { kind: "stroke", draw: { subpaths, width: 1, color: colors.rgba(1, 1, 1, 1) } },
-    ]);
+    const pixels = await renderer.draw_commands([{ kind: "stroke", draw: { subpaths, width: 1, color: colors.rgba(1, 1, 1, 1) } }]);
     renderer.dispose();
     const pixel_at = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
     let ink = 0;
@@ -1255,6 +1264,60 @@ test("[camera-2d] applies zoom and inverse rotation to world geometry", async ({
 
   expect(result.rotated).toEqual([0, 255, 0, 255]);
   expect(result.opposite).toEqual([0, 0, 0, 255]);
+});
+
+test("[camera-2d] transforms sprites, primitives, and labels in one scope", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const camera_url = new URL("/src/lib/core/runtime/camera.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const camera_module = (await import(/* @vite-ignore */ camera_url)) as typeof import("../src/lib/core/runtime/camera.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 8, height: 8 });
+    const camera = camera_module.create_camera({ x: 4, y: 4, viewport: { logical_width: 8, logical_height: 8 } });
+    const texture = renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1);
+    const font = await renderer.create_font_from_url('url("/fonts/GeostarFill-Regular.ttf")', { characters: "A", size: 6 });
+    const pixels = await camera.draw(() =>
+      renderer.draw_commands([
+        { kind: "texture", draw: { texture, options: { x: 0, y: 0, width: 1, height: 1 } } },
+        { kind: "rectangle", draw: { rectangle: { x: 2, y: 2, width: 1, height: 1 }, color: colors.rgba(0, 0, 1, 1) } },
+        { kind: "text", draw: { font, text: "A", options: { x: 4, y: 0, size: 6, color: colors.rgba(0, 1, 0, 1) } } },
+      ]),
+    );
+    const has_color = (red: number, green: number, blue: number, left: number, right: number, top: number, bottom: number): boolean => {
+      for (let y = top; y < bottom; y += 1) {
+        for (let x = left; x < right; x += 1) {
+          const offset = y * 256 + x * 4;
+          if (pixels[offset] === red && pixels[offset + 1] === green && pixels[offset + 2] === blue && pixels[offset + 3] === 255)
+            return true;
+        }
+      }
+      return false;
+    };
+    const has_green_ink = (left: number, right: number, top: number, bottom: number): boolean => {
+      for (let y = top; y < bottom; y += 1) {
+        for (let x = left; x < right; x += 1) {
+          const offset = y * 256 + x * 4;
+          if (pixels[offset + 1] > pixels[offset] + pixels[offset + 2] && pixels[offset + 1] > 0) return true;
+        }
+      }
+      return false;
+    };
+    font.release();
+    texture.release();
+    renderer.dispose();
+    return {
+      sprite: has_color(255, 0, 0, 0, 2, 0, 2),
+      primitive: has_color(0, 0, 255, 2, 4, 2, 4),
+      label: has_green_ink(4, 8, 0, 8),
+    };
+  });
+
+  expect(result).toEqual({ sprite: true, primitive: true, label: true });
 });
 
 test("[viewport-sizing] maps logical content into fixed-fit letterbox bounds", async ({ page }) => {

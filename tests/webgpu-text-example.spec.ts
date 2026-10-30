@@ -4,8 +4,10 @@ test("[text-drawing] documents and renders the bundled font example", async ({ p
   await page.goto("/docs/examples/text");
   await expect(page.getByRole("heading", { level: 1, name: "Text drawing" })).toBeVisible();
   await expect(page.getByTestId("text-example-status")).toHaveText("status: ready");
-  await expect.poll(async () => Number((await page.getByTestId("text-example-ticks").textContent())?.replace("ticks: ", ""))).toBeGreaterThan(0);
-  await expect(page.getByText("Bundled URL loading from")).toBeVisible();
+  await expect
+    .poll(async () => Number((await page.getByTestId("text-example-ticks").textContent())?.replace("ticks: ", "")))
+    .toBeGreaterThan(0);
+  await expect(page.getByText("This example loads a bundled font", { exact: false })).toBeVisible();
   await expect(page.getByText("const font_handle = await assets.load_font(", { exact: false })).toBeVisible();
 
   const non_black = await page.locator("canvas").evaluate(async (element) => {

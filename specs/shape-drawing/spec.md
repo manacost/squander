@@ -6,10 +6,10 @@ Draw basic geometric forms without requiring image assets.
 
 ## Status
 
-Draft. Target: Phase 2.
+Implemented.
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+The Phase 2 shape contract is implemented and verified through CPU, public type,
+and real WebGPU fixtures.
 
 ## Requirements
 
@@ -109,9 +109,10 @@ Current verification:
   `[shape-drawing]` suite.
 
 CPU validation and filled rectangle/circle/line plus rectangle- and
-circle-outline GPU command paths are implemented. Width scaling and degenerate
-stroke behavior have focused GPU evidence; remaining cap/join rules and
-complete shape promotion remain unimplemented.
+circle-outline GPU command paths are implemented. Width scaling, centered
+strokes, joins, degenerate behavior, and source-over ordering have real GPU
+evidence. Rounded/configurable caps and joins, dashed strokes, and antialiasing
+remain explicitly deferred.
 Shared color construction is covered independently by
 [`src/lib/core/runtime/colors.test.ts`](../../src/lib/core/runtime/colors.test.ts),
 and rectangle fills consume it internally.

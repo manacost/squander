@@ -1,6 +1,6 @@
 # Phase 2 package boundary checkpoint
 
-Status: **Replacement package boundary and v2 release metadata verified; capability promotion remains Draft**.
+Status: **Replacement package boundary and v8 release metadata verified**.
 
 ## Pre-slice contract checkpoint
 
@@ -61,16 +61,16 @@ Svelte-aware consumer.
 
 ## Known gaps and gate
 
-- Bumped the package to `2.0.0` and normalized the repository/license metadata
+- Bumped the package to `8.0.0` and normalized the repository/license metadata
   for Publint.
 - The final package gate is complete. This release intentionally does not add a
   migration guide.
-- Go/no-go: **package release validation is complete; do not promote individual
-  Draft capabilities until their own acceptance gates pass.**
+- Go/no-go: **package release validation is complete. Capability promotion is
+  recorded in the Phase 2 audit remediation checkpoint.**
 
 ## Remaining Phase 2 coverage gaps
 
 The replacement-runtime four-metric coverage gate is complete. Browser-only
-renderer correctness is intentionally not merged into the CPU report; real
-WebGPU readback remains a separate acceptance gate. Individual capabilities
-remain Draft until their complete public-contract and GPU evidence is present.
+renderer correctness remains separate from the CPU report and is evidenced by
+the trusted real-WebGPU suite. Current capability promotion is recorded in the
+Phase 2 audit remediation checkpoint.

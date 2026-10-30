@@ -39,8 +39,9 @@ Focused and complementary evidence:
 - `npm run test:type`: passed.
 - `npm run check`: passed with zero diagnostics.
 - `npm run test:integration`: passed, 2 tests.
-- `npm run test:webgpu`: real Chromium WebGPU readback suite remains required
-  for shader, sampling, blending, tessellation, and draw-order correctness.
+- `npm run test:webgpu`: passed with 43 real Chromium WebGPU readback tests for
+  shader, sampling, blending, tessellation, draw order, camera, viewport,
+  documentation, and Svelte-host behavior.
 - `npm run package`: passed; Publint reported `All good!`.
 - `npm run validate:package`: passed.
 - `npm run validate:consumer`: passed with and without Svelte.

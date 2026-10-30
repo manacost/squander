@@ -6,10 +6,11 @@ Make every Phase 2 feature independently learnable and verifiable, then demonstr
 
 ## Status
 
-Draft. Target: Phase 2.
+Implemented.
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+The Phase 2 documentation contract is implemented and verified through the guide
+inventory, focused examples, composition playground, type tests, coverage gate,
+and real WebGPU browser suites.
 
 ## Requirements
 
@@ -59,7 +60,8 @@ the live playground or Svelte demo, explains scope and limitations, lists public
 types, and includes a usage sample. The composition playground remains
 supplementary evidence.
 
-Use `[feature-documentation]` in relevant suite names and add actual file/suite links as tests land.
+Use `[feature-documentation]` in relevant suite names and keep the inventory
+synchronized when capabilities change.
 
 ## Notes
 

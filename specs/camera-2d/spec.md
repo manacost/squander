@@ -6,10 +6,10 @@ View the 2D world through a basic position, zoom, and rotation transform.
 
 ## Status
 
-Draft. Target: Phase 2.
+Implemented.
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+The Phase 2 camera contract is implemented and verified through CPU, public type,
+and real WebGPU fixtures.
 
 ## Requirements
 
@@ -113,10 +113,9 @@ Current verification:
   verifies synchronous camera scope application to a real GPU landmark in the
   `[camera-2d]` suite.
 
-Nested scope restoration and one renderer integration fixture are implemented;
-broader camera transforms across all draw types and viewport integration remain
-unimplemented; one real GPU zoom/rotation fixture now covers the shared quad
-path.
+Nested scope restoration, viewport mapping, and camera transforms across sprites,
+primitives, labels, and owned geometry are implemented. Automatic culling and
+advanced projections remain deferred.
 
 ## Notes
 

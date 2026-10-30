@@ -6,10 +6,10 @@ Draw composable textured sprites in predictable order with explicit placement an
 
 ## Status
 
-Draft. Target: Phase 2.
+Implemented.
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+The Phase 2 sprite contract is implemented and verified through CPU, public type,
+and real WebGPU fixtures.
 
 ## Requirements
 
@@ -84,19 +84,17 @@ Current verification:
   RGB/HSL/hex equivalence, shorthand hex, readonly values, and construction
   validation.
 
-Real GPU coverage now includes placement, origin anchoring, horizontal flipping,
-rotation-path execution, ordered sprite overlap, combined flipping, and
-source-over composition. These capabilities are available through the
-game-owned renderer exposed after `game.ready`. One mixed sprite/rectangle
-ordering fixture now exists; mixed circles, lines, and text remain unverified.
+Real GPU coverage includes placement, origin anchoring, horizontal and vertical
+flipping, rotation, ordered sprite overlap, source-over composition, and mixed
+sprite/primitive/label camera rendering. These capabilities are available
+through the game-owned renderer exposed after `game.ready`.
 Shared color construction is covered at its CPU seam and sprite tinting now
 consumes the shared type internally.
 
 ## Notes
 
-AD-008, AD-014, AD-022, and AD-023. The current GPU slice accepts the shared
-internal color representation; final package exports and complete mixed
-primitive ordering remain open.
+AD-008, AD-014, AD-022, and AD-023. Additional blend modes and implicit batching
+policy remain outside Phase 2.
 Negative-scale behavior remains an API design detail; explicit flips do not imply geometry mirroring.
 The angle convention and helper are agreed; the illustrative draw-option spelling and any branded angle type remain API design details.
 

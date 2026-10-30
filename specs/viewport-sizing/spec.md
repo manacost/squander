@@ -6,10 +6,10 @@ Keep logical drawing coordinates usable across responsive containers and display
 
 ## Status
 
-Draft. Target: Phase 2.
+Implemented.
 
-The direction was agreed in the interview; open contract details are listed below.
-This draft does not claim implementation or verification.
+The Phase 2 viewport contract is implemented and verified through CPU, public
+type, and real WebGPU fixtures.
 
 ## Requirements
 
@@ -54,9 +54,10 @@ Current verification:
 
 Fixed-fit letterbox mapping is integrated into the renderer and game-owned
 viewport state is observable through `game.get_viewport()` and mutable through
-`game.resize(viewport)`. Browser resize and DPR updates are verified through the
-public game seam; automatic DOM observation and overlay alignment remain
-unimplemented.
+`game.resize(viewport)`. Responsive sizing, explicit resize, DPR updates, and
+logical placement are verified through the public game seam. Automatic DOM
+observation remains an application integration concern rather than a Phase 2
+runtime requirement.
 
 ## Notes
 
