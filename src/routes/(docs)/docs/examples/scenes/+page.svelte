@@ -47,7 +47,9 @@
         void renderer.draw_commands([
           { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 400, height: 225 }, color: rgba(0.05, 0.15, 0.35, 1) } },
           { kind: "rectangle", draw: { rectangle: { x: 80, y: 60, width: 260, height: 100 }, color: rgba(0.1, 0.45, 0.9, 1) } },
-        ]);
+        ]).then((pixels) => {
+          (globalThis as { __scene_readback?: Uint8Array }).__scene_readback = pixels;
+        });
       },
     });
 
@@ -61,7 +63,9 @@
         void renderer.draw_commands([
           { kind: "rectangle", draw: { rectangle: { x: 400, y: 0, width: 400, height: 225 }, color: rgba(0.35, 0.12, 0.05, 1) } },
           { kind: "rectangle", draw: { rectangle: { x: 460, y: 60, width: 260, height: 100 }, color: rgba(0.95, 0.55, 0.1, 1) } },
-        ]);
+        ]).then((pixels) => {
+          (globalThis as { __scene_readback?: Uint8Array }).__scene_readback = pixels;
+        });
       },
     });
 

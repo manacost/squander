@@ -1,10 +1,15 @@
 import { expect, test } from "@playwright/test";
 
+declare global {
+  var __scene_readback: Uint8Array | undefined;
+}
+
 test("[scene-lifecycle] mounts and renders an ordered scene stack", async ({ page }) => {
   await page.goto("/docs/examples/scenes");
   const gpu_environment = await page.evaluate(async () => {
     const adapter = await navigator.gpu.requestAdapter();
     const device = adapter === null ? null : await adapter.requestDevice();
+    const adapter_info = adapter === null ? null : "info" in adapter ? adapter.info : null;
     if (device !== null) device.destroy();
     return {
       secure_context: window.isSecureContext,
@@ -13,7 +18,17 @@ test("[scene-lifecycle] mounts and renders an ordered scene stack", async ({ pag
       has_device: device !== null,
       dpr: window.devicePixelRatio,
       viewport: { width: window.innerWidth, height: window.innerHeight },
+      adapter_info,
     };
+  });
+  test.info().annotations.push({
+    type: "webgpu-environment",
+    description: JSON.stringify({
+      browser: await page.context().browser()?.version(),
+      os: process.platform,
+      ...gpu_environment,
+      fixture: { width: 800, height: 450 },
+    }),
   });
   expect(gpu_environment.secure_context).toBe(true);
   expect(gpu_environment.has_gpu).toBe(true);
@@ -43,4 +58,8 @@ test("[scene-lifecycle] mounts and renders an ordered scene stack", async ({ pag
     return { non_black };
   });
   expect(canvas_probe.non_black).toBeGreaterThan(0);
+
+  await expect.poll(async () => page.evaluate(() => globalThis.__scene_readback?.length ?? 0)).toBeGreaterThan(0);
+  const readback = await page.evaluate(() => Array.from(globalThis.__scene_readback ?? []).slice(0, 4));
+  expect(readback.some((channel) => channel !== 0)).toBe(true);
 });
