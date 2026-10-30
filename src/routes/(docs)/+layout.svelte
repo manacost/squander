@@ -25,6 +25,7 @@
       target: "/(docs)/docs/examples/playground",
       children: [
         { label: "playground", href: "/docs/examples/playground", target: "/(docs)/docs/examples/playground" },
+        { label: "scenes", href: "/docs/examples/scenes", target: "/(docs)/docs/examples/scenes" },
         { label: "svelte", href: "/docs/examples/svelte", target: "/(docs)/docs/examples/svelte" },
       ],
     },
@@ -69,7 +70,6 @@
           {/each}
         {/if}
       {/each}
-
     </nav>
     <div class="links">
       <a class="external-link" href="https://github.com/ancient-cat/squander" target="_blank">github</a>

@@ -775,6 +775,15 @@ restriction.
 Camera zoom keeps the stricter positive-finite rules of AD-042. Bounds queries
 keep AD-050’s nonfinite-input rejection.
 
+## AD-054: Phase 3-a scene removal disposes the scene
+
+Phase 3-a supersedes the earlier deferred-scene wording in AD-004 for the
+game-owned scene composer. Removing a scene permanently disposes its lifecycle
+instance and, once scene asset scopes and subscriptions are present, releases
+those scene-owned resources. Remounting the same factory creates a new isolated
+instance. Game-owned assets and programmer-owned signals remain independent of
+scene removal.
+
 ## Implementation readiness
 
 Capability contracts are drafted under [specs](../specs/README.md). Their Draft

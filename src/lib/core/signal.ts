@@ -1,14 +1,14 @@
 type SignalUnsubscriber = () => void;
 
-export type Signal<EventDetail = any> = {
-  subscribe: (callback: (detail: EventDetail) => any) => SignalUnsubscriber;
-  once: (callback: (detail: EventDetail) => any) => SignalUnsubscriber;
-  unsubscribe: (callback?: (detail: EventDetail) => any) => void;
+export type Signal<EventDetail = unknown> = {
+  subscribe: (callback: (detail: EventDetail) => void) => SignalUnsubscriber;
+  once: (callback: (detail: EventDetail) => void) => SignalUnsubscriber;
+  unsubscribe: (callback?: (detail: EventDetail) => void) => void;
   clear: () => void;
   emit: (detail: EventDetail) => void;
 };
-export const create_signal = <EventDetail = any>(): Signal<EventDetail> => {
-  let listeners: CallableFunction[] = [];
+export const create_signal = <EventDetail = unknown>(): Signal<EventDetail> => {
+  let listeners: Array<(detail: EventDetail) => void> = [];
   const signal: Signal<EventDetail> = {
     subscribe: (callback) => {
       listeners.push(callback);
@@ -26,7 +26,7 @@ export const create_signal = <EventDetail = any>(): Signal<EventDetail> => {
     },
 
     emit: (detail) => {
-      listeners.forEach((cb) => {
+      [...listeners].forEach((cb) => {
         cb(detail);
       });
     },

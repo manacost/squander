@@ -14,6 +14,17 @@ export type { FlattenedSubpath } from "./path_flattening.js";
 export * from "./polygons.js";
 export * from "./resource_ownership.js";
 export * from "./shapes.js";
+export type {
+  SceneAssetScope,
+  SceneComposer,
+  SceneContext,
+  SceneDefinition,
+  SceneDependencies,
+  SceneFactory,
+  SceneFactoryContext,
+  SceneHandle,
+  SceneSubscriptions,
+} from "./scene.js";
 export * from "./stroke_geometry.js";
 export * from "./texture_filtering.js";
 export * from "./timing.js";

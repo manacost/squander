@@ -5,6 +5,7 @@ import { create_asset_cache, type AssetCache, type AssetManifest } from "./asset
 import type { UpdateTime } from "./timing.js";
 import { create_webgpu_renderer, type WebGpuRenderer, type WebGpuRendererOptions } from "./webgpu_renderer.js";
 import type { ViewportSize } from "./viewport_sizing.js";
+import { create_scene_composer, type SceneComposer } from "./scene.js";
 
 export class GameInitializationError extends Error {
   public constructor(cause: unknown) {
@@ -65,6 +66,7 @@ export type Game<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   resources: ResourceOwner;
   geometry: GeometryOwner;
   assets: AssetCache<Manifest>;
+  scenes: SceneComposer<Manifest>;
   pause: () => void;
   resume: () => void;
   set_visibility: (visible: boolean) => void;
@@ -72,10 +74,15 @@ export type Game<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   get_state: () => FrameLoopState | "initializing";
 }>;
 
-const create_loop_options = (options: GameOptions, on_error: (error: unknown) => void): FrameLoopOptions => ({
+const create_loop_options = (
+  options: GameOptions,
+  on_error: (error: unknown) => void,
+  update: (time: UpdateTime) => void = options.update,
+  draw: () => void = options.draw,
+): FrameLoopOptions => ({
   scheduler: options.scheduler,
-  update: options.update,
-  draw: options.draw,
+  update,
+  draw,
   on_error,
   max_delta_seconds: options.max_delta_seconds,
 });
@@ -88,8 +95,24 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
   const renderer_factory = options.renderer_factory ?? create_webgpu_renderer;
   const renderer_ready = Promise.resolve().then(() => renderer_factory(options.renderer));
   const assets = create_asset_cache((options.manifest ?? {}) as Manifest, resources, renderer_ready);
+  const manifest = (options.manifest ?? {}) as Manifest;
   const abort_controller = new AbortController();
   let loop: FrameLoop | undefined;
+  let scene_controller: ReturnType<typeof create_scene_composer<Manifest>> | undefined;
+  const get_scene_composer = (): SceneComposer<Manifest> => {
+    if (scene_controller === undefined) throw new Error("game scene composer is not ready");
+    return scene_controller.composer;
+  };
+  const scenes: SceneComposer<Manifest> = Object.freeze({
+    mount: async (factory, mount_options) => get_scene_composer().mount(factory, mount_options),
+    remove: async (scene) => {
+      await get_scene_composer().remove(scene);
+    },
+    replace: async (scene, factory) => get_scene_composer().replace(scene, factory),
+    dispose: async () => {
+      await scene_controller?.composer.dispose();
+    },
+  });
   const lifecycle = { disposed: false, manually_paused: false, visible: true };
   let disposal_promise: Promise<void> | undefined;
 
@@ -104,18 +127,43 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
         renderer = undefined;
         throw new GameDisposedError();
       }
+      const active_scene_controller = create_scene_composer({
+        signal: abort_controller.signal,
+        renderer,
+        manifest,
+        asset_cache: assets,
+        on_async_error: (cause) => {
+          if (loop === undefined) {
+            options.on_error?.(new GameRuntimeError(cause));
+          } else {
+            loop.fail(cause);
+          }
+        },
+      });
+      scene_controller = active_scene_controller;
       await options.setup?.({ signal: abort_controller.signal, renderer, resources, geometry, assets });
       if (lifecycle.disposed || abort_controller.signal.aborted) {
         throw new GameDisposedError();
       }
       loop = create_frame_loop(
-        create_loop_options(options, (cause) => {
-          if (cause instanceof GameDeviceLostError) {
-            options.on_error?.(cause);
-            return;
-          }
-          options.on_error?.(new GameRuntimeError(cause));
-        }),
+        create_loop_options(
+          options,
+          (cause) => {
+            if (cause instanceof GameDeviceLostError) {
+              options.on_error?.(cause);
+              return;
+            }
+            options.on_error?.(new GameRuntimeError(cause));
+          },
+          (time) => {
+            options.update(time);
+            active_scene_controller.update(time);
+          },
+          () => {
+            options.draw();
+            active_scene_controller.draw();
+          },
+        ),
       );
       loop.start();
       if (lifecycle.manually_paused) {
@@ -131,6 +179,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
         loop?.fail(new GameDeviceLostError(cause));
       });
     } catch (cause) {
+      await scene_controller?.composer.dispose();
       assets.dispose();
       resources.dispose();
       geometry.dispose();
@@ -170,19 +219,21 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
     lifecycle.disposed = true;
     abort_controller.abort();
     disposal_promise = (loop?.dispose() ?? Promise.resolve()).then(() => {
-      assets.dispose();
-      resources.dispose();
-      geometry.dispose();
-      return renderer_ready
-        .then((resolved_renderer) => {
-          if (renderer_disposed) {
-            return;
-          }
-          resolved_renderer.dispose();
-          renderer_disposed = true;
-          renderer = undefined;
-        })
-        .catch(() => undefined);
+      return (scene_controller?.composer.dispose() ?? Promise.resolve()).then(() => {
+        assets.dispose();
+        resources.dispose();
+        geometry.dispose();
+        return renderer_ready
+          .then((resolved_renderer) => {
+            if (renderer_disposed) {
+              return;
+            }
+            resolved_renderer.dispose();
+            renderer_disposed = true;
+            renderer = undefined;
+          })
+          .catch(() => undefined);
+      });
     });
     return disposal_promise;
   };
@@ -216,6 +267,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
     resources,
     geometry,
     assets,
+    scenes,
     pause,
     resume,
     set_visibility,
