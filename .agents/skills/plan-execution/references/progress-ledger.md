@@ -27,7 +27,7 @@ Overall status: in-progress | blocked | complete
 ## Checkpoint history
 
 | Slice | Commit | Result | Coverage | Evidence | Next action |
-| --- | --- | --- | --- | --- | --- |
+| ----- | ------ | ------ | -------- | -------- | ----------- |
 
 ## Blockers and decisions
 

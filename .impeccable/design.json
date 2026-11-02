@@ -130,14 +130,49 @@
   "narrative": {
     "northStar": "The game engine workbench",
     "overview": "Squander's interface should feel like a well-used workbench for making game systems: focused, capable, and built around the tools rather than decoration. The visual language is distinct, creative, and tech-y through geometric type, dark instrument surfaces, compact navigation, and a single signal-red accent. It stays grounded in the actual work of reading API contracts, copying code, and inspecting live rendering proofs.\n\nThe system is flat and practical. Contrast, borders, spacing, and tonal changes make hierarchy legible without relying on glows, gradients, or ornamental effects. Controls should feel compact and quietly tactile: small enough to stay out of the way, clear enough to invite use. Panels and examples stay open to the page instead of becoming rounded wells.",
-    "keyCharacteristics": ["Workbench-like rather than showroom-like", "Geometric headings with restrained utility text", "Carbon rail, dark proof surfaces, and signal-red navigation", "Flat depth with compact, square controls", "Creative through composition and type, not effects"],
-    "rules": [
-      { "name": "The Signal Rule", "body": "Use the red accent as a deliberate navigation signal, not as a general decoration or a full-surface wash.", "section": "colors" },
-      { "name": "The No-Glow Rule", "body": "Do not use luminous halos, neon glows, or gradients to make the interface feel technical. Let structure and contrast do that work.", "section": "colors" },
-      { "name": "The Two-Speed Type Rule", "body": "Headings carry the personality; body and code carry the information. Never make utility text compete with a guide title.", "section": "typography" },
-      { "name": "The Flat Workbench Rule", "body": "Depth comes from adjacent surfaces and clear edges. Reserve stronger contrast for an active, actionable, or rendered state.", "section": "elevation" }
+    "keyCharacteristics": [
+      "Workbench-like rather than showroom-like",
+      "Geometric headings with restrained utility text",
+      "Carbon rail, dark proof surfaces, and signal-red navigation",
+      "Flat depth with compact, square controls",
+      "Creative through composition and type, not effects"
     ],
-    "dos": ["Do make the interface feel like a capable game-engine workbench.", "Do let Geo headings, compact spacing, and dark instrument surfaces carry the identity.", "Do use the signal-red accent sparingly for navigation and meaningful emphasis.", "Do keep proof panels, code examples, and controls close to the content they explain.", "Do preserve flat depth, thin structural borders, and quietly tactile radii.", "Do keep technical surfaces readable at mobile widths through wrapping or scrolling."],
-    "donts": ["Don't use hacker clichés, terminal-wall decoration, or novelty code rain as visual identity.", "Don't add glows, neon halos, gradient backgrounds, or gradient text.", "Don't turn every surface into a floating card with a shadow.", "Don't over-round controls into pills or make the documentation feel like a marketing landing page.", "Don't spend the accent color everywhere; its rarity is part of the system."]
+    "rules": [
+      {
+        "name": "The Signal Rule",
+        "body": "Use the red accent as a deliberate navigation signal, not as a general decoration or a full-surface wash.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Glow Rule",
+        "body": "Do not use luminous halos, neon glows, or gradients to make the interface feel technical. Let structure and contrast do that work.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Speed Type Rule",
+        "body": "Headings carry the personality; body and code carry the information. Never make utility text compete with a guide title.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Workbench Rule",
+        "body": "Depth comes from adjacent surfaces and clear edges. Reserve stronger contrast for an active, actionable, or rendered state.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do make the interface feel like a capable game-engine workbench.",
+      "Do let Geo headings, compact spacing, and dark instrument surfaces carry the identity.",
+      "Do use the signal-red accent sparingly for navigation and meaningful emphasis.",
+      "Do keep proof panels, code examples, and controls close to the content they explain.",
+      "Do preserve flat depth, thin structural borders, and quietly tactile radii.",
+      "Do keep technical surfaces readable at mobile widths through wrapping or scrolling."
+    ],
+    "donts": [
+      "Don't use hacker clichés, terminal-wall decoration, or novelty code rain as visual identity.",
+      "Don't add glows, neon halos, gradient backgrounds, or gradient text.",
+      "Don't turn every surface into a floating card with a shadow.",
+      "Don't over-round controls into pills or make the documentation feel like a marketing landing page.",
+      "Don't spend the accent color everywhere; its rarity is part of the system."
+    ]
   }
 }

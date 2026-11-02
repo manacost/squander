@@ -50,9 +50,9 @@ by the repository's actual tests, reports, and runtime checks.
 Record decisions before implementation when they change public behavior, resource ownership,
 error handling, timing, compatibility, or test interpretation.
 
-| ID | Decision | Rationale/evidence | Affected slices | Deferred alternative |
-| --- | --- | --- | --- | --- |
-| AD-001 | <contract> | <reason> | <slice IDs> | <if any> |
+| ID     | Decision   | Rationale/evidence | Affected slices | Deferred alternative |
+| ------ | ---------- | ------------------ | --------------- | -------------------- |
+| AD-001 | <contract> | <reason>           | <slice IDs>     | <if any>             |
 
 ### 5. Slice map
 
@@ -86,14 +86,14 @@ contracts merely to reduce the commit count.
 
 ### 6. Verification matrix
 
-| Evidence | Command/suite | Proves | Does not prove | Required result |
-| --- | --- | --- | --- | --- |
-| Unit/runtime | `<command>` | <CPU behavior> | <GPU/raster behavior> | pass |
-| Type | `<command>` | <public inference/rejection> | <runtime behavior> | pass |
-| Integration | `<command>` | <cross-module behavior> | <unexercised paths> | pass |
-| Real runtime/GPU | `<command>` | <shader, upload, raster, device behavior> | <coverage> | executes, no silent skip |
-| Coverage | `<command>` | <instrumented runtime paths> | <shader correctness> | all required dimensions exceed threshold |
-| Package/consumer | `<command>` | <published boundary> | <source-only behavior> | pass |
+| Evidence         | Command/suite | Proves                                    | Does not prove         | Required result                          |
+| ---------------- | ------------- | ----------------------------------------- | ---------------------- | ---------------------------------------- |
+| Unit/runtime     | `<command>`   | <CPU behavior>                            | <GPU/raster behavior>  | pass                                     |
+| Type             | `<command>`   | <public inference/rejection>              | <runtime behavior>     | pass                                     |
+| Integration      | `<command>`   | <cross-module behavior>                   | <unexercised paths>    | pass                                     |
+| Real runtime/GPU | `<command>`   | <shader, upload, raster, device behavior> | <coverage>             | executes, no silent skip                 |
+| Coverage         | `<command>`   | <instrumented runtime paths>              | <shader correctness>   | all required dimensions exceed threshold |
+| Package/consumer | `<command>`   | <published boundary>                      | <source-only behavior> | pass                                     |
 
 State how expected values are calculated independently and how environment metadata is
 recorded. A skipped required environment is a failed evidence gate, not a pass.
