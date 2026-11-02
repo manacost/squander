@@ -3,7 +3,6 @@ import { create_geometry_owner } from "./geometry_ownership.js";
 import { create_webgpu_renderer, WebGpuUnavailableError } from "./webgpu_renderer.js";
 import type { WebGpuFont } from "./font_loading.js";
 import { rgba } from "./colors.js";
-import { flatten_path, line_to, move_to } from "./path_flattening.js";
 
 class FakeTexture {
   public label = "";
@@ -18,6 +17,7 @@ class FakeBuffer {
 
   public constructor(private readonly size: number) {}
 
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- WebGPU uses this external method name.
   public getMappedRange(): ArrayBuffer {
     return new ArrayBuffer(this.size);
   }
@@ -150,7 +150,6 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     const no_context = install_webgpu({ context: null });
     await expect(create_webgpu_renderer({ canvas: canvas(), width: 2, height: 2 })).rejects.toThrow("context");
     expect(no_context.device.destroy as ReturnType<typeof vi.fn>).toHaveBeenCalledOnce();
-    void no_adapter;
   });
 
   it("covers texture uploads, commands, viewport changes, and idempotent disposal", async () => {
@@ -164,7 +163,7 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     expect(() => renderer.create_texture(new Uint8Array(4), 2, 1)).toThrow(/shorter/);
     expect((await renderer.clear({ red: 0, green: 0, blue: 0, alpha: 1 })).slice(0, 16)).toHaveLength(16);
     await expect(renderer.clear({ red: 2, green: 0, blue: 0, alpha: 1 })).rejects.toThrow(/between/);
-    expect(await renderer.create_texture_from_image({} as CanvasImageSource, 1, 1)).toBeDefined();
+    expect(renderer.create_texture_from_image({} as CanvasImageSource, 1, 1)).toBeDefined();
     expect(await renderer.create_texture_from_blob(new Blob(["image"]))).toBeDefined();
     await renderer.create_font_from_url("local(Arial)", { characters: "A" });
 

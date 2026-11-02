@@ -24,7 +24,7 @@ test("[scene-lifecycle] mounts and renders an ordered scene stack", async ({ pag
   test.info().annotations.push({
     type: "webgpu-environment",
     description: JSON.stringify({
-      browser: await page.context().browser()?.version(),
+      browser: page.context().browser()?.version(),
       os: process.platform,
       ...gpu_environment,
       fixture: { width: 800, height: 450 },

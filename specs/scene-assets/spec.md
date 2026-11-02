@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted. Target phase: Phase 3-a, Slice 2. Implementation in progress.
+Accepted. Target phase: Phase 3-a, Slice 2. CPU implementation and ownership
+evidence are verified; browser evidence remains pending.
 
 ## Goal
 
@@ -43,10 +44,14 @@ Declare `dependencies: { hero: "hero" }` for required setup work, or call
 
 ## Test references
 
+Automated evidence marker: [scene-assets]
+
 Test evidence: the focused [`scene.test.ts`](../../src/lib/core/runtime/scene.test.ts) suite
-covers required dependency acquisition and ownership. Additional cancellation,
-retry, and browser evidence are tracked by the Slice 2 implementation
-checkpoint.
+covers required dependency acquisition, shared-scene lifetime, surviving-scene
+use, cancellation, retry, and late completion. Real browser image upload/draw
+evidence is exercised by [`webgpu-scene-assets.spec.ts`](../../tests/webgpu-scene-assets.spec.ts)
+when the trusted preview server is runnable; the current managed environment
+denies that server bind.
 
 ## Notes
 

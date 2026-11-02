@@ -20,7 +20,7 @@ const test_renderer_options = { canvas: {} as HTMLCanvasElement, width: 1, heigh
 const create_fake_renderer = (): WebGpuRenderer => {
   const owner = create_resource_owner();
   let viewport = calculate_responsive_viewport({ css_width: 1, css_height: 1, device_pixel_ratio: 1 });
-  const create_texture = (pixels: Uint8Array, width: number, height: number) => {
+  const create_texture = (_pixels: Uint8Array, width: number, height: number) => {
     const resource = owner.acquire({} as GPUTexture, () => undefined);
     return {
       resource,
@@ -34,8 +34,8 @@ const create_fake_renderer = (): WebGpuRenderer => {
   return {
     clear: draw,
     create_texture,
-    create_texture_from_image: (image, width, height) => create_texture(new Uint8Array(), width, height),
-    create_texture_from_blob: async (source) => create_texture(new Uint8Array(), 1, 1),
+    create_texture_from_image: (_image, width, height) => create_texture(new Uint8Array(), width, height),
+    create_texture_from_blob: async (_source) => create_texture(new Uint8Array(), 1, 1),
     create_font_from_url: async () => ({
       family: "test",
       size: 16,
@@ -210,9 +210,9 @@ describe("[game-lifecycle] game setup", () => {
     });
 
     expect(() => game.renderer).toThrow("game renderer is not ready");
-    expect(() => game.resize(calculate_responsive_viewport({ css_width: 1, css_height: 1, device_pixel_ratio: 1 }))).toThrow(
-      "game renderer is not ready",
-    );
+    expect(() => {
+      game.resize(calculate_responsive_viewport({ css_width: 1, css_height: 1, device_pixel_ratio: 1 }));
+    }).toThrow("game renderer is not ready");
     expect(() => game.get_viewport()).toThrow("game renderer is not ready");
     const disposal = game.dispose();
     resolve_renderer(renderer);

@@ -39,7 +39,7 @@ const create_scheduler = () => {
       return callbacks.size;
     },
     peek() {
-      return callbacks.values().next().value as (() => void) | undefined;
+      return callbacks.values().next().value;
     },
   };
 };

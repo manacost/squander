@@ -88,7 +88,7 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
         },
       },
     ]);
-    /* eslint-disable @typescript-eslint/naming-convention -- browser-only diagnostic property */
+
     (
       window as unknown as { __renderer_gallery?: { renderer: typeof renderer; texture: typeof texture; font: typeof font } }
     ).__renderer_gallery = {
@@ -96,13 +96,11 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
       texture,
       font,
     };
-    /* eslint-enable @typescript-eslint/naming-convention -- browser-only diagnostic property */
   });
 
   const canvas = page.locator("canvas");
   await expect(canvas).toHaveScreenshot("renderer-capability-gallery.png", { animations: "disabled" });
   await page.evaluate(() => {
-    /* eslint-disable @typescript-eslint/naming-convention -- browser-only diagnostic property */
     const gallery = (
       window as unknown as {
         __renderer_gallery?: { renderer: { dispose: () => void }; texture: { release: () => void }; font: { release: () => void } };
@@ -112,7 +110,6 @@ test("[visual-evidence] captures a readable renderer capability gallery", async 
     gallery?.texture.release();
     gallery?.renderer.dispose();
     delete (window as unknown as { __renderer_gallery?: unknown }).__renderer_gallery;
-    /* eslint-enable @typescript-eslint/naming-convention -- browser-only diagnostic property */
   });
 });
 

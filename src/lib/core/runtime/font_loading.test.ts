@@ -80,7 +80,9 @@ describe("[text-drawing] font preparation", () => {
     font.release();
     font.release();
     expect(() => font.atlas).toThrow("atlas is unavailable");
-    expect(() => font.prepare("C")).toThrow("font is released");
+    expect(() => {
+      font.prepare("C");
+    }).toThrow("font is released");
     expect(textures.every((texture) => (texture.release as ReturnType<typeof vi.fn>).mock.calls.length === 1)).toBe(true);
   });
 

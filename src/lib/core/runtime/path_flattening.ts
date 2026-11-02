@@ -86,28 +86,29 @@ export const flatten_path = (input: PathInput, tolerance: number): readonly Flat
       start = point;
       continue;
     }
+    const active = subpaths.at(-1);
+    if (active === undefined || current === undefined) throw new Error("path command must begin with move");
     if (command.kind === "line") {
       current = snapshot_point(command);
-      subpaths.at(-1)!.points.push(current);
+      active.points.push(current);
     } else if (command.kind === "quadratic") {
       const end = snapshot_point(command);
-      flatten_quadratic(current!, { x: command.control_x, y: command.control_y }, end, flatness, subpaths.at(-1)!.points, 0);
+      flatten_quadratic(current, { x: command.control_x, y: command.control_y }, end, flatness, active.points, 0);
       current = end;
     } else if (command.kind === "cubic") {
       const end = snapshot_point(command);
       flatten_cubic(
-        current!,
+        current,
         { x: command.control_1_x, y: command.control_1_y },
         { x: command.control_2_x, y: command.control_2_y },
         end,
         flatness,
-        subpaths.at(-1)!.points,
+        active.points,
         0,
       );
       current = end;
     } else {
-      const active = subpaths.at(-1)!;
-      if (distance(current!, start!) > 0) active.points.push(start!);
+      if (start !== undefined && distance(current, start) > 0) active.points.push(start);
       active.closed = true;
       current = undefined;
       start = undefined;

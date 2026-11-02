@@ -1,13 +1,11 @@
-export const mount_all = (...t: any[]) => {
-  let list: CallableFunction[] = [];
+export const mount_all = (...t: (() => void)[]) => {
+  let list: (() => void)[] = [];
 
   list.push(...t);
 
   const unsub_all = () => {
     for (const cb of list) {
-      if (typeof cb === "function") {
-        cb();
-      }
+      cb();
     }
     list = [];
   };

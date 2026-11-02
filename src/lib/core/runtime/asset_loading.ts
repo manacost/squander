@@ -39,7 +39,7 @@ const create_abort_error = (): Error => new DOMException("asset load was aborted
 export const create_asset_cache = <Manifest extends AssetManifest>(
   manifest: Manifest,
   resources: ResourceOwner,
-  renderer: Promise<WebGpuRenderer> | undefined = undefined,
+  renderer?: Promise<WebGpuRenderer>,
 ): AssetCache<Manifest> => {
   const pending = new Map<keyof Manifest, PendingEntry>();
   const shared_handles = new Map<keyof Manifest, ResourceHandle<unknown>>();
@@ -102,7 +102,8 @@ export const create_asset_cache = <Manifest extends AssetManifest>(
       if (request_state.aborted || options.signal?.aborted) {
         throw create_abort_error();
       }
-      const handle = shared_handles.get(key)!;
+      const handle = shared_handles.get(key);
+      if (handle === undefined) throw new Error(`asset load completed without a shared handle: ${String(key)}`);
       return handle.share() as ResourceHandle<AssetResource<Manifest, Key>>;
     } finally {
       options.signal?.removeEventListener("abort", abort);
@@ -127,17 +128,23 @@ export const create_asset_cache = <Manifest extends AssetManifest>(
     }
     const { signal, ...filtering } = options;
     const controller = new AbortController();
-    const abort = (): void => controller.abort();
+    const abort = (): void => {
+      controller.abort();
+    };
     signal?.addEventListener("abort", abort, { once: true });
     texture_operations.add(controller);
     try {
       const texture = await renderer.then((value) => value.create_texture_from_blob(source, filtering, controller.signal));
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Cache disposal can happen while upload awaits the renderer.
       if (disposed || controller.signal.aborted) {
         texture.release();
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Preserve disposal versus abort diagnostics after asynchronous upload.
         throw disposed ? new Error("asset cache was disposed during loading") : create_abort_error();
       }
       try {
-        return resources.acquire(texture, (resource) => resource.release());
+        return resources.acquire(texture, (resource) => {
+          resource.release();
+        });
       } catch (error) {
         texture.release();
         throw error;
@@ -154,17 +161,23 @@ export const create_asset_cache = <Manifest extends AssetManifest>(
     if (renderer === undefined) throw new Error("asset cache has no renderer");
     const { signal, ...font_options } = options;
     const controller = new AbortController();
-    const abort = (): void => controller.abort();
+    const abort = (): void => {
+      controller.abort();
+    };
     signal?.addEventListener("abort", abort, { once: true });
     font_operations.add(controller);
     try {
       const font = await renderer.then((value) => value.create_font_from_url(source, font_options));
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Cache disposal can happen while font loading awaits the renderer.
       if (disposed || controller.signal.aborted) {
         font.release();
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Preserve disposal versus abort diagnostics after asynchronous font loading.
         throw disposed ? new Error("asset cache was disposed during loading") : create_abort_error();
       }
       try {
-        return resources.acquire(font, (resource) => resource.release());
+        return resources.acquire(font, (resource) => {
+          resource.release();
+        });
       } catch (error) {
         font.release();
         throw error;

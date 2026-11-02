@@ -37,13 +37,13 @@ describe("create_signal", () => {
   it("dispatches from a stable snapshot when listeners mutate subscriptions", () => {
     const signal = create_signal<number>();
     const events: string[] = [];
-    let unsubscribe_second!: () => void;
+    const second_subscription: { unsubscribe: () => void } = { unsubscribe: () => undefined };
     signal.subscribe(() => {
       events.push("first");
-      unsubscribe_second();
+      second_subscription.unsubscribe();
       signal.subscribe(() => events.push("late"));
     });
-    unsubscribe_second = signal.subscribe(() => events.push("second"));
+    second_subscription.unsubscribe = signal.subscribe(() => events.push("second"));
 
     signal.emit(1);
     signal.emit(2);

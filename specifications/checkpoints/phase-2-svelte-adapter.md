@@ -35,7 +35,7 @@ view and typed command wrappers → game disposal on effect cleanup.
 - `npm run validate:package` — passed for `squander/core`,
   `squander/core/runtime`, and `squander/svelte/adapter`.
 - `npx playwright test --config=playwright.webgpu.config.ts
-  tests/webgpu-svelte-adapter.spec.ts` — passed, one browser mount/command/
+tests/webgpu-svelte-adapter.spec.ts` — passed, one browser mount/command/
   navigation recreation test against the trusted Vite origin. The primary
   demo intentionally shows one host; advanced multi-host isolation is covered
   by the adapter unit suite.

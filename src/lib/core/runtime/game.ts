@@ -5,7 +5,7 @@ import { create_asset_cache, type AssetCache, type AssetManifest } from "./asset
 import type { UpdateTime } from "./timing.js";
 import { create_webgpu_renderer, type WebGpuRenderer, type WebGpuRendererOptions } from "./webgpu_renderer.js";
 import type { ViewportSize } from "./viewport_sizing.js";
-import { create_scene_composer, type SceneComposer } from "./scene.js";
+import { create_scene_composer, create_scene_event_bus, type SceneComposer, type SceneEventMap } from "./scene.js";
 
 export class GameInitializationError extends Error {
   public constructor(cause: unknown) {
@@ -58,7 +58,7 @@ export type GameOptions<Manifest extends AssetManifest = AssetManifest> = Readon
   max_delta_seconds?: number;
 }>;
 
-export type Game<Manifest extends AssetManifest = AssetManifest> = Readonly<{
+export type Game<Manifest extends AssetManifest = AssetManifest, EventMap extends SceneEventMap = SceneEventMap> = Readonly<{
   ready: Promise<void>;
   readonly renderer: WebGpuRenderer;
   resize: (viewport: ViewportSize) => void;
@@ -66,7 +66,7 @@ export type Game<Manifest extends AssetManifest = AssetManifest> = Readonly<{
   resources: ResourceOwner;
   geometry: GeometryOwner;
   assets: AssetCache<Manifest>;
-  scenes: SceneComposer<Manifest>;
+  scenes: SceneComposer<Manifest, EventMap>;
   pause: () => void;
   resume: () => void;
   set_visibility: (visible: boolean) => void;
@@ -87,7 +87,9 @@ const create_loop_options = (
   max_delta_seconds: options.max_delta_seconds,
 });
 
-export const create_game = <Manifest extends AssetManifest = AssetManifest>(options: GameOptions<Manifest>): Game<Manifest> => {
+export const create_game = <Manifest extends AssetManifest = AssetManifest, EventMap extends SceneEventMap = SceneEventMap>(
+  options: GameOptions<Manifest>,
+): Game<Manifest, EventMap> => {
   const resources = create_resource_owner();
   const geometry = create_geometry_owner();
   let renderer: WebGpuRenderer | undefined;
@@ -98,17 +100,20 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
   const manifest = (options.manifest ?? {}) as Manifest;
   const abort_controller = new AbortController();
   let loop: FrameLoop | undefined;
-  let scene_controller: ReturnType<typeof create_scene_composer<Manifest>> | undefined;
-  const get_scene_composer = (): SceneComposer<Manifest> => {
+  const scene_events = create_scene_event_bus<EventMap>((cause) => options.on_error?.(new GameRuntimeError(cause)));
+  let scene_controller: ReturnType<typeof create_scene_composer<Manifest, EventMap>> | undefined;
+  const get_scene_composer = (): SceneComposer<Manifest, EventMap> => {
     if (scene_controller === undefined) throw new Error("game scene composer is not ready");
     return scene_controller.composer;
   };
-  const scenes: SceneComposer<Manifest> = Object.freeze({
+  const scenes: SceneComposer<Manifest, EventMap> = Object.freeze({
+    events: scene_events,
     mount: async (factory, mount_options) => get_scene_composer().mount(factory, mount_options),
     remove: async (scene) => {
       await get_scene_composer().remove(scene);
     },
     replace: async (scene, factory) => get_scene_composer().replace(scene, factory),
+    replace_stack: async (factory) => get_scene_composer().replace_stack(factory),
     dispose: async () => {
       await scene_controller?.composer.dispose();
     },
@@ -120,10 +125,8 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
     try {
       renderer = await renderer_ready;
       if (lifecycle.disposed || abort_controller.signal.aborted) {
-        if (!renderer_disposed) {
-          renderer.dispose();
-          renderer_disposed = true;
-        }
+        renderer.dispose();
+        renderer_disposed = true;
         renderer = undefined;
         throw new GameDisposedError();
       }
@@ -132,6 +135,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
         renderer,
         manifest,
         asset_cache: assets,
+        events: scene_events,
         on_async_error: (cause) => {
           if (loop === undefined) {
             options.on_error?.(new GameRuntimeError(cause));
@@ -142,6 +146,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
       });
       scene_controller = active_scene_controller;
       await options.setup?.({ signal: abort_controller.signal, renderer, resources, geometry, assets });
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Setup can dispose the game while awaiting application work.
       if (lifecycle.disposed || abort_controller.signal.aborted) {
         throw new GameDisposedError();
       }
@@ -220,6 +225,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest>(opti
     abort_controller.abort();
     disposal_promise = (loop?.dispose() ?? Promise.resolve()).then(() => {
       return (scene_controller?.composer.dispose() ?? Promise.resolve()).then(() => {
+        scene_events.clear();
         assets.dispose();
         resources.dispose();
         geometry.dispose();

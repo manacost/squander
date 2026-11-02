@@ -1,7 +1,7 @@
 <script lang="ts" generics="State, Commands extends Record<string, (...args: never[]) => unknown>">
   import type { Snippet } from "svelte";
   import type { AssetManifest } from "../core/runtime/asset_loading.js";
-  import type { GameAdapter, GameAdapterOptions, GameAdapterView } from "./adapter.js";
+  import type { GameAdapterOptions, GameAdapterView } from "./adapter.js";
   import { create_game_adapter } from "./adapter.js";
 
   type Props<Manifest extends AssetManifest> = GameAdapterOptions<State, Commands, Manifest> & {
@@ -15,15 +15,14 @@
     state: initial_state,
     status: "loading",
     error: undefined,
-    commands: {} as GameAdapterView<State, Commands>["commands"],
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- Svelte's generic component checker cannot infer the empty command map.
+    commands: {} as unknown as GameAdapterView<State, Commands>["commands"],
   });
   let view = $state<GameAdapterView<State, Commands>>();
-  let adapter = $state<GameAdapter<State, Commands>>();
 
   $effect(() => {
     if (canvas === undefined) return;
     const next_adapter = create_game_adapter({ initial_state, commands, create });
-    adapter = next_adapter;
     const unsubscribe = next_adapter.subscribe((next_view) => {
       view = next_view;
     });

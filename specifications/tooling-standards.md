@@ -1,8 +1,14 @@
 # Tooling standards
 
-AD-021 sets the quality baseline for new framework work. Run `npm run check`,
-`npm run lint:format`, and `npm run lint:code` independently when diagnosing
-failures. `npm run lint` requires both formatting and code lint to pass.
+AD-021 sets the quality baseline for new framework work. The global verification
+suite requires `npm run lint`, alongside type checks and tests. Run `npm run
+lint:format` and `npm run lint:code` independently when diagnosing failures.
+`npm run lint` requires both formatting and code lint to pass.
+
+All future changes must leave ESLint with zero warnings and zero errors. A
+change may not introduce new diagnostics or rely on broad suppression. Resolve
+the diagnostic in the changed code, or use the smallest named, explained
+exception for a required external API contract.
 
 ## Enforced rules
 

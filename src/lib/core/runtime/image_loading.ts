@@ -42,7 +42,7 @@ export const decode_image_source = async (source: Blob, signal?: AbortSignal): P
         signal?.removeEventListener("abort", abort);
         if (settled) return;
         settled = true;
-        reject(error);
+        reject(error instanceof Error ? error : new Error("image decoding failed", { cause: error }));
       },
     );
   });

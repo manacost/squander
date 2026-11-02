@@ -58,7 +58,7 @@ The repository research wave found these relevant seams:
   clearing; it remains programmer-owned while scene subscriptions are scoped.
 - `create_game_bridge`, `create_game_adapter`, and `GameHost` already establish
   per-instance UI ownership, readonly snapshots, typed commands, SSR-safe
-  rendering, and teardown behavior. Scene overlays should extend this seam while
+  rendering, and teardown behavior. Scene-owned UI should extend this seam while
   keeping the core scene package free of Svelte imports.
 - `src/lib/core/ecs.ts` is an old singleton-style experiment and is not a Phase
   3-a dependency. It must not be expanded incidentally while building scenes.
@@ -124,7 +124,8 @@ both intended inference and representative rejected misuse.
 Run focused checks first, then the broader checks required by the repository:
 
 - `npm run check`
-- `npm run lint`
+- `npm run lint` (Prettier and ESLint; run `npm run lint:code` separately when
+  diagnosing ESLint failures)
 - `npm run test:unit`
 - `npm run test:type`
 - `npm run validate:specs`
@@ -346,69 +347,89 @@ Svelte.
 `scene context/event facade` -> `scoped bus` -> listener registration/dispatch ->
 scene/game disposal -> unit/type/browser tests -> docs/example.
 
-## Slice 4: scene-owned Svelte UI overlays
+## Slice 4: scene-owned Svelte UI
 
 ### Outcome
 
-Allow a scene to optionally own a Svelte overlay within the existing per-game
-host, while keeping scene lifecycle and asset/event contracts in the core.
+Provide a lean `<Game onReady={start_game}>` host. Scenes create, mount, update,
+and dispose their own Svelte UI through a contextual `create_ui()` helper while
+the core scene runtime remains Svelte-independent.
 
 ### Research and analysis questions
 
-- How does a scene describe an overlay without making the core import Svelte?
-- Is the overlay a Svelte snippet, component constructor, adapter registration,
-  or another host-controlled render contract? Select one contract and record its
-  SSR and bundler implications before coding.
-- Which scene state and typed commands are exposed to an overlay, and how is
-  publication scoped to the scene rather than the whole game?
-- What is the ordering and visibility behavior for multiple overlays?
-- What happens when a scene is replaced during an overlay update, during async
-  setup, or during host unmount?
-- Can overlays subscribe to typed signals, and if so, who owns the
-  subscription cleanup?
+- Keep the private DOM UI layer inside `Game`; do not publish `SceneOverlayHost`.
+- Expose contextual `SvelteScenes` and `create_ui()` only after game readiness.
+- Define full-stack `switch`, UI stack ordering, replacement, cancellation,
+  host unmount, and SSR behavior before promotion.
 
 ### Planned feature changes
 
-- Add an optional Svelte adapter seam that consumes the core scene contract but
-  does not add Svelte imports to core modules.
-- Extend `GameHost`/adapter lifecycle only as needed for scene overlay mounting,
-  replacement, isolation, SSR-safe initial output, and teardown.
-- Add focused Svelte documentation and a runnable overlay example.
-- Preserve existing bridge state/command inference and host ownership behavior.
+- Add `Game`, `GameReadyContext`, `SvelteScenes`, `create_ui`, and `UiHandle` to
+  the Svelte package. Keep `GameHost` and `create_game` as lower-level seams.
+- Support `enter()` cleanup callbacks in core, running cleanup before `exit`.
+- Make `switch()` transactionally replace the full stack only after its next
+  root scene is ready; use `mount()` for intentional stacked UI. Uncaught
+  factory, `init`, or `enter` failures follow the game runtime fatal-error path;
+  applications catch expected failures inside those callbacks.
+- Add focused documentation and a runnable scene-UI example.
 
 ### Tests and evidence
 
-- Type tests cover overlay state, commands, event payloads, and rejected
-  cross-scene access.
-- Adapter unit tests cover mount, replacement, notification scheduling, scene
-  disposal, host disposal during setup, and late publication suppression.
-- SSR tests prove the core remains importable without browser globals and the
-  host renders its documented initial state.
-- Browser tests mount two isolated hosts/scenes, exercise an overlay action, and
-  verify overlay removal and no post-disposal updates.
-- Coverage is recorded for modified adapter/component runtime code.
+- Type tests cover component props, callback inference, scene navigation, and
+  rejected missing/wrong props.
+- Unit tests cover UI mount/update/idempotent disposal, multiple handles,
+  replacement, late calls, `onReady` failure, and host disposal during setup.
+- SSR tests prove `Game` imports/renders without browser globals or `onReady`.
+- Browser/WebGPU tests cover two isolated games, UI ordering, actions, switch
+  teardown, host unmount, and deterministic render readback.
 
 ### Acceptance criteria
 
-- A scene can opt into an overlay without requiring Svelte in the core package.
-- Overlay state and commands remain typed, read-only from the UI, and scoped to
-  the owning scene.
-- Scene replacement and host unmount dispose overlay subscriptions and prevent
-  late setup/publication from updating removed UI.
-- Multiple game hosts remain isolated, including scene assets, events, bridge
-  state, and overlays.
+- Consumers use `<Game onReady={start_game}>` without a separate UI-host API.
+- `create_ui(Component, props)` is scene-scoped, strongly typed, and owns its
+  mount/update/dispose lifecycle.
+- Switch/replacement/unmount dispose UI, scene assets, and subscriptions without
+  late updates or mixed stacks.
+- Multiple game hosts remain isolated and core modules remain Svelte-free.
 - SSR, browser integration, focused docs, and public exports match the same
   documented contract.
 
 ### Trace notes to record at checkpoint
 
-`scene core contract` -> `optional Svelte adapter` -> `GameHost` -> scene-scoped
-bridge/events -> overlay lifecycle -> host/scene disposal -> type/unit/SSR/browser
-tests -> docs/example.
+`Game` -> `onReady` -> `SvelteScenes` -> scene factory -> `create_ui` -> private
+UI layer -> scene/game disposal -> type/unit/SSR/browser tests -> docs/example.
+
+## Slice 5: zero-lint verification baseline
+
+### Outcome
+
+Make `npm run lint` pass with zero warnings and zero errors, without weakening
+the first-party quality rules. Treat copied agent/vendor assets as non-product
+inputs and preserve strict linting for the package, application, tests, and
+verification scripts.
+
+### Tests and evidence
+
+- Classify every current diagnostic as generated/vendor, external-contract, or
+  first-party code.
+- Add narrow ignores only for copied/generated non-product files.
+- Repair first-party diagnostics in coherent modules; retain named, explained
+  exceptions only where an external framework contract requires them.
+- Run `npm run lint` with zero warnings and errors, followed by the relevant
+  type and test suites.
+
+### Acceptance criteria
+
+- `npm run lint` passes with zero warnings and errors.
+- All future changes preserve that result; no broad suppression or lowered
+  severity hides new diagnostics.
+- [Tooling standards](tooling-standards.md) documents the expectation and the
+  verification workflow.
 
 ## Global definition of done
 
-Phase 3-a is complete only when all four slices have:
+Phase 3-a is complete only when all four capability slices and the verification
+baseline slice have:
 
 - an accepted capability spec with implementation status and test references;
 - a red-green TDD trail and passing focused tests;

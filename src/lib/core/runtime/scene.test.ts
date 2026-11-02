@@ -3,6 +3,7 @@ import { create_game, GameRuntimeError } from "./game.js";
 import { create_resource_owner } from "./resource_ownership.js";
 import { calculate_responsive_viewport } from "./viewport_sizing.js";
 import { create_signal } from "../signal.js";
+import { create_scene_event_bus, type SceneEventBus } from "./scene.js";
 import type { WebGpuRenderer } from "./webgpu_renderer.js";
 
 const create_renderer = (): WebGpuRenderer => {
@@ -141,6 +142,87 @@ describe("[scene-lifecycle] game-owned scene composer", () => {
     await game.dispose();
   });
 
+  it("keeps a shared dependency usable after one scene leaves and destroys it once", async () => {
+    let loads = 0;
+    const destroys: string[] = [];
+    const game = create_game({
+      renderer: { canvas: {} as HTMLCanvasElement, width: 1, height: 1 },
+      renderer_factory: () => Promise.resolve(create_renderer()),
+      scheduler: create_scheduler().scheduler,
+      manifest: {
+        hero: {
+          load: async () => {
+            loads += 1;
+            return "shared-hero";
+          },
+          destroy: (value: string) => destroys.push(value),
+        },
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+    await game.ready;
+    let surviving_value = "";
+    const first = await game.scenes.mount(() => ({ name: "first", dependencies: { hero: "hero" } }));
+    const second = await game.scenes.mount(() => ({
+      name: "second",
+      dependencies: { hero: "hero" },
+      init: ({ assets }) => {
+        surviving_value = assets.get("hero").read();
+      },
+    }));
+    await game.scenes.remove(first);
+    expect(surviving_value).toBe("shared-hero");
+    await game.scenes.remove(second);
+    expect(loads).toBe(1);
+    expect(destroys).toEqual([]);
+    await game.dispose();
+    expect(destroys).toEqual(["shared-hero"]);
+  });
+
+  it("retries a failed required dependency without mounting a partial scene", async () => {
+    let attempts = 0;
+    const game = create_game({
+      renderer: { canvas: {} as HTMLCanvasElement, width: 1, height: 1 },
+      renderer_factory: () => Promise.resolve(create_renderer()),
+      scheduler: create_scheduler().scheduler,
+      manifest: {
+        hero: {
+          load: async () => {
+            attempts += 1;
+            if (attempts === 1) throw new Error("temporary asset failure");
+            return "hero-after-retry";
+          },
+          destroy: () => undefined,
+        },
+      },
+      update: () => undefined,
+      draw: () => undefined,
+    });
+    await game.ready;
+    let entered = 0;
+    await expect(
+      game.scenes.mount(() => ({
+        name: "failed asset",
+        dependencies: { hero: "hero" },
+        enter: () => {
+          entered += 1;
+        },
+      })),
+    ).rejects.toThrow("temporary asset failure");
+    const handle = await game.scenes.mount(() => ({
+      name: "retried asset",
+      dependencies: { hero: "hero" },
+      enter: () => {
+        entered += 1;
+      },
+    }));
+    expect(attempts).toBe(2);
+    expect(entered).toBe(1);
+    await game.scenes.remove(handle);
+    await game.dispose();
+  });
+
   it("clears scene subscriptions when the scene is removed", async () => {
     const signal = create_signal<number>();
     const events: number[] = [];
@@ -171,7 +253,9 @@ describe("[scene-lifecycle] game-owned scene composer", () => {
           throw new Error("listener failed");
         });
       },
-      update: () => signal.emit(1),
+      update: () => {
+        signal.emit(1);
+      },
     }));
     clock.tick();
     expect(errors[0]).toBeInstanceOf(GameRuntimeError);
@@ -201,7 +285,7 @@ describe("[scene-lifecycle] game-owned scene composer", () => {
     const handle = await game.scenes.mount(() => ({
       name: "late asset",
       init: ({ assets }) => {
-        void assets.load("hero", { signal: external_signal.signal }).catch((error) => load_errors.push(error));
+        void assets.load("hero", { signal: external_signal.signal }).catch((error: unknown) => load_errors.push(error));
       },
     }));
     await Promise.resolve();
@@ -280,6 +364,29 @@ describe("[scene-lifecycle] game-owned scene composer", () => {
       "base:draw",
       "overlay:draw",
     ]);
+    await game.dispose();
+  });
+
+  it("runs enter cleanup before exit when a scene is removed", async () => {
+    const events: string[] = [];
+    const { game } = create_test_game();
+    await game.ready;
+    const handle = await game.scenes.mount(() => ({
+      name: "cleanup scene",
+      enter: () => {
+        events.push("enter");
+        return () => {
+          events.push("cleanup");
+        };
+      },
+      exit: () => {
+        events.push("exit");
+      },
+    }));
+
+    await game.scenes.remove(handle);
+
+    expect(events).toEqual(["enter", "cleanup", "exit"]);
     await game.dispose();
   });
 
@@ -379,7 +486,7 @@ describe("[scene-lifecycle] game-owned scene composer", () => {
 
   it("keeps the old scene when replacement setup fails", async () => {
     const events: string[] = [];
-    const { game, clock } = create_test_game();
+    const { game } = create_test_game();
     await game.ready;
     const handle = await game.scenes.mount(() => ({
       name: "old",
@@ -391,6 +498,78 @@ describe("[scene-lifecycle] game-owned scene composer", () => {
     await expect(game.scenes.replace(handle, () => Promise.reject(new Error("replacement failed")))).rejects.toThrow("replacement failed");
     await game.scenes.remove(handle);
     expect(events).toEqual([]);
+    await game.dispose();
+  });
+
+  it("preserves the active stack structurally when replacement-stack setup fails fatally", async () => {
+    const exits: string[] = [];
+    const { game } = create_test_game();
+    await game.ready;
+    await game.scenes.mount(() => ({
+      name: "base",
+      exit: () => {
+        exits.push("base");
+      },
+    }));
+    await game.scenes.mount(() => ({
+      name: "top",
+      exit: () => {
+        exits.push("top");
+      },
+    }));
+
+    await expect(game.scenes.replace_stack(() => Promise.reject(new Error("next failed")))).rejects.toThrow("next failed");
+
+    expect(exits).toEqual([]);
+    expect(game.get_state()).toBe("stopped");
+    await game.dispose();
+    expect(exits).toEqual(["base", "top"]);
+  });
+
+  it("does not invoke scene callbacks while an asynchronous stack replacement is tearing down", async () => {
+    const events: string[] = [];
+    let finish_cleanup!: () => void;
+    let cleanup_started!: () => void;
+    const cleanup = new Promise<void>((resolve) => {
+      finish_cleanup = resolve;
+    });
+    const cleanup_has_started = new Promise<void>((resolve) => {
+      cleanup_started = resolve;
+    });
+    const { game, clock } = create_test_game();
+    await game.ready;
+    await game.scenes.mount(() => ({
+      name: "old",
+      enter: () => () => {
+        cleanup_started();
+        return cleanup;
+      },
+      update: () => {
+        events.push("old:update");
+      },
+      draw: () => {
+        events.push("old:draw");
+      },
+    }));
+
+    const replacement = game.scenes.replace_stack(() => ({
+      name: "new",
+      update: () => {
+        events.push("new:update");
+      },
+      draw: () => {
+        events.push("new:draw");
+      },
+    }));
+    await cleanup_has_started;
+    clock.tick();
+
+    expect(events).toEqual([]);
+    finish_cleanup();
+    await replacement;
+    clock.tick();
+
+    expect(events).toEqual(["new:update", "new:draw"]);
     await game.dispose();
   });
 
@@ -620,5 +799,155 @@ describe("[scene-lifecycle] game-owned scene composer", () => {
 
     await expect(second.game.scenes.remove(handle)).rejects.toThrow();
     await Promise.all([first.game.dispose(), second.game.dispose()]);
+  });
+
+  it("dispatches typed scene events in registration order and supports once/off", () => {
+    type Events = { score: { points: number }; reset: undefined };
+    const bus: SceneEventBus<Events> = create_scene_event_bus();
+    const received: string[] = [];
+    const first = bus.on("score", ({ points }) => received.push(`first:${String(points)}`));
+    bus.once("score", ({ points }) => received.push(`once:${String(points)}`));
+    bus.on("score", ({ points }) => received.push(`last:${String(points)}`));
+
+    bus.emit("score", { points: 3 });
+    first();
+    bus.emit("score", { points: 4 });
+
+    expect(received).toEqual(["first:3", "once:3", "last:3", "last:4"]);
+  });
+
+  it("dispatches from a stable snapshot, reports listener failures, and clears disposed listeners", () => {
+    type Events = { pulse: number };
+    const errors: unknown[] = [];
+    const bus = create_scene_event_bus<Events>((cause) => errors.push(cause));
+    const received: number[] = [];
+    const unsubscribe = bus.on("pulse", (value) => {
+      received.push(value);
+      unsubscribe();
+      bus.on("pulse", (next_value) => received.push(next_value));
+      throw new Error("listener failed");
+    });
+
+    bus.emit("pulse", 1);
+    bus.emit("pulse", 2);
+    bus.clear();
+    bus.emit("pulse", 3);
+
+    expect(received).toEqual([1, 2]);
+    expect(errors).toHaveLength(1);
+  });
+
+  it("does not invoke a pending listener removed earlier in the same dispatch", () => {
+    type Events = { pulse: number };
+    const bus = create_scene_event_bus<Events>();
+    const received: string[] = [];
+    let unsubscribe_second = (): void => undefined;
+    bus.on("pulse", () => {
+      received.push("first");
+      unsubscribe_second();
+    });
+    unsubscribe_second = bus.on("pulse", () => received.push("second"));
+    bus.emit("pulse", 1);
+    expect(received).toEqual(["first"]);
+  });
+
+  it("clears the game-owned event bus when the game is disposed", async () => {
+    const { game } = create_test_game();
+    await game.ready;
+    let received = 0;
+    game.scenes.events.on("pulse", () => {
+      received += 1;
+    });
+    game.scenes.events.emit("pulse", 1);
+    await game.dispose();
+    game.scenes.events.emit("pulse", 1);
+    expect(received).toBe(1);
+  });
+
+  it("cleans scene event listeners when the scene is removed", async () => {
+    const { game } = create_test_game();
+    await game.ready;
+    let received = 0;
+    const handle = await game.scenes.mount(({ events }) => ({
+      name: "event scope",
+      enter: () =>
+        events.on("pulse", () => {
+          received += 1;
+        }),
+    }));
+    game.scenes.events.emit("pulse", 1);
+    await game.scenes.remove(handle);
+    game.scenes.events.emit("pulse", 1);
+    expect(received).toBe(1);
+    await game.dispose();
+  });
+
+  it("supports scoped once and targeted event cleanup", async () => {
+    const { game } = create_test_game();
+    await game.ready;
+    let scoped_events: SceneEventBus<{ pulse: number }> | undefined;
+    let received = 0;
+    const handle = await game.scenes.mount(({ events }) => {
+      scoped_events = events;
+      const callback = (): void => {
+        received += 1;
+      };
+      events.off("pulse", callback);
+      events.off("pulse");
+      events.on("pulse", callback);
+      events.off("pulse", callback);
+      events.off("pulse", callback);
+      events.once("pulse", () => {
+        received += 10;
+      });
+      return { name: "scoped events" };
+    });
+    scoped_events?.emit("pulse", 1);
+    scoped_events?.emit("pulse", 1);
+    expect(received).toBe(10);
+    await game.scenes.remove(handle);
+    scoped_events?.clear();
+    await game.dispose();
+  });
+
+  it("makes post-clear subscriptions inert and supports clearing one event name", () => {
+    type Events = { pulse: number; reset: undefined };
+    const bus = create_scene_event_bus<Events>();
+    const received: number[] = [];
+    const callback = (value: number): void => {
+      received.push(value);
+    };
+    bus.on("pulse", callback);
+    bus.off("pulse", callback);
+    bus.off("pulse");
+    bus.emit("pulse", 1);
+    bus.emit("reset", undefined);
+    bus.clear();
+    bus.on("pulse", (value) => received.push(value));
+    bus.emit("pulse", 2);
+    expect(received).toEqual([]);
+  });
+
+  it("makes disposed asset and subscription scopes idempotent", async () => {
+    const { game } = create_test_game();
+    await game.ready;
+    let assets: { get: (key: never) => never; dispose: () => void } | undefined;
+    let unsubscribe: (() => void) | undefined;
+    const signal = create_signal<number>();
+    const handle = await game.scenes.mount(({ assets: next_assets, subscriptions }) => {
+      assets = next_assets as never;
+      unsubscribe = subscriptions.subscribe(signal, () => {
+        return;
+      });
+      return { name: "scope" };
+    });
+    unsubscribe?.();
+    unsubscribe?.();
+    await game.scenes.remove(handle);
+    expect(() => {
+      assets?.get("missing" as never);
+    }).toThrow();
+    assets?.dispose();
+    await game.dispose();
   });
 });

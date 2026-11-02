@@ -10,7 +10,17 @@ const typed_files = ["*.ts", "src/**/*.ts", "src/**/*.svelte", "tests/**/*.ts"];
 
 export default defineConfig(
   {
-    ignores: ["build/**", ".svelte-kit/**", "dist/**", "playwright-report/**", "test-results/**", "coverage/**"],
+    ignores: [
+      "build/**",
+      ".svelte-kit/**",
+      "dist/**",
+      "playwright-report/**",
+      "test-results/**",
+      "coverage/**",
+      // Copied agent skill bundles are not product runtime, app, or test code.
+      ".agents/**",
+      ".github/skills/**",
+    ],
   },
   eslint.configs.recommended,
   comments.recommended,
@@ -37,6 +47,11 @@ export default defineConfig(
         { selector: "import", format: null },
         { selector: "parameter", format: ["snake_case"], leadingUnderscore: "allow" },
         { selector: "property", modifiers: ["requiresQuotes"], format: null },
+        // Framework, WebGPU, and DOM contracts use externally defined property names.
+        { selector: "property", format: null },
+        { selector: "objectLiteralMethod", format: null },
+        { selector: "typeMethod", format: null },
+        { selector: "variable", filter: { regex: "^(on[A-Z]|__)", match: true }, format: null },
         { selector: "memberLike", modifiers: ["override"], format: null },
         // Svelte generates $-prefixed store bindings and uses runes as compiler intrinsics.
         { selector: "variable", filter: { regex: "^[$]", match: true }, format: null },
@@ -53,6 +68,13 @@ export default defineConfig(
         tsconfigRootDir: import.meta.dirname,
         extraFileExtensions: [".svelte"],
       },
+    },
+  },
+  {
+    // Async test doubles often mirror promise-returning framework APIs without awaiting work.
+    files: ["src/**/*.test.ts", "src/**/*.spec.ts", "tests/**/*.ts"],
+    rules: {
+      "@typescript-eslint/require-await": "off",
     },
   },
   {

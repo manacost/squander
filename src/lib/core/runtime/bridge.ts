@@ -23,10 +23,11 @@ const readonly_snapshot = <Value>(value: Value): Value => {
     return value;
   }
   if (Array.isArray(value)) {
-    return Object.freeze(value.map((entry) => readonly_snapshot(entry))) as Value;
+    const snapshot: unknown[] = (value as unknown[]).map((entry) => readonly_snapshot(entry));
+    return Object.freeze(snapshot) as unknown as Value;
   }
-  const copy = Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, readonly_snapshot(entry)]));
-  return Object.freeze(copy) as Value;
+  const copy: Record<string, unknown> = Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, readonly_snapshot(entry)]));
+  return Object.freeze(copy) as unknown as Value;
 };
 
 export const create_game_bridge = <State, Commands extends BridgeCommands>(
@@ -39,7 +40,7 @@ export const create_game_bridge = <State, Commands extends BridgeCommands>(
 
   const publish = (state: State): void => {
     if (disposed) return;
-    current_state = readonly_snapshot(state) as Readonly<State>;
+    current_state = readonly_snapshot(state);
     for (const subscriber of subscribers) subscriber(current_state);
   };
 

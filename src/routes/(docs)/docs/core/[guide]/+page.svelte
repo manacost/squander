@@ -2,6 +2,7 @@
   import CoreGuideExample from "../../../../../lib/docs/CoreGuideExample.svelte";
   import CodeBlock from "../../../../../lib/docs/CodeBlock.svelte";
   import type { PageData } from "./$types.js";
+  import { resolve } from "$app/paths";
 
   let { data }: { data: PageData } = $props();
   let guide = $derived(data.guide);
@@ -21,7 +22,7 @@
       <p>{guide.example_description}</p>
     </div>
     {#if guide.slug === "svelte-bridge"}
-      <a class="example-link" href="/docs/examples/svelte">Open the focused Svelte bridge example →</a>
+      <a class="example-link" href={resolve("/(docs)/docs/examples/svelte")}>Open the focused Svelte bridge example →</a>
     {:else}
       <CoreGuideExample slug={guide.slug} />
     {/if}
@@ -32,7 +33,7 @@
 
   <h2>Public types</h2>
   <ul>
-    {#each guide.types as type_name}
+    {#each guide.types as type_name (type_name)}
       <li><code>{type_name}</code></li>
     {/each}
   </ul>

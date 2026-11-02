@@ -2,6 +2,7 @@
   import GameHost from "../svelte/GameHost.svelte";
   import { create_camera, create_game, create_path, create_polygon, degrees, flatten_path, rgba, type RuntimeGame } from "../core/index.js";
   import type { GameBridge } from "../core/runtime/bridge.js";
+  import type { GameAdapterView } from "../svelte/adapter.js";
   import type { RenderCommand, WebGpuRenderer, WebGpuTexture } from "../core/runtime/webgpu_renderer.js";
 
   type Props = { slug: string };
@@ -35,15 +36,15 @@
     context.fillRect(1, 0, 1, 1);
     context.fillRect(0, 1, 1, 1);
     const blob = await new Promise<Blob>((resolve, reject) => {
-      source.toBlob(
-        (next_blob) => (next_blob === null ? reject(new Error("could not encode example texture")) : resolve(next_blob)),
-        "image/png",
-      );
+      source.toBlob((next_blob) => {
+        if (next_blob === null) reject(new Error("could not encode example texture"));
+        else resolve(next_blob);
+      }, "image/png");
     });
     return blob;
   };
 
-  const draw_example = (renderer: WebGpuRenderer, ticks: number): void => {
+  const draw_example = (renderer: WebGpuRenderer, _ticks: number): void => {
     const commands: RenderCommand[] = [
       { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: rgba(0.04, 0.05, 0.09, 1) } },
     ];
@@ -149,7 +150,9 @@
       renderer: { canvas, width: 800, height: 450 },
       scheduler: {
         request_frame: (callback) => requestAnimationFrame(callback),
-        cancel_frame: (handle) => cancelAnimationFrame(handle as number),
+        cancel_frame: (handle) => {
+          cancelAnimationFrame(handle as number);
+        },
         now_seconds: () => performance.now() / 1000,
       },
       setup: async ({ renderer, assets, resources }) => {
@@ -160,7 +163,11 @@
           texture = await assets.load_texture(file, { magnification: "nearest" }).then((handle) => handle.read());
         } else if (slug === "resource-ownership") {
           const owned_texture = create_demo_texture(renderer, { magnification: "nearest" });
-          texture = resources.acquire(owned_texture, (resource) => resource.release()).read();
+          texture = resources
+            .acquire(owned_texture, (resource) => {
+              resource.release();
+            })
+            .read();
         } else {
           texture = create_demo_texture(renderer, { magnification: "nearest" });
         }
@@ -181,7 +188,7 @@
 </script>
 
 <GameHost class="core-example-canvas" initial_state={{ status: "loading", ticks: 0 }} commands={{}} create={create_example}>
-  {#snippet children(view)}
+  {#snippet children(view: GameAdapterView<ExampleState, ExampleCommands>)}
     <div class="example-meta">
       <span>live rendering</span>
       <output data-testid={`core-example-status-${slug}`}>{view.state.status}</output>

@@ -4,30 +4,28 @@ import { create_resource_owner } from "./resource_ownership.js";
 import type { WebGpuRenderer, WebGpuTexture } from "./webgpu_renderer.js";
 import type { WebGpuFont } from "./font_loading.js";
 
-const create_texture = (release = vi.fn()): WebGpuTexture =>
-  ({
-    resource: {} as WebGpuTexture["resource"],
-    width: 1,
-    height: 1,
-    filtering: { magnification: "linear", minification: "linear" },
-    release,
-  }) as WebGpuTexture;
+const create_texture = (release = vi.fn()): WebGpuTexture => ({
+  resource: {} as WebGpuTexture["resource"],
+  width: 1,
+  height: 1,
+  filtering: { magnification: "linear", minification: "linear" },
+  release,
+});
 
 const create_texture_renderer = (load: WebGpuRenderer["create_texture_from_blob"]): WebGpuRenderer =>
   ({ create_texture_from_blob: load }) as WebGpuRenderer;
 
-const create_font = (release = vi.fn()): WebGpuFont =>
-  ({
-    family: "test",
-    size: 16,
-    atlas: create_texture(),
-    atlas_width: 1,
-    atlas_height: 1,
-    prepare: vi.fn(),
-    get_glyph: vi.fn(),
-    get_glyph_texture: vi.fn(() => create_texture()),
-    release,
-  }) as WebGpuFont;
+const create_font = (release = vi.fn()): WebGpuFont => ({
+  family: "test",
+  size: 16,
+  atlas: create_texture(),
+  atlas_width: 1,
+  atlas_height: 1,
+  prepare: vi.fn(),
+  get_glyph: vi.fn(),
+  get_glyph_texture: vi.fn(() => create_texture()),
+  release,
+});
 
 type TestManifest = AssetManifest & {
   hero: {
@@ -146,7 +144,7 @@ describe("[asset-loading] manifest cache", () => {
     const texture = create_texture();
     const renderer = create_texture_renderer(
       vi.fn(
-        (_source, _options, signal) =>
+        (_source, _options, signal: AbortSignal | undefined) =>
           new Promise<WebGpuTexture>((resolve) => {
             signal?.addEventListener(
               "abort",
@@ -177,7 +175,7 @@ describe("[asset-loading] manifest cache", () => {
     const texture = create_texture();
     const renderer = create_texture_renderer(
       vi.fn(
-        (_source, _options, signal) =>
+        (_source, _options, signal: AbortSignal | undefined) =>
           new Promise<WebGpuTexture>((resolve) => {
             signal?.addEventListener(
               "abort",

@@ -3,7 +3,8 @@
   import CodeBlock from "../../../../../lib/docs/CodeBlock.svelte";
   import { create_game, rgba, type RuntimeGame } from "../../../../../lib/core/index.js";
   import type { GameBridge } from "../../../../../lib/core/runtime/bridge.js";
-  import type { WebGpuFont } from "../../../../../lib/core/runtime/index.js";
+  import type { WebGpuFont } from "../../../../../lib/core/runtime/font_loading.js";
+  import type { GameAdapterView } from "../../../../../lib/svelte/adapter.js";
 
   type TextState = Readonly<{ status: "loading" | "ready"; ticks: number }>;
   type TextCommands = Record<string, never>;
@@ -25,7 +26,9 @@
       renderer: { canvas, width: 720, height: 420 },
       scheduler: {
         request_frame: (callback) => requestAnimationFrame(callback),
-        cancel_frame: (handle) => cancelAnimationFrame(handle as number),
+        cancel_frame: (handle) => {
+          cancelAnimationFrame(handle as number);
+        },
         now_seconds: () => performance.now() / 1000,
       },
       setup: async ({ assets }) => {
@@ -42,13 +45,24 @@
       },
       draw: () => {
         if (font === undefined) return;
+        const current_font = font;
         void active_game?.renderer.draw_commands([
-          { kind: "text", draw: { font, text: "Bundled text works", options: { x: 32, y: 32, size: 30, color: rgba(1, 0.82, 0.3, 1) } } },
+          {
+            kind: "text",
+            draw: { font: current_font, text: "Bundled text works", options: { x: 32, y: 32, size: 30, color: rgba(1, 0.82, 0.3, 1) } },
+          },
           ...character_rows.map((text, index) => ({
             kind: "text" as const,
-            draw: { font: font!, text, options: { x: 32, y: 120 + index * 48, size: 24, color: rgba(0.65, 0.9, 1, 1) } },
+            draw: { font: current_font, text, options: { x: 32, y: 120 + index * 48, size: 24, color: rgba(0.65, 0.9, 1, 1) } },
           })),
-          { kind: "text", draw: { font, text: `TICKS ${ticks}`, options: { x: 500, y: 370, size: 20, color: rgba(0.45, 1, 0.65, 1) } } },
+          {
+            kind: "text",
+            draw: {
+              font: current_font,
+              text: `TICKS ${String(ticks)}`,
+              options: { x: 500, y: 370, size: 20, color: rgba(0.45, 1, 0.65, 1) },
+            },
+          },
         ]);
       },
     });
@@ -67,7 +81,7 @@
   </p>
 
   <GameHost class="text-canvas" initial_state={{ status: "loading", ticks: 0 }} commands={{}} create={create_text_game}>
-    {#snippet children(view)}
+    {#snippet children(view: GameAdapterView<{ status: "loading" | "ready"; ticks: number }, Record<string, never>>)}
       <p data-testid="text-example-status">status: {view.state.status}</p>
       <p data-testid="text-example-ticks">ticks: {view.state.ticks}</p>
       {#if view.error}<p data-testid="text-example-error">

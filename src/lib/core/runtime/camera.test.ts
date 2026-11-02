@@ -37,8 +37,12 @@ describe("[camera-2d] camera transforms", () => {
     expect(() => create_camera({ viewport: { logical_width: 1, logical_height: Number.NaN } })).toThrow(RangeError);
     expect(() => create_camera({ viewport: { logical_width: 1, logical_height: 1 }, zoom: Number.POSITIVE_INFINITY })).toThrow(RangeError);
     expect(() => create_camera({ viewport: { logical_width: 1, logical_height: 1 }, rotation: Number.NaN })).toThrow(RangeError);
-    expect(() => camera.set_position(Number.NaN, 0)).toThrow(RangeError);
-    expect(() => camera.set_rotation(Number.POSITIVE_INFINITY)).toThrow(RangeError);
+    expect(() => {
+      camera.set_position(Number.NaN, 0);
+    }).toThrow(RangeError);
+    expect(() => {
+      camera.set_rotation(Number.POSITIVE_INFINITY);
+    }).toThrow(RangeError);
     expect(() => camera.world_to_screen({ x: Number.NaN, y: 0 })).toThrow(RangeError);
   });
 

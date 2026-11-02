@@ -69,6 +69,27 @@ const invalid_manifest_factory: SceneFactory<Manifest> = ({ manifest }) => {
 };
 void invalid_manifest_factory;
 
+type SceneEvents = {
+  score: { points: number };
+  reset: undefined;
+};
+
+const typed_game = create_game<Manifest, SceneEvents>(options);
+const typed_factory: SceneFactory<Manifest, SceneEvents> = ({ events }) => {
+  events.on("score", ({ points }) => {
+    const typed_points: number = points;
+    void typed_points;
+  });
+  events.emit("score", { points: 1 });
+  // @ts-expect-error Event payloads must match the declared event map.
+  events.emit("score", { points: "one" });
+  // @ts-expect-error Unknown event names must be rejected.
+  events.emit("missing", undefined);
+  return { name: "typed events" };
+};
+void typed_game;
+void typed_factory;
+
 const invalid_dependency_factory: SceneFactory<Manifest> = () => ({
   name: "invalid dependency",
   dependencies: {

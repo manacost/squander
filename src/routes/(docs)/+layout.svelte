@@ -26,14 +26,15 @@
       children: [
         { label: "playground", href: "/docs/examples/playground", target: "/(docs)/docs/examples/playground" },
         { label: "scenes", href: "/docs/examples/scenes", target: "/(docs)/docs/examples/scenes" },
+        { label: "scene UI", href: "/docs/examples/scene-ui", target: "/(docs)/docs/examples/scene-ui" },
         { label: "svelte", href: "/docs/examples/svelte", target: "/(docs)/docs/examples/svelte" },
       ],
     },
   ] as const;
-  interface Props {
+  type Props = {
     data: LayoutData;
     children?: import("svelte").Snippet;
-  }
+  };
 
   let { data, children }: Props = $props();
 
@@ -57,15 +58,16 @@
     </div>
 
     <nav class="list">
-      {#each links as [label, link]}
+      {#each links as [label, link] (link)}
         <a class="link" class:active={link === page_path} href={resolve("/(docs)")}>{label}</a>
       {/each}
 
       <h5 class="sep subtitle">Docs</h5>
-      {#each documentation as doc}
+      {#each documentation as doc (doc.href)}
         <a class="link" class:active={doc.href === page_path} href={resolve(doc.target)}>{doc.label}</a>
         {#if doc.children}
-          {#each doc.children as child}
+          {#each doc.children as child (child.href)}
+            <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- child URLs are explicit public docs paths. -->
             <a class="link nested" class:active={child.href === page_path} href={child.href}>{child.label}</a>
           {/each}
         {/if}

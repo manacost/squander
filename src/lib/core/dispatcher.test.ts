@@ -9,7 +9,7 @@ type Events = {
 describe("create_event_dispatcher", () => {
   it("emits a typed CustomEvent and returns an unsubscriber", () => {
     const dispatcher = create_event_dispatcher<Events>();
-    const listener = vi.fn();
+    const listener = vi.fn<(event: CustomEvent<{ points: number }>) => void>();
     const unsubscribe = dispatcher.on("score", listener);
 
     dispatcher.emit("score", { points: 10 });

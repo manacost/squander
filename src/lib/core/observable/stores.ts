@@ -2,13 +2,13 @@ import type { Readable, StartStopNotifier, Subscriber, Unsubscriber, Writable, S
 
 export type { Readable, Writable, Subscriber, Unsubscriber, StoresValues };
 
-const noop: () => void = () => {};
+const noop = (): undefined => undefined;
 
 export const create_writable = <T>(initial_value: T, start?: StartStopNotifier<T>): Writable<T> => {
   const subscribers = new Set<Subscriber<T>>();
   let inner_value: T = initial_value;
   let has_subscribers = false;
-  let stop: (() => any) | undefined = undefined;
+  let stop: (() => void) | undefined = undefined;
 
   const set = (value: T) => {
     if (value !== inner_value) {
@@ -39,12 +39,10 @@ export const create_writable = <T>(initial_value: T, start?: StartStopNotifier<T
     return () => {
       subscribers.delete(callback);
 
-      if (subscribers.size === 0 && stop) {
+      if (subscribers.size === 0 && stop !== undefined) {
         has_subscribers = false;
-        if (stop !== undefined) {
-          stop();
-          stop = undefined;
-        }
+        stop();
+        stop = undefined;
       }
     };
   };
@@ -61,66 +59,70 @@ export const create_readable = <T>(initial_value: T, start: StartStopNotifier<T>
   const inner = create_writable(initial_value, start);
 
   return {
-    get: inner.get,
-    subscribe: inner.subscribe,
+    get: () => inner.get(),
+    subscribe: (run, invalidate) => inner.subscribe(run, invalidate),
   };
 };
 
 export const create_readonly = <T>(store: Readable<T> | Writable<T>): Readable<T> => {
   return {
-    get: store.get,
-    subscribe: store.subscribe,
+    get: () => store.get(),
+    subscribe: (run, invalidate) => store.subscribe(run, invalidate),
   };
 };
 
-export const create_derived = <S extends [Readable<any>, ...Array<Readable<any>>], T>(
+export const create_derived = <S extends [Readable<unknown>, ...Readable<unknown>[]], T>(
   stores: S,
   fn: (values: StoresValues<S>) => T,
   initial_value?: T,
 ): Readable<T> => {
-  const get = (): T => fn(stores.map((store) => store.get()) as StoresValues<typeof stores>);
+  const get = (): T => fn(stores.map((store) => store.get()) as StoresValues<S>);
   const inner_value: T = initial_value ?? get();
   return create_readable(inner_value, (set) => {
-    const unsubscribes: Unsubscriber[] = stores.map((store, i) =>
+    const unsubscribes: Unsubscriber[] = stores.map((store) =>
       store.subscribe(() => {
         set(get());
       }),
     );
 
     return () => {
-      unsubscribes.forEach((unsub) => unsub());
+      unsubscribes.forEach((unsub) => {
+        unsub();
+      });
     };
   });
 };
 
-const tapped_stores = new Map<Readable<any>, Unsubscriber>();
+const tapped_stores = new Map<Readable<unknown>, Unsubscriber>();
 
 /**
  * Add a subscriber to one or many stores.
  * Primarily for readable stores as this will initiate / "start" them
  * @param store
  */
-export const tap = (...stores: Readable<any>[]) => {
+export const tap = (...stores: Readable<unknown>[]) => {
   stores.forEach((store) => {
     if (!tapped_stores.has(store)) {
-      const unsub = store.subscribe(() => {});
+      const unsub = store.subscribe(() => undefined);
       tapped_stores.set(store, unsub);
     }
   });
 };
 
-export const untap = (...stores: Readable<any>[]) => {
+export const untap = (...stores: Readable<unknown>[]) => {
   stores.forEach((store) => {
     if (tapped_stores.has(store)) {
-      const unsub = tapped_stores.get(store)!;
-      unsub();
-      tapped_stores.delete(store);
+      const unsub = tapped_stores.get(store);
+      if (unsub !== undefined) {
+        unsub();
+        tapped_stores.delete(store);
+      }
     }
   });
 };
 
 export const untap_all = () => {
-  tapped_stores.forEach((unsub, store) => {
+  tapped_stores.forEach((unsub) => {
     unsub();
   });
   tapped_stores.clear();

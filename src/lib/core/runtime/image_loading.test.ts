@@ -3,7 +3,8 @@ import { decode_image_source, ImageDecodeError } from "./image_loading.js";
 
 describe("[dynamic-assets] image source decoding", () => {
   it("decodes a Blob through the browser bitmap API", async () => {
-    const bitmap = { close: vi.fn() } as unknown as ImageBitmap;
+    const close = vi.fn(() => undefined);
+    const bitmap = { close } as unknown as ImageBitmap;
     const decode = vi.fn(async () => bitmap);
     vi.stubGlobal("createImageBitmap", decode);
 
@@ -12,8 +13,12 @@ describe("[dynamic-assets] image source decoding", () => {
   });
 
   it("accepts File values through the Blob contract", async () => {
-    const bitmap = { close: vi.fn() } as unknown as ImageBitmap;
-    vi.stubGlobal("createImageBitmap", vi.fn(async () => bitmap));
+    const close = vi.fn();
+    const bitmap = { close } as unknown as ImageBitmap;
+    vi.stubGlobal(
+      "createImageBitmap",
+      vi.fn(async () => bitmap),
+    );
     const file = new File(["image"], "avatar.png", { type: "image/png" });
 
     await expect(decode_image_source(file)).resolves.toBe(bitmap);
@@ -30,7 +35,8 @@ describe("[dynamic-assets] image source decoding", () => {
 
   it("closes a decoded bitmap that finishes after cancellation", async () => {
     let resolve_decode!: (bitmap: ImageBitmap) => void;
-    const bitmap = { close: vi.fn() } as unknown as ImageBitmap;
+    const close = vi.fn();
+    const bitmap = { close } as unknown as ImageBitmap;
     vi.stubGlobal(
       "createImageBitmap",
       () =>
@@ -45,11 +51,14 @@ describe("[dynamic-assets] image source decoding", () => {
     resolve_decode(bitmap);
     await Promise.resolve();
     await Promise.resolve();
-    expect(bitmap.close).toHaveBeenCalledOnce();
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it("wraps browser decode failures with a typed error", async () => {
-    vi.stubGlobal("createImageBitmap", vi.fn(async () => Promise.reject(new Error("bad image"))));
+    vi.stubGlobal(
+      "createImageBitmap",
+      vi.fn(async () => Promise.reject(new Error("bad image"))),
+    );
     await expect(decode_image_source(new Blob())).rejects.toMatchObject({ name: "ImageDecodeError" });
   });
 

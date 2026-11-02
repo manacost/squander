@@ -71,7 +71,7 @@ export type EntityComponentManager = {
 const map = new Map<Entity, ComponentRecord>();
 let id = 0;
 
-const ECS: EntityComponentManager = {
+const ecs_manager: EntityComponentManager = {
   create: function (): Entity {
     const entity: Entity = ++id;
     map.set(entity, {
@@ -97,7 +97,7 @@ const ECS: EntityComponentManager = {
   addComponent: function (entity: Entity, component: ComponentType): void {
     const record: ComponentRecord | undefined = map.get(entity);
 
-    // @ts-ignore
+    // @ts-expect-error ComponentMap is intentionally open to future component keys.
     record[component.type] = component;
 
     // if (component.type === "position") {
@@ -117,7 +117,7 @@ const ECS: EntityComponentManager = {
     // }
   },
   removeComponent: function (entity: Entity, ...components: Component[]): void {
-    const record = ECS.get(entity);
+    const record = ecs_manager.get(entity);
     components.forEach((component) => {
       record[component] = undefined;
     });
@@ -147,5 +147,5 @@ const ECS: EntityComponentManager = {
  * Retrieves the ECS singleton
  */
 export const entity_component_system: () => EntityComponentManager = () => {
-  return ECS;
+  return ecs_manager;
 };

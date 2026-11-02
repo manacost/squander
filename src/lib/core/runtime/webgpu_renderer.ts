@@ -222,7 +222,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   options.canvas.width = surface_width;
   options.canvas.height = surface_height;
   const format = navigator.gpu.getPreferredCanvasFormat();
-  /* eslint-disable @typescript-eslint/naming-convention -- WebGPU descriptor keys use the external API's camelCase names. */
+
   context.configure({ device, format, alphaMode: "opaque", usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
   const resources: ResourceOwner = create_resource_owner();
   const pipeline = device.createRenderPipeline({
@@ -304,7 +304,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       ],
     });
     pass.end();
-    /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
+
     return submit_and_readback(encoder, texture);
   };
 
@@ -320,14 +320,14 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       format: "rgba8unorm",
       usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
     });
-    /* eslint-disable @typescript-eslint/naming-convention -- WebGPU write descriptors use external camelCase names. */
+
     device.queue.writeTexture(
       { texture },
       pixels,
       { bytesPerRow: width * 4, rowsPerImage: height },
       { width, height, depthOrArrayLayers: 1 },
     );
-    /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
+
     const resolved_filtering = resolve_texture_filtering(filtering);
     const handle = resources.acquire(texture, (resource) => {
       resource.destroy();
@@ -394,12 +394,13 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       if (!Number.isFinite(size) || size <= 0) throw new RangeError("text size must be finite and positive");
       const color = options.color ?? { red: 1, green: 1, blue: 1, alpha: 1 };
       const scale = size / font.size;
-      const total_width = [...text].reduce((width, character) => width + font.get_glyph(character).advance * scale, 0);
+      const characters = Array.from(text);
+      const total_width = characters.reduce((width, character) => width + font.get_glyph(character).advance * scale, 0);
       const origin = options.origin ?? { x: 0, y: 0 };
       const start_x = (options.x ?? 0) - total_width * origin.x;
       const start_y = (options.y ?? 0) - size * origin.y;
       let cursor_x = start_x;
-      return [...text].map((character): RenderCommand => {
+      return characters.map((character): RenderCommand => {
         const glyph = font.get_glyph(character);
         const draw: TextureDraw = {
           texture: font.get_glyph_texture(character),
@@ -781,9 +782,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       return { buffer, persistent: false };
     });
     const samplers = encoded_draws.map(({ texture }) => {
-      /* eslint-disable @typescript-eslint/naming-convention -- WebGPU sampler descriptors use external camelCase names. */
       const sampler = device.createSampler({ magFilter: texture.filtering.magnification, minFilter: texture.filtering.minification });
-      /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
+
       return sampler;
     });
     const uniforms = encoded_draws.map(({ tint, opacity, region, texture, shape_kind, shape_x, shape_y }) => {
@@ -818,7 +818,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         ],
       });
     });
-    /* eslint-disable @typescript-eslint/naming-convention -- WebGPU render descriptors use external camelCase names. */
+
     const target = context.getCurrentTexture();
     const encoder = device.createCommandEncoder();
     const pass = encoder.beginRenderPass({
@@ -838,7 +838,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       pass.draw(vertex_count);
     });
     pass.end();
-    /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
+
     try {
       return await submit_and_readback(encoder, target);
     } finally {
@@ -878,9 +878,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     device_scale_y = viewport.physical_height / viewport.css_height;
     options.canvas.width = surface_width;
     options.canvas.height = surface_height;
-    /* eslint-disable @typescript-eslint/naming-convention -- WebGPU configuration uses external camelCase names. */
+
     context.configure({ device, format, alphaMode: "opaque", usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
-    /* eslint-enable @typescript-eslint/naming-convention -- End of the WebGPU external descriptor boundary. */
   };
 
   const get_viewport = (): ViewportSize => current_viewport;
@@ -903,8 +902,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     device.destroy();
   };
 
-  let renderer_api!: WebGpuRenderer;
-  renderer_api = Object.freeze({
+  const renderer_api: WebGpuRenderer = Object.freeze({
     clear,
     create_texture,
     create_texture_from_image,

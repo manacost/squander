@@ -281,9 +281,9 @@ publication and business rules; the UI does not receive a general mutable simula
 Publish relevant changes as needed rather than making all game data reactive.
 
 Svelte owns a game instance and disposes it on host unmount. Hosts and bridges are
-per instance. Future scenes can own overlays within that host through an optional
-Svelte adapter, while core scenes remain independent of Svelte. Phase 2 provides
-the bridge and host; scene-owned overlays belong to the future scene layer.
+per instance. Phase 3-a adds the optional `<Game onReady>` host: its private DOM
+layer lets a Svelte scene create and own UI through contextual `create_ui`, while
+core scenes remain independent of Svelte.
 
 Type tests must verify inference and rejected misuse. TypeScript does not validate
 external input, current gameplay permissions, or runtime immutability of aliases.

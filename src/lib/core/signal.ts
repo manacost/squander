@@ -8,12 +8,14 @@ export type Signal<EventDetail = unknown> = {
   emit: (detail: EventDetail) => void;
 };
 export const create_signal = <EventDetail = unknown>(): Signal<EventDetail> => {
-  let listeners: Array<(detail: EventDetail) => void> = [];
+  let listeners: ((detail: EventDetail) => void)[] = [];
   const signal: Signal<EventDetail> = {
     subscribe: (callback) => {
       listeners.push(callback);
 
-      return () => signal.unsubscribe(callback);
+      return () => {
+        signal.unsubscribe(callback);
+      };
     },
 
     once: (callback) => {
@@ -31,7 +33,7 @@ export const create_signal = <EventDetail = unknown>(): Signal<EventDetail> => {
       });
     },
 
-    unsubscribe: (callback = undefined) => {
+    unsubscribe: (callback) => {
       if (callback === undefined) {
         listeners = [];
       } else {

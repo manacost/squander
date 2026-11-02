@@ -24,7 +24,7 @@ export type GameAdapterOptions<State, Commands extends BridgeCommands, Manifest 
   ) => Game<Manifest>;
 }>;
 
-export type GameAdapter<State, Commands extends BridgeCommands, Manifest extends AssetManifest = AssetManifest> = Readonly<{
+export type GameAdapter<State, Commands extends BridgeCommands> = Readonly<{
   readonly bridge: GameBridge<State, Commands>;
   readonly view: GameAdapterView<State, Commands>;
   subscribe: (subscriber: (view: GameAdapterView<State, Commands>) => void) => () => void;
@@ -34,7 +34,7 @@ export type GameAdapter<State, Commands extends BridgeCommands, Manifest extends
 
 export const create_game_adapter = <State, Commands extends BridgeCommands, Manifest extends AssetManifest = AssetManifest>(
   options: GameAdapterOptions<State, Commands, Manifest>,
-): GameAdapter<State, Commands, Manifest> => {
+): GameAdapter<State, Commands> => {
   const controller = create_game_bridge(options.initial_state, options.commands);
   let game: Game<Manifest> | undefined;
   let status: GameAdapterStatus = "loading";
@@ -48,6 +48,7 @@ export const create_game_adapter = <State, Commands extends BridgeCommands, Mani
   });
   const subscribers = new Set<(view: GameAdapterView<State, Commands>) => void>();
   let notification_pending = false;
+  let disposal_epoch = 0;
   const notify = (): void => {
     view = Object.freeze({ state: controller.bridge.state.get(), status, error, commands: controller.bridge.commands });
     for (const subscriber of subscribers) subscriber(view);
@@ -73,8 +74,9 @@ export const create_game_adapter = <State, Commands extends BridgeCommands, Mani
     if (game !== undefined) throw new Error("game adapter is already mounted");
     try {
       game = options.create({ canvas, bridge: controller.bridge, publish: controller.publish });
+      const mount_epoch = disposal_epoch;
       await game.ready;
-      if (disposed) return;
+      if (mount_epoch !== disposal_epoch) return;
       status = "ready";
       notify();
     } catch (cause) {
@@ -87,6 +89,7 @@ export const create_game_adapter = <State, Commands extends BridgeCommands, Mani
   const dispose = async (): Promise<void> => {
     if (disposed) return;
     disposed = true;
+    disposal_epoch += 1;
     await game?.dispose();
     game = undefined;
     controller.dispose();

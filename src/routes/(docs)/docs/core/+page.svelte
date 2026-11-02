@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import { core_guides } from "../../../../lib/docs/core-guides.js";
 </script>
 
@@ -13,9 +14,12 @@
 
   <h2>Available guides</h2>
   <ul>
-    <li><a href="/docs/examples/text">Text drawing</a> — load a bundled font, prepare glyphs, and render changing labels with WebGPU.</li>
-    {#each core_guides as guide}
-      <li><a href={`/docs/core/${guide.slug}`}>{guide.title}</a> — {guide.summary}</li>
+    <li>
+      <a href={resolve("/(docs)/docs/examples/text")}>Text drawing</a> — load a bundled font, prepare glyphs, and render changing labels with
+      WebGPU.
+    </li>
+    {#each core_guides as guide (guide.slug)}
+      <li><a href={resolve("/(docs)/docs/core/[guide]", { guide: guide.slug })}>{guide.title}</a> — {guide.summary}</li>
     {/each}
   </ul>
 

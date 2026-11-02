@@ -79,7 +79,7 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
   const size = options.size ?? 32;
   assert_font_size(size);
   if (source.trim() === "") throw new FontLoadError("font source must not be empty");
-  const family = `squander-font-${family_id++}`;
+  const family = `squander-font-${String(family_id++)}`;
   const face = new FontFace(family, source, { weight: options.weight ?? "400", style: options.style ?? "normal" });
   try {
     await face.load();
@@ -91,7 +91,7 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   if (context === null) throw new FontLoadError("Canvas 2D font preparation is unavailable");
-  context.font = `${options.weight ?? "400"} ${size}px ${family}`;
+  context.font = `${options.weight ?? "400"} ${String(size)}px ${family}`;
   const glyphs = new Map<string, FontGlyph>();
   const glyph_textures = new Map<string, WebGpuTexture>();
   let atlas: WebGpuTexture | undefined;
@@ -100,7 +100,7 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
   let disposed = false;
 
   const rebuild = (): void => {
-    const entries = [...glyphs.keys()].map((character) => {
+    const entries = Array.from(glyphs.keys()).map((character) => {
       const metrics = context.measureText(character);
       return { character, width: Math.max(1, Math.ceil(metrics.width) + padding * 2), height: Math.ceil(size * 1.25) + padding * 2 };
     });
@@ -119,7 +119,7 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
     canvas.width = atlas_width;
     canvas.height = atlas_height;
     context.clearRect(0, 0, atlas_width, atlas_height);
-    context.font = `${options.weight ?? "400"} ${size}px ${family}`;
+    context.font = `${options.weight ?? "400"} ${String(size)}px ${family}`;
     context.textBaseline = "top";
     context.fillStyle = "white";
     const pixels = new Uint8Array(atlas_width * atlas_height * 4);
@@ -161,7 +161,9 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
       );
     });
     atlas?.release();
-    glyph_textures.forEach((texture) => texture.release());
+    glyph_textures.forEach((texture) => {
+      texture.release();
+    });
     glyph_textures.clear();
     next_glyph_textures.forEach((texture, character) => glyph_textures.set(character, texture));
     atlas = next_atlas;
@@ -169,7 +171,7 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
 
   const prepare = (text: string): void => {
     if (disposed) throw new Error("font is released");
-    const additions = [...text].filter((character) => !glyphs.has(character));
+    const additions = Array.from(text).filter((character) => !glyphs.has(character));
     additions.forEach(assert_character);
     if (additions.length === 0) return;
     additions.forEach((character) => glyphs.set(character, { character, x: 0, y: 0, width: 1, height: 1, advance: size, baseline: 0 }));
@@ -211,7 +213,9 @@ export const create_webgpu_font = async (renderer: WebGpuRenderer, source: strin
       disposed = true;
       atlas?.release();
       atlas = undefined;
-      glyph_textures.forEach((texture) => texture.release());
+      glyph_textures.forEach((texture) => {
+        texture.release();
+      });
       glyph_textures.clear();
       document.fonts.delete(face);
     },

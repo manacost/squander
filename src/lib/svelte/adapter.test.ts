@@ -48,7 +48,7 @@ describe("[svelte-bridge] game adapter", () => {
   });
 
   it("batches publications through the injected notification scheduler", async () => {
-    const scheduled: Array<() => void> = [];
+    const scheduled: (() => void)[] = [];
     let publish!: (state: { score: number }) => void;
     const adapter = create_game_adapter({
       initial_state: { score: 0 },

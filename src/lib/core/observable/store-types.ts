@@ -15,39 +15,39 @@ export type Updater<T> = (value: T) => T;
  * @returns Optionally, a cleanup function that is called when the last remaining
  * subscriber unsubscribes.
  */
-export type StartStopNotifier<T> = (set: (value: T) => void, update: (fn: Updater<T>) => void) => void | (() => void);
+export type StartStopNotifier<T> = (set: (value: T) => void, update: (fn: Updater<T>) => void) => undefined | (() => void);
 
 /** Readable interface for subscribing. */
-export interface Readable<T> {
+export type Readable<T> = {
   /**
    * Subscribe on value changes.
    * @param run subscription callback
    * @param invalidate cleanup callback
    */
-  subscribe(this: void, run: Subscriber<T>, invalidate?: () => void): Unsubscriber;
+  subscribe(run: Subscriber<T>, invalidate?: () => void): Unsubscriber;
 
-  get: (this: void) => T;
-}
+  get: () => T;
+};
 
 /** Writable interface for both updating and subscribing. */
-export interface Writable<T> extends Readable<T> {
+export type Writable<T> = {
   /**
    * Set value and inform subscribers.
    * @param value to set
    */
-  set(this: void, value: T): void;
+  set(value: T): void;
 
   /**
    * Update value using callback and inform subscribers.
    * @param updater callback
    */
-  update(this: void, updater: Updater<T>): void;
-}
+  update(updater: Updater<T>): void;
+} & Readable<T>;
 
 /** One or more `Readable`s. */
-export type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
+export type Stores = Readable<unknown> | [Readable<unknown>, ...Readable<unknown>[]] | Readable<unknown>[];
 
 /** One or more values from `Readable` stores. */
-export type StoresValues<S extends Readable<any>[]> = {
+export type StoresValues<S extends Readable<unknown>[]> = {
   [K in keyof S]: S[K] extends Readable<infer U> ? U : never;
 };

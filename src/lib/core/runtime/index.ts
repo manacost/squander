@@ -14,8 +14,10 @@ export type { FlattenedSubpath } from "./path_flattening.js";
 export * from "./polygons.js";
 export * from "./resource_ownership.js";
 export * from "./shapes.js";
+export { create_scene_event_bus } from "./scene.js";
 export type {
   SceneAssetScope,
+  SceneCleanup,
   SceneComposer,
   SceneContext,
   SceneDefinition,
@@ -24,6 +26,8 @@ export type {
   SceneFactoryContext,
   SceneHandle,
   SceneSubscriptions,
+  SceneEventBus,
+  SceneEventMap,
 } from "./scene.js";
 export * from "./stroke_geometry.js";
 export * from "./texture_filtering.js";

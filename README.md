@@ -102,8 +102,8 @@ screenshots are supplemental visual evidence.
 | ---------------------------------- | -------------------------------------------------------------------------- |
 | `src/lib/core/runtime/`            | Replacement lifecycle, assets, geometry, camera, text, and WebGPU runtime. |
 | `src/lib/svelte/`                  | Optional Svelte 5 adapter and `GameHost` component.                        |
-| `src/routes/(docs)/docs/core/`    | Focused runtime guides and usage examples.                                |
-| `src/routes/(docs)/docs/examples/` | Runnable composition and feature examples.                               |
+| `src/routes/(docs)/docs/core/`     | Focused runtime guides and usage examples.                                 |
+| `src/routes/(docs)/docs/examples/` | Runnable composition and feature examples.                                 |
 | `tests/`                           | Playwright integration and real WebGPU fixtures.                           |
 | `specs/`                           | Capability contracts and promotion criteria.                               |
 | `specifications/checkpoints/`      | Evidence records, gaps, and go/no-go decisions.                            |

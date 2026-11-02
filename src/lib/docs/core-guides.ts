@@ -243,7 +243,8 @@ export const core_guides = [
       "const bridge = create_game_adapter({\n  initial_state: { score: 0 },\n  commands: { increment: (amount: number) => score += amount },\n  create: ({ publish, canvas }) => create_game({ canvas, publish }),\n});",
     proof:
       "Adapter unit, SSR, package-consumer, and browser tests cover typed commands, snapshots, unmount, SSR, and advanced multi-host isolation.",
-    limitations: "Core remains Svelte-independent; scene overlays and richer reactive helpers are deferred.",
+    limitations:
+      "Core remains Svelte-independent; scene-owned UI is available through the optional Svelte Game host, while richer reactive helpers are deferred.",
   },
 ] as const satisfies readonly CoreGuide[];
 

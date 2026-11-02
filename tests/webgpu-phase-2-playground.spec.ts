@@ -35,13 +35,13 @@ test("[phase-2-playground] composes runtime capabilities through GameHost", asyn
   expect(canvas_probe.non_black).toBeGreaterThan(0);
   const canvas_box = await page.locator("canvas").boundingBox();
   expect(canvas_box).not.toBeNull();
+  if (canvas_box === null) throw new Error("canvas bounding box unavailable");
   const static_composition = await page.screenshot({
-    clip: { x: canvas_box!.x, y: canvas_box!.y, width: canvas_box!.width, height: canvas_box!.height * 0.88 },
+    clip: { x: canvas_box.x, y: canvas_box.y, width: canvas_box.width, height: canvas_box.height * 0.88 },
     animations: "disabled",
   });
   expect(static_composition).toMatchSnapshot("phase-2-playground.png");
   await expect.poll(async () => Number(await page.getByTestId("playground-ticks").textContent())).toBeGreaterThan(0);
-  const running_ticks = Number(await page.getByTestId("playground-ticks").textContent());
   await page.getByTestId("playground-pause").click();
   await expect(page.getByTestId("playground-status")).toHaveText("paused");
   const paused_ticks = Number(await page.getByTestId("playground-ticks").textContent());

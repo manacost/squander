@@ -2,6 +2,7 @@
   import GameHost from "../../../../../lib/svelte/GameHost.svelte";
   import CodeBlock from "../../../../../lib/docs/CodeBlock.svelte";
   import type { Game } from "../../../../../lib/core/runtime/game.js";
+  import type { GameAdapterView } from "../../../../../lib/svelte/adapter.js";
 
   type State = Readonly<{ score: number }>;
   let left_publish: ((state: State) => void) | undefined;
@@ -13,7 +14,7 @@
     },
   };
   let current_score = 0;
-  const create_game_instance = (publish: (state: State) => void, on_dispose: () => void): Game =>
+  const create_game_instance = (_publish: (state: State) => void, on_dispose: () => void): Game =>
     ({
       ready: Promise.resolve(),
       renderer: {},
@@ -36,7 +37,10 @@
       pause: () => undefined,
       resume: () => undefined,
       set_visibility: () => undefined,
-      dispose: async () => on_dispose(),
+      dispose: () => {
+        on_dispose();
+        return Promise.resolve();
+      },
       get_state: () => "running",
     }) as unknown as Game;
   const create = ({ publish }: { publish: (state: State) => void; canvas: HTMLCanvasElement; bridge: unknown }): Game => {
@@ -73,7 +77,7 @@
   </p>
 
   <GameHost initial_state={{ score: 0 }} {commands} {create}>
-    {#snippet children(view)}
+    {#snippet children(view: GameAdapterView<State, typeof commands>)}
       <output data-testid="adapter-status">{view.status}</output>
       <output data-testid="adapter-score">{view.state.score}</output>
       <button data-testid="adapter-increment" onclick={() => view.commands.increment(2)}>Increment</button>

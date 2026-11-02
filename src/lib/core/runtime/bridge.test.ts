@@ -21,7 +21,7 @@ describe("[svelte-bridge] core bridge", () => {
 
   it("preserves sync and async command results", async () => {
     const use_item = vi.fn((item_id: string) => item_id.length);
-    const save = vi.fn(async (slot: number) => `saved:${slot}`);
+    const save = vi.fn(async (slot: number) => `saved:${String(slot)}`);
     const controller = create_game_bridge({ ready: true }, { use_item, save });
 
     expect(controller.bridge.commands.use_item("potion")).toBe(6);
@@ -38,7 +38,9 @@ describe("[svelte-bridge] core bridge", () => {
     controller.dispose();
     controller.publish({ ready: false });
     expect(subscriber).toHaveBeenCalledOnce();
-    expect(() => controller.bridge.commands.reset()).toThrow("game bridge is disposed");
+    expect(() => {
+      controller.bridge.commands.reset();
+    }).toThrow("game bridge is disposed");
     expect(controller.bridge.state.subscribe(vi.fn())).toBeTypeOf("function");
   });
 });
