@@ -17,6 +17,7 @@ Draft.
 - Make event consumption and browser default prevention separate outcomes.
 - Scope subscriptions and state to one game instance.
 - Register and remove scene handlers automatically with scene activation and teardown.
+- Provide an explicit DOM adapter that listens only on a caller-owned host.
 - Leave action mapping, rebinding, text input, gestures, and renderable hit
   testing for later capabilities.
 
@@ -40,6 +41,12 @@ uses a stable snapshot; the removal takes effect for the next event.
 
 Mounting a scene activates its input handler, replacing or removing a scene
 removes the old handler, and disposing the game makes the router inert.
+
+### Browser host preserves native controls
+
+The browser adapter routes keyboard and pointer events from the host subtree,
+leaves editable controls alone by default, and only calls `preventDefault()`
+for `consume_and_prevent_default`.
 
 ## Interface contract
 
@@ -76,8 +83,13 @@ routing.
 
 Create one router per game, register scene handlers as scenes mount, register
 global fallback handlers for cross-scene behavior, and return an explicit
-disposition from each handler. The browser adapter will translate
-`consume_and_prevent_default` into `preventDefault()` in a later slice.
+disposition from each handler. In a browser, attach the host adapter explicitly:
+
+```ts
+const input_adapter = create_browser_input_adapter({ host, router: game.input });
+```
+
+Dispose the adapter with the host or game lifecycle.
 
 ## Test references
 
@@ -88,13 +100,14 @@ Planned verification:
   removal, and disposal.
 - [`type-tests/input.ts`](../../type-tests/input.ts) covers event narrowing and
   rejected event/disposition misuse.
+- [`src/lib/core/runtime/browser_input.test.ts`](../../src/lib/core/runtime/browser_input.test.ts)
+  covers host keyboard/pointer normalization, editable-control policy,
+  default prevention, pointer capture, focus, and listener disposal.
 
 ## Notes
 
-The core router and game/scene ownership slices are implemented. Browser
-listener and focus policy are specified in
-[`specifications/phase-3-b.md`](../../specifications/phase-3-b.md) and remain
-unimplemented until the adapter slice.
+The core router, game/scene ownership, and browser adapter slices are
+implemented. Gamepad polling and broader browser evidence remain future work.
 
 ## Trace
 

@@ -99,3 +99,15 @@ event; a game may explicitly focus its host when it needs keyboard capture.
 
 Each slice requires focused unit tests, public type tests, documentation, and
 browser evidence where DOM behavior is part of the claim.
+
+## Browser adapter seam
+
+The browser adapter is explicit rather than implicit:
+
+```ts
+const input_adapter = create_browser_input_adapter({ host, router: game.input });
+```
+
+The adapter owns DOM listeners and can be disposed independently. The core
+game does not access `window` or `document`, which preserves SSR safety and
+allows non-browser adapters later.
