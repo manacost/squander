@@ -8,7 +8,7 @@ behavior explicit.
 
 ## Status
 
-Draft.
+Implemented.
 
 ## Requirements
 
@@ -113,12 +113,16 @@ Planned verification:
 - [`src/lib/core/runtime/browser_gamepad.test.ts`](../../src/lib/core/runtime/browser_gamepad.test.ts)
   covers connection/disconnection, changed button and axis events, immutable
   snapshots, polling, and adapter disposal.
+- [`tests/input-routing.spec.ts`](../../tests/input-routing.spec.ts) exercises
+  the built site in Chromium with a real host DOM, native button activation,
+  Escape consumption, and editable text behavior.
 
 ## Notes
 
-The core router, game/scene ownership, browser keyboard/pointer adapter, and
-gamepad adapter slices are implemented. Broader browser evidence remains for
-the final documentation slice.
+The core router, game/scene ownership, browser keyboard/pointer adapter,
+gamepad adapter, focused documentation, and Chromium host evidence are
+implemented. Physical gamepad hardware is environment-dependent and is not
+claimed by the automated browser fixture.
 
 ## Trace
 

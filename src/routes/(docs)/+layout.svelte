@@ -16,6 +16,7 @@
       target: "/(docs)/docs/core",
       children: [
         { label: "text", href: "/docs/examples/text" },
+        { label: "input routing", href: "/docs/examples/input" },
         ...core_guides.map((guide) => ({ label: guide.label, href: `/docs/core/${guide.slug}` })),
       ],
     },

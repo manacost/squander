@@ -95,7 +95,7 @@ event; a game may explicitly focus its host when it needs keyboard capture.
 2. Game-owned router and automatic scene lifecycle integration.
 3. Browser keyboard and pointer adapter with focus/default-action policy.
 4. Gamepad adapter and per-game device state snapshots.
-5. Focused docs and browser evidence for the complete capability.
+5. Focused docs and browser evidence for the complete capability. **Complete.**
 
 Each slice requires focused unit tests, public type tests, documentation, and
 browser evidence where DOM behavior is part of the claim.

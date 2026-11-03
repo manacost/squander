@@ -18,6 +18,10 @@
       <a href={resolve("/(docs)/docs/examples/text")}>Text drawing</a> — load a bundled font, prepare glyphs, and render changing labels with
       WebGPU.
     </li>
+    <li>
+      <a href={resolve("/(docs)/docs/examples/input")}>Input routing</a> — route raw keyboard, pointer, and gamepad input through active scenes
+      and global fallbacks.
+    </li>
     {#each core_guides as guide (guide.slug)}
       <li><a href={resolve("/(docs)/docs/core/[guide]", { guide: guide.slug })}>{guide.title}</a> — {guide.summary}</li>
     {/each}
