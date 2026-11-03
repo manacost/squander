@@ -8,8 +8,9 @@ normalization and event ownership in the core runtime. It does not introduce
 action maps, rebinding, text-input composition, touch gestures, or a general
 UI widget system.
 
-The first implementation slice is the input event router. Browser listeners,
-device state, and gamepad polling build on this contract in later slices.
+The first implementation slice is the input event router. The second slice
+connects that router to game and scene ownership. Browser listeners, device
+state, and gamepad polling build on this contract in later slices.
 
 ## Goals
 
@@ -91,9 +92,10 @@ event; a game may explicitly focus its host when it needs keyboard capture.
 ## Planned slices
 
 1. Core normalized event types, dispositions, and scene-first router.
-2. Browser keyboard and pointer adapter with focus/default-action policy.
-3. Gamepad adapter and per-game device state snapshots.
-4. Scene lifecycle integration, focused docs, and browser evidence.
+2. Game-owned router and automatic scene lifecycle integration.
+3. Browser keyboard and pointer adapter with focus/default-action policy.
+4. Gamepad adapter and per-game device state snapshots.
+5. Focused docs and browser evidence for the complete capability.
 
 Each slice requires focused unit tests, public type tests, documentation, and
 browser evidence where DOM behavior is part of the claim.

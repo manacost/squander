@@ -33,6 +33,13 @@ const factory: SceneFactory<Manifest> = ({ signal }) => ({
     const delta: number = time.delta_seconds;
     void delta;
   },
+  input: (event) => {
+    if (event.type === "key") {
+      const code: string = event.code;
+      void code;
+    }
+    return "pass";
+  },
 });
 
 const dependency_factory: SceneFactory<Manifest> = ({ assets }) => ({
@@ -89,6 +96,18 @@ const typed_factory: SceneFactory<Manifest, SceneEvents> = ({ events }) => {
 };
 void typed_game;
 void typed_factory;
+
+typed_game.input.on_global((event) => {
+  if (event.type === "gamepad" && event.phase === "axis") {
+    const value: number = event.value;
+    void value;
+  }
+  return "pass";
+});
+
+// @ts-expect-error Scene input handlers must return a declared routing disposition.
+const invalid_input_factory: SceneFactory<Manifest> = () => ({ name: "invalid input", input: () => "handled" });
+void invalid_input_factory;
 
 const invalid_dependency_factory: SceneFactory<Manifest> = () => ({
   name: "invalid dependency",

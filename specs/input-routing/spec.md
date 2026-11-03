@@ -16,6 +16,7 @@ Draft.
 - Dispatch newest mounted scene first, then global fallback handlers.
 - Make event consumption and browser default prevention separate outcomes.
 - Scope subscriptions and state to one game instance.
+- Register and remove scene handlers automatically with scene activation and teardown.
 - Leave action mapping, rebinding, text input, gestures, and renderable hit
   testing for later capabilities.
 
@@ -34,6 +35,11 @@ default prevention.
 
 A scene removes another scene while handling an event. The current dispatch
 uses a stable snapshot; the removal takes effect for the next event.
+
+### Scene lifecycle owns input
+
+Mounting a scene activates its input handler, replacing or removing a scene
+removes the old handler, and disposing the game makes the router inert.
 
 ## Interface contract
 
@@ -85,9 +91,10 @@ Planned verification:
 
 ## Notes
 
-This is the first Phase 3-b slice. Browser listener and focus policy are
-specified in [`specifications/phase-3-b.md`](../../specifications/phase-3-b.md)
-and remain unimplemented until the adapter slice.
+The core router and game/scene ownership slices are implemented. Browser
+listener and focus policy are specified in
+[`specifications/phase-3-b.md`](../../specifications/phase-3-b.md) and remain
+unimplemented until the adapter slice.
 
 ## Trace
 

@@ -67,6 +67,7 @@ export type InputHandler = (event: InputEvent) => InputDisposition;
 export type InputSceneHandle = Readonly<object>;
 
 export type InputRouter = Readonly<{
+  insert_scene: (handler: InputHandler, options?: Readonly<{ index?: number }>) => InputSceneHandle;
   push_scene: (handler: InputHandler) => InputSceneHandle;
   remove_scene: (scene: InputSceneHandle) => void;
   on_global: (handler: InputHandler, options?: Readonly<{ capture?: boolean }>) => () => void;
@@ -104,12 +105,15 @@ export const create_input_router = (options: InputRouterOptions = {}): InputRout
     }
   };
 
-  const push_scene = (handler: InputHandler): InputSceneHandle => {
+  const insert_scene = (handler: InputHandler, insert_options: Readonly<{ index?: number }> = {}): InputSceneHandle => {
     if (disposed) return Object.freeze({});
     const record: SceneRecord = { handle: Object.freeze({}), handler };
-    scenes.push(record);
+    const index = insert_options.index === undefined ? scenes.length : Math.max(0, Math.min(insert_options.index, scenes.length));
+    scenes.splice(index, 0, record);
     return record.handle;
   };
+
+  const push_scene = (handler: InputHandler): InputSceneHandle => insert_scene(handler);
 
   const remove_scene = (scene: InputSceneHandle): void => {
     const index = scenes.findIndex((record) => record.handle === scene);
@@ -151,5 +155,5 @@ export const create_input_router = (options: InputRouterOptions = {}): InputRout
     globals.length = 0;
   };
 
-  return Object.freeze({ push_scene, remove_scene, on_global, dispatch, dispose });
+  return Object.freeze({ insert_scene, push_scene, remove_scene, on_global, dispatch, dispose });
 };

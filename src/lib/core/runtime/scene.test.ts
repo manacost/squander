@@ -4,6 +4,7 @@ import { create_resource_owner } from "./resource_ownership.js";
 import { calculate_responsive_viewport } from "./viewport_sizing.js";
 import { create_signal } from "../signal.js";
 import { create_scene_event_bus, type SceneEventBus } from "./scene.js";
+import type { InputEvent } from "./input.js";
 import type { WebGpuRenderer } from "./webgpu_renderer.js";
 
 const create_renderer = (): WebGpuRenderer => {
@@ -84,7 +85,77 @@ const create_test_game = (on_error?: (error: unknown) => void) => {
   return { game, clock };
 };
 
+const key_down = (key: string): InputEvent => ({
+  type: "key",
+  phase: "down",
+  key,
+  code: key,
+  repeat: false,
+  modifiers: { alt: false, ctrl: false, meta: false, shift: false },
+});
+
 describe("[scene-lifecycle] game-owned scene composer", () => {
+  it("registers scene input on activation and removes it before scene teardown completes", async () => {
+    const calls: string[] = [];
+    const { game } = create_test_game();
+    await game.ready;
+    const base = await game.scenes.mount(() => ({
+      name: "base input",
+      input: (event) => {
+        calls.push(`base:${event.type}`);
+        return "consume";
+      },
+    }));
+    const overlay = await game.scenes.mount(() => ({
+      name: "overlay input",
+      input: (event) => {
+        calls.push(`overlay:${event.type}`);
+        return "consume";
+      },
+    }));
+
+    expect(game.input.dispatch(key_down("Escape"))).toBe("consume");
+    expect(calls).toEqual(["overlay:key"]);
+
+    await game.scenes.remove(overlay);
+    expect(game.input.dispatch(key_down("Escape"))).toBe("consume");
+    expect(calls).toEqual(["overlay:key", "base:key"]);
+
+    await game.scenes.remove(base);
+    expect(game.input.dispatch(key_down("Escape"))).toBe("pass");
+    expect(calls).toEqual(["overlay:key", "base:key"]);
+    await game.dispose();
+  });
+
+  it("routes scene input before global handlers registered during game setup", async () => {
+    const calls: string[] = [];
+    const game = create_game({
+      renderer: { canvas: {} as HTMLCanvasElement, width: 1, height: 1 },
+      renderer_factory: () => Promise.resolve(create_renderer()),
+      scheduler: create_scheduler().scheduler,
+      update: () => undefined,
+      draw: () => undefined,
+      setup: ({ input }) => {
+        input.on_global(() => {
+          calls.push("global");
+          return "consume";
+        });
+      },
+    });
+    await game.ready;
+    await game.scenes.mount(() => ({
+      name: "passing input",
+      input: () => {
+        calls.push("scene");
+        return "pass";
+      },
+    }));
+
+    expect(game.input.dispatch(key_down("Space"))).toBe("consume");
+    expect(calls).toEqual(["scene", "global"]);
+    await game.dispose();
+  });
+
   it("loads typed required dependencies into an owned scene scope", async () => {
     const loads: string[] = [];
     const destroys: string[] = [];

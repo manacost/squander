@@ -3,6 +3,7 @@ import type { ResourceHandle } from "./resource_ownership.js";
 import type { UpdateTime } from "./timing.js";
 import type { WebGpuRenderer } from "./webgpu_renderer.js";
 import type { Signal } from "../signal.js";
+import type { InputHandler, InputRouter, InputSceneHandle } from "./input.js";
 
 export type SceneEventMap = Record<string, unknown>;
 
@@ -52,6 +53,7 @@ export type SceneDefinition<Manifest extends AssetManifest = AssetManifest, Even
   init?: (context: SceneContext<Manifest, EventMap>) => void | Promise<void>;
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type -- An enter callback may intentionally return no cleanup.
   enter?: (context: SceneContext<Manifest, EventMap>) => void | SceneCleanup | Promise<void | SceneCleanup>;
+  input?: InputHandler;
   update?: (time: UpdateTime) => void;
   draw?: () => void;
   exit?: () => void | Promise<void>;
@@ -178,6 +180,7 @@ type SceneRecord<Manifest extends AssetManifest, EventMap extends SceneEventMap>
   subscriptions: SceneSubscriptions;
   enter_cleanup: SceneCleanup | undefined;
   events_dispose: () => void;
+  input_scene: InputSceneHandle | undefined;
 };
 
 type SceneComposerOptions<Manifest extends AssetManifest, EventMap extends SceneEventMap> = Readonly<{
@@ -187,6 +190,7 @@ type SceneComposerOptions<Manifest extends AssetManifest, EventMap extends Scene
   asset_cache: AssetCache<Manifest>;
   on_async_error: (cause: unknown) => void;
   events: SceneEventBus<EventMap>;
+  input: InputRouter;
 }>;
 
 type PendingMutation = () => Promise<void>;
@@ -360,6 +364,10 @@ export const create_scene_composer = <Manifest extends AssetManifest = AssetMani
   };
 
   const dispose_record = async (record: SceneRecord<Manifest, EventMap>, invoke_exit = true): Promise<void> => {
+    if (record.input_scene !== undefined) {
+      options.input.remove_scene(record.input_scene);
+      record.input_scene = undefined;
+    }
     try {
       await run_teardown(record, invoke_exit);
     } finally {
@@ -400,6 +408,7 @@ export const create_scene_composer = <Manifest extends AssetManifest = AssetMani
         subscriptions,
         enter_cleanup: undefined,
         events_dispose,
+        input_scene: undefined,
       };
       const enter_result = await next_definition.enter?.(context);
       record.enter_cleanup = typeof enter_result === "function" ? enter_result : undefined;
@@ -436,6 +445,9 @@ export const create_scene_composer = <Manifest extends AssetManifest = AssetMani
     }
     const bounded_index = index === undefined ? records.length : Math.max(0, Math.min(index, records.length));
     records.splice(bounded_index, 0, record);
+    if (record.definition.input !== undefined) {
+      record.input_scene = options.input.insert_scene(record.definition.input, { index: bounded_index });
+    }
     handles.set(record.handle, record);
   };
 
@@ -525,6 +537,9 @@ export const create_scene_composer = <Manifest extends AssetManifest = AssetMani
         }
         handles.delete(scene);
         records.splice(index, 1, replacement);
+        if (replacement.definition.input !== undefined) {
+          replacement.input_scene = options.input.insert_scene(replacement.definition.input, { index });
+        }
         handles.set(replacement.handle, replacement);
         await dispose_record(old_record, false);
       }, defer);
@@ -550,6 +565,9 @@ export const create_scene_composer = <Manifest extends AssetManifest = AssetMani
         }
         for (const record of previous) await dispose_record(record, false);
         records.splice(0, records.length, replacement);
+        if (replacement.definition.input !== undefined) {
+          replacement.input_scene = options.input.insert_scene(replacement.definition.input, { index: 0 });
+        }
         handles.clear();
         handles.set(replacement.handle, replacement);
       }, defer);

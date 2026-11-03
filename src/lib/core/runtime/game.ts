@@ -6,6 +6,7 @@ import type { UpdateTime } from "./timing.js";
 import { create_webgpu_renderer, type WebGpuRenderer, type WebGpuRendererOptions } from "./webgpu_renderer.js";
 import type { ViewportSize } from "./viewport_sizing.js";
 import { create_scene_composer, create_scene_event_bus, type SceneComposer, type SceneEventMap } from "./scene.js";
+import { create_input_router, type InputRouter } from "./input.js";
 
 export class GameInitializationError extends Error {
   public constructor(cause: unknown) {
@@ -41,6 +42,7 @@ export type GameSetupContext<Manifest extends AssetManifest = AssetManifest> = R
   resources: ResourceOwner;
   geometry: GeometryOwner;
   assets: AssetCache<Manifest>;
+  input: InputRouter;
 }>;
 
 export type RendererFactory = (options: WebGpuRendererOptions) => Promise<WebGpuRenderer>;
@@ -66,6 +68,7 @@ export type Game<Manifest extends AssetManifest = AssetManifest, EventMap extend
   resources: ResourceOwner;
   geometry: GeometryOwner;
   assets: AssetCache<Manifest>;
+  input: InputRouter;
   scenes: SceneComposer<Manifest, EventMap>;
   pause: () => void;
   resume: () => void;
@@ -99,6 +102,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
   const assets = create_asset_cache((options.manifest ?? {}) as Manifest, resources, renderer_ready);
   const manifest = (options.manifest ?? {}) as Manifest;
   const abort_controller = new AbortController();
+  const input = create_input_router({ on_error: (cause) => options.on_error?.(new GameRuntimeError(cause)) });
   let loop: FrameLoop | undefined;
   const scene_events = create_scene_event_bus<EventMap>((cause) => options.on_error?.(new GameRuntimeError(cause)));
   let scene_controller: ReturnType<typeof create_scene_composer<Manifest, EventMap>> | undefined;
@@ -135,6 +139,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
         renderer,
         manifest,
         asset_cache: assets,
+        input,
         events: scene_events,
         on_async_error: (cause) => {
           if (loop === undefined) {
@@ -145,7 +150,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
         },
       });
       scene_controller = active_scene_controller;
-      await options.setup?.({ signal: abort_controller.signal, renderer, resources, geometry, assets });
+      await options.setup?.({ signal: abort_controller.signal, renderer, resources, geometry, assets, input });
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Setup can dispose the game while awaiting application work.
       if (lifecycle.disposed || abort_controller.signal.aborted) {
         throw new GameDisposedError();
@@ -226,6 +231,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
     disposal_promise = (loop?.dispose() ?? Promise.resolve()).then(() => {
       return (scene_controller?.composer.dispose() ?? Promise.resolve()).then(() => {
         scene_events.clear();
+        input.dispose();
         assets.dispose();
         resources.dispose();
         geometry.dispose();
@@ -273,6 +279,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
     resources,
     geometry,
     assets,
+    input,
     scenes,
     pause,
     resume,
