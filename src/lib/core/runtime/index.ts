@@ -2,6 +2,7 @@ export * from "./angles.js";
 export * from "./asset_loading.js";
 export * from "./bridge.js";
 export * from "./browser_input.js";
+export * from "./browser_gamepad.js";
 export * from "./camera.js";
 export * from "./colors.js";
 export * from "./frame_loop.js";

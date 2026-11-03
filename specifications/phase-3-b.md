@@ -111,3 +111,8 @@ const input_adapter = create_browser_input_adapter({ host, router: game.input })
 The adapter owns DOM listeners and can be disposed independently. The core
 game does not access `window` or `document`, which preserves SSR safety and
 allows non-browser adapters later.
+
+The gamepad adapter follows the browser API's event-plus-polling model:
+connection events wake the adapter, while `navigator.getGamepads()` is sampled
+when the owner calls `poll()` from its frame/update cadence. This matches the
+browser's current-state model and avoids a second framework-owned render loop.

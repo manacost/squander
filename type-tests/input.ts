@@ -1,4 +1,4 @@
-import { create_input_router, type InputEvent, type InputDisposition } from "../src/lib/index.js";
+import { create_browser_gamepad_adapter, create_input_router, type InputDisposition, type InputEvent } from "../src/lib/index.js";
 
 const router = create_input_router();
 
@@ -28,6 +28,20 @@ const valid_event: InputEvent = {
   modifiers: { alt: false, ctrl: false, meta: false, shift: false },
 };
 router.dispatch(valid_event);
+
+const gamepad_adapter = create_browser_gamepad_adapter({ router, window });
+const gamepad = gamepad_adapter.state.get(0);
+if (gamepad !== undefined) {
+  const axis: number = gamepad.axes[0] ?? 0;
+  const pressed: boolean = gamepad.buttons[0]?.pressed ?? false;
+  void axis;
+  void pressed;
+}
+gamepad_adapter.poll();
+gamepad_adapter.dispose();
+
+// @ts-expect-error Gamepad state keys are numeric indexes, not device names.
+router.dispatch({ type: "gamepad", phase: "axis", gamepad_id: "pad", index: 0, axis: 0, value: 0, label: "pad" });
 
 // @ts-expect-error Unknown input event kinds are not part of the raw-device contract.
 router.dispatch({ type: "action", name: "open_menu" });

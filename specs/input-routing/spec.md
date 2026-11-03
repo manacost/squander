@@ -18,6 +18,7 @@ Draft.
 - Scope subscriptions and state to one game instance.
 - Register and remove scene handlers automatically with scene activation and teardown.
 - Provide an explicit DOM adapter that listens only on a caller-owned host.
+- Provide a per-game gamepad adapter with immutable snapshots and frame-driven polling.
 - Leave action mapping, rebinding, text input, gestures, and renderable hit
   testing for later capabilities.
 
@@ -47,6 +48,12 @@ removes the old handler, and disposing the game makes the router inert.
 The browser adapter routes keyboard and pointer events from the host subtree,
 leaves editable controls alone by default, and only calls `preventDefault()`
 for `consume_and_prevent_default`.
+
+### Gamepad state is sampled per frame
+
+The gamepad adapter listens for connection lifecycle events and samples current
+button and axis values when its owner calls `poll()`. It emits changes through
+the same router and exposes immutable snapshots for polling-based gameplay.
 
 ## Interface contract
 
@@ -103,11 +110,15 @@ Planned verification:
 - [`src/lib/core/runtime/browser_input.test.ts`](../../src/lib/core/runtime/browser_input.test.ts)
   covers host keyboard/pointer normalization, editable-control policy,
   default prevention, pointer capture, focus, and listener disposal.
+- [`src/lib/core/runtime/browser_gamepad.test.ts`](../../src/lib/core/runtime/browser_gamepad.test.ts)
+  covers connection/disconnection, changed button and axis events, immutable
+  snapshots, polling, and adapter disposal.
 
 ## Notes
 
-The core router, game/scene ownership, and browser adapter slices are
-implemented. Gamepad polling and broader browser evidence remain future work.
+The core router, game/scene ownership, browser keyboard/pointer adapter, and
+gamepad adapter slices are implemented. Broader browser evidence remains for
+the final documentation slice.
 
 ## Trace
 
