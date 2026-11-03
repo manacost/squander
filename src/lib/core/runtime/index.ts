@@ -8,6 +8,7 @@ export * from "./font_loading.js";
 export * from "./game.js";
 export * from "./geometry_ownership.js";
 export * from "./image_loading.js";
+export * from "./input.js";
 export * from "./paths.js";
 export { flatten_path } from "./path_flattening.js";
 export type { FlattenedSubpath } from "./path_flattening.js";
