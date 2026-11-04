@@ -5,7 +5,12 @@ import type { WebGpuTexture } from "../src/lib/core/runtime/webgpu_renderer.js";
 test("captures a readable renderer capability gallery", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(async () => {
+    document.body.replaceChildren();
+    document.body.style.margin = "0";
+    document.body.style.backgroundColor = "#000";
     const canvas = document.createElement("canvas");
+    canvas.style.display = "block";
+    canvas.style.backgroundColor = "#000";
     document.body.append(canvas);
     const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
     const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
