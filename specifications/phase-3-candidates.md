@@ -1,6 +1,6 @@
 # Phase 3 capability candidates
 
-Last updated: 2026-10-24.
+Last updated: 2026-11-03.
 
 This is a planning backlog, not committed implementation scope. Entries need
 capability specs, acceptance criteria, and test mappings before implementation.
@@ -8,22 +8,21 @@ Use capability names as stable IDs when creating specs; earlier P3 numeric label
 were planning labels only. Lists replace the earlier tables for readability.
 
 Phase 1 and Phase 2 closeout work does not promote any candidate in this file
-into the replacement framework scope.
+into the replacement framework scope. Phase 3-a and Phase 3-b capabilities are
+now promoted and listed below for historical traceability.
+
+## Promoted capabilities
+
+- **Phase 3-a composition stack:** scene lifecycle, scene asset dependencies,
+  typed event communication, and scene-owned Svelte UI. See
+  [`phase-3-a.md`](phase-3-a.md).
+- **Phase 3-b input routing:** keyboard, pointer, and gamepad input with
+  scene-first routing and browser adapters. See [`phase-3-b.md`](phase-3-b.md).
 
 ## Requested future directions
 
-- **Scene lifecycle/composition:** factory-based mounting, unmounting, stacking,
-  and potentially recursive composition over the update/draw loop.
-- **Scene asset dependencies:** declarative dictionaries using explicit ownership;
-  retain assets until disposal by default, sharing underlying resources across owners.
-- **Scene-owned UI overlays:** an optional Svelte adapter within the per-game host;
-  keep the core scene layer independent of Svelte.
 - **ECS integration:** composed systems and entities without mandatory inheritance.
   Built-in ECS versus integration remains undecided.
-- **Typed event buses:** communication with subscriptions that can be cleaned up
-  on unmount; exact event contracts remain to be designed.
-- **Keyboard events and gamepad detection:** input routing and broader gamepad
-  controls need separate scoping.
 - **Safe file storage and safe math utilities:** the meaning of safety and initial
   supported operations remain undecided.
 - **Cursor-anchored zoom:** a convenience that keeps the world point under the
@@ -78,7 +77,8 @@ they are no longer Phase 3 candidates. A developer-authored bitmap atlas is not
 required for the preferred font workflow. Exact supplied-atlas import remains open.
 
 The core Svelte bridge, game ownership primitives, typed manifests, and dynamic
-File/Blob textures are Phase 2 features. Scene automation remains future work.
+File/Blob textures are Phase 2 features. Scene automation is implemented by
+Phase 3-a; future scene behavior must extend its existing lifecycle contract.
 
 Fixed-step scheduling and mipmaps belong in the [Phase 4 log](phase-4-candidates.md).
 WebGL2 fallback and general 3D are not planned. See the

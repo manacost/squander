@@ -1,5 +1,8 @@
 # Phase 3-a: composition stack
 
+> This document records the original Phase 3-a plan. The plan is complete;
+> Phase 3-b is specified separately in [`phase-3-b.md`](phase-3-b.md).
+
 ## Purpose
 
 Phase 3-a adds the first higher-level composition layer above the Phase 2 game
@@ -442,4 +445,4 @@ baseline slice have:
 
 The final Phase 3-a review must also verify that the core remains Svelte-free,
 Phase 2 behavior remains intact, the four capabilities compose in one example,
-and Phase 3b–3e remain explicitly unplanned.
+and later phases keep separate API designs and acceptance evidence.

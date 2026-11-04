@@ -68,3 +68,13 @@ test("Svelte bridge samples render source syntax instead of HTML entities", asyn
   await expect(host_sample).not.toContainText("&lt;");
   await expect(host_sample).not.toContainText("=&gt;");
 });
+
+test("scene UI documentation explains lifecycle ownership with copyable samples", async ({ page }) => {
+  await page.goto("/docs/examples/scene-ui");
+  await expect(page.getByRole("heading", { level: 1, name: "Scene-owned UI" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Mount UI when the scene enters" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Understand ownership and failure behavior" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Public types and constraints" })).toBeVisible();
+  await expect(page.locator("pre code").filter({ hasText: "create_ui(StatusPanel" }).first()).toContainText("await scenes.switch");
+  await expect(page.locator("pre code").filter({ hasText: "$props" }).first()).toContainText("Scene status");
+});

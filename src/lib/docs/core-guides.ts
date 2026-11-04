@@ -172,7 +172,7 @@ export const core_guides = [
       "const game = create_game({ renderer, scheduler, setup, update, draw });\nawait game.ready;\ngame.pause();\ngame.resume();\nawait game.dispose();",
     proof:
       "Lifecycle unit tests cover setup races, callback errors, visibility, disposal, and renderer cleanup. Browser demos expose the controls.",
-    limitations: "Scene automation and input/storage lifecycle are outside Phase 2.",
+    limitations: "Scene composition and input routing are separate Phase 3 capabilities. Storage lifecycle remains outside this guide.",
   },
   {
     slug: "game-timing",
