@@ -1,9 +1,9 @@
 # squander
 
 Squander is a TypeScript browser-game toolkit with a WebGPU renderer and an
-optional Svelte 5 adapter. The Phase 2 replacement runtime owns game lifecycle,
-assets, sprites, primitives, paths, polygons, cameras, viewports, filtering,
-fonts, and typed UI state bridges.
+optional Svelte 5 adapter. The current runtime owns game lifecycle, assets,
+sprites, primitives, paths, polygons, cameras, viewports, filtering, fonts,
+scenes, input routing, scene-owned UI, and typed UI state bridges.
 
 This checkout contains the npm package and the SvelteKit documentation site.
 The package version is `8.0.0`.
@@ -74,9 +74,10 @@ Node-safe; Svelte components must be compiled by a Svelte-aware consumer.
 
 ## Evidence and verification
 
-The replacement runtime is documented as verified slices. Capability contracts
-live in `specs/`, and detailed evidence lives in
-`specifications/checkpoints/`.
+The replacement runtime is documented as verified capabilities. Current
+contracts live in `specs/`, durable rationale lives in
+`specifications/decisions.md`, and detailed historical evidence lives in
+`specifications/history/`.
 
 ```sh
 npm run test:unit
@@ -106,7 +107,8 @@ screenshots are supplemental visual evidence.
 | `src/routes/(docs)/docs/examples/` | Runnable composition and feature examples.                                 |
 | `tests/`                           | Playwright integration and real WebGPU fixtures.                           |
 | `specs/`                           | Capability contracts and promotion criteria.                               |
-| `specifications/checkpoints/`      | Evidence records, gaps, and go/no-go decisions.                            |
+| `specifications/history/`          | Archived phase plans, checkpoints, and historical evidence.                |
+| `specifications/decisions.md`      | Durable architecture decisions and boundaries.                             |
 
 Generated `dist/`, `build/`, and `.svelte-kit/` output is ignored; edit source
 files instead.

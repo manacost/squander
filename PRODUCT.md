@@ -18,7 +18,8 @@ serious, polished results.
 Squander provides the runtime and tooling needed to build browser games with
 TypeScript. It hides most WebGPU graphics-rendering details while exposing the
 game lifecycle, assets, sprites, primitives, paths, polygons, cameras,
-viewports, filtering, fonts, and typed UI state bridges needed to make a game.
+viewports, filtering, fonts, scenes, input routing, scene-owned Svelte UI, and
+typed UI state bridges needed to make a game.
 Success means developers can move from idea to a performant, professional game
 without managing low-level graphics plumbing in every feature.
 
@@ -44,6 +45,10 @@ agents to navigate.
   details behind a practical game API.
 - The core runtime must remain independent of Svelte; Svelte 5 integration is
   optional.
+- Scenes compose gameplay, assets, typed communication, and input ownership
+  without requiring a rendering scene graph.
+- Browser input remains explicit and host-scoped so native controls retain their
+  behavior unless a game handler opts into prevention.
 - APIs should support ECS-oriented and other flexible programming styles rather
   than requiring a heavy object-oriented model.
 - Developer experience must support agentic-first programming through explicit,

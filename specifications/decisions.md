@@ -1,10 +1,10 @@
 # Architecture decision log
 
-Last updated: 2026-10-25.
+Last updated: 2026-11-03.
 
-These decisions were accepted during the architecture interview. They describe
-the intended replacement framework, not the current implementation. API examples
-discussed in the interview remain illustrative. The interview is ongoing.
+These decisions describe the current accepted architecture. Capability specs
+define observable behavior and checkpoints preserve historical evidence. A
+later decision supersedes an earlier one only when it says so explicitly.
 
 ## AD-055: Synchronous game controller with asynchronous readiness
 
@@ -784,13 +784,76 @@ those scene-owned resources. Remounting the same factory creates a new isolated
 instance. Game-owned assets and programmer-owned signals remain independent of
 scene removal.
 
+## AD-057: Scene assets reuse game ownership primitives
+
+Scene dependencies use the parent game's typed asset cache and resource owner.
+Each scene receives independent handles, while shared cache entries remain
+game-owned until the final owner releases them. Scene removal releases its
+handles and rejects late attachment; it does not create a second cache or GPU
+lifetime system.
+
+This keeps scene lifetime explicit without changing the Phase 2 ownership
+contract. See the [scene-assets capability](../specs/scene-assets/spec.md).
+
+## AD-058: Scene communication uses a game-owned typed bus
+
+Scenes communicate through `game.scenes.events` and the typed `context.events`
+facade. The bus is scoped to one game, preserves listener order, uses stable
+dispatch snapshots, reports listener failures through the game error path, and
+clears on disposal.
+
+The bus is not a process-global event singleton. The existing `Signal<T>` and
+`EventDispatcher<EventMap>` utilities remain available as lower-level
+primitives. See the [scene-signals capability](../specs/scene-signals/spec.md).
+
+## AD-059: Scene-owned Svelte UI stays behind the Game host
+
+The optional Svelte package exposes `<Game onReady={...}>` with a private UI
+layer. Scenes create typed component handles through contextual `create_ui()`;
+consumers do not mount a second overlay host. The core scene runtime remains
+Svelte-independent, and host teardown owns UI disposal.
+
+This extends the Svelte bridge without making gameplay state globally reactive.
+See the [scene-ui capability](../specs/scene-ui/spec.md).
+
+## AD-060: Input routes from the newest scene to global fallback
+
+Each game owns one normalized input router. Mounted scenes receive events from
+newest to oldest, followed by global fallback handlers. Handlers return `pass`,
+`consume`, or `consume_and_prevent_default`; consumption and browser default
+prevention remain separate outcomes.
+
+Action mapping, rebinding, text input, gestures, hit testing, and a global input
+singleton remain outside this capability. See the [input-routing capability](../specs/input-routing/spec.md).
+
+## AD-061: Browser input stays at an explicit host seam
+
+Browser adapters attach only to a caller-owned host. Editable controls retain
+native behavior by default, and `preventDefault()` is requested only by the
+explicit input disposition. Pointer capture and focus are adapter concerns;
+the core router remains free of DOM types.
+
+This preserves SSR safety and leaves other input adapters possible. The browser
+policy is part of [input-routing](../specs/input-routing/spec.md).
+
+## AD-062: Gamepad state is owner-polled and immutable
+
+The browser gamepad adapter listens for connection lifecycle events, but samples
+current values when the owner calls `poll()`. It emits changes through the same
+input router and exposes immutable snapshots without creating a framework-owned
+animation loop.
+
+Physical hardware availability is environment-dependent; the adapter seam and
+injected browser API are the verified contract. See [input-routing](../specs/input-routing/spec.md).
+
 ## Implementation readiness
 
-Capability contracts are drafted under [specs](../specs/README.md). Their Draft
-status preserves unresolved details; none claim replacement-framework verification.
-Follow [readiness guidance](implementation-readiness.md) before each implementation
-slice. Use the [open questions](open-questions.md) to resolve behavior before tests
-or implementation accidentally establish an undocumented policy.
+Capability contracts live under [specs](../specs/README.md). Their lifecycle
+status distinguishes current implemented behavior from accepted or draft work.
+Follow [readiness guidance](implementation-readiness.md) before each new
+implementation slice. Use the [open questions](open-questions.md) to resolve
+behavior before tests or implementation accidentally establish an undocumented
+policy.
 
 Future work is recorded in the [Phase 3 candidate log](phase-3-candidates.md) and
 [Phase 4 candidate log](phase-4-candidates.md).

@@ -206,8 +206,8 @@ await game.scenes.remove(handle);`}</code
   <p>
     The example mounts two independent scenes into one game and reports their update counts. Scene factories also receive the game-owned
     typed event bus through <code>context.events</code>; use it for explicit scene communication without a global singleton. The shared
-    manifest asset remains usable while one scene leaves. Scene-owned Svelte UI is the remaining separate host capability; see the Scene UI
-    demo for the
+    manifest asset remains usable while one scene leaves. Scene-owned Svelte UI is implemented as a separate optional host capability; see
+    the Scene UI demo for the
     <code>&lt;Game onReady&gt;</code> integration path.
   </p>
 

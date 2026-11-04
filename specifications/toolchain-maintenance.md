@@ -1,7 +1,7 @@
 # Toolchain maintenance
 
-This maintenance implements AD-021 ahead of the WebGPU replacement. It does not
-implement the draft rendering capabilities.
+This document records the current toolchain and the completed migration that
+established the WebGPU replacement runtime. It is not a capability contract.
 
 ## Upgrade
 
@@ -11,34 +11,28 @@ implement the draft rendering capabilities.
 - Vitest 5, Playwright 1.64, ESLint 10, typescript-eslint 8, and Prettier 3
   with prettier-plugin-svelte 4. Exact resolutions are in `package-lock.json`.
 - Node.js 22.17 or newer is required. GitHub Pages uses Node.js 24 and `npm ci`.
-- PixiJS remains pinned to the previously installed 8.5.1 during this migration.
+- PixiJS is not part of the current replacement package surface.
 
 SvelteKit configuration moves into `vite.config.ts`; `#lib` imports replace
 `$lib`, and `$app/state` replaces the removed store API. Navigation and static
 assets use the typed `resolve` and `asset` helpers. The migration follows the
 [official SvelteKit 3 guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3).
 
-## Verification baseline
+## Historical migration notes
 
-Before the upgrade, type checking passed and all 18 unit tests passed. Build and
-packaging succeeded with a SvelteKit dependency warning and a repository URL
-suggestion. ESLint reported six errors and 68 warnings. Formatting reported eight
-unrelated skill files; those files were preserved.
+The original SvelteKit and tooling upgrade had separate packaging warnings,
+legacy lint debt, and sandbox server-bind failures. Those results are retained
+in the archived phase records and do not describe the current repository gate.
 
-The original browser-test attempt was blocked by sandbox port binding, so it
-provided no application-level baseline result. Upgraded browser verification runs
-with the required local-server and browser permissions.
+## Current verification baseline
 
-## Current verification
-
-- Clean `npm ci` succeeds without peer-dependency bypasses.
-- `npm run check`: zero errors or warnings.
-- `npm run test:unit`: seven files, 18 passing tests.
-- Production build and package generation succeed. Package validation retains the
-  SvelteKit dependency warning and repository URL suggestion; the newer Publint
-  also suggests declaring the existing license in package metadata.
-- `npm run test:integration`: all five tests pass. Browser verification covers documentation navigation, rendering surfaces in
-  Pixi and camera demos, Svelte bridge interaction, and returning to the home page.
+- `npm ci` uses the locked dependency graph.
+- `npm run check`, `npm run lint`, `npm run test:type`, and `npm run test:unit`
+  are required repository gates.
+- `npm run test:integration` and `npm run test:webgpu` provide trusted-origin
+  browser and real-device rendering evidence.
+- `npm run package`, `npm run validate:package`, and
+  `npm run validate:consumer` verify the published package boundary.
 
 Strict lint configuration and remaining legacy debt are documented in
 [tooling standards](tooling-standards.md).

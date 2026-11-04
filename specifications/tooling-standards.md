@@ -40,24 +40,18 @@ type LegacyPayload = any;
 A suppression is an exception to review, not a substitute for designing a typed
 boundary. Prefer validation and `unknown` where the value's shape is not known.
 
-## Verification and remaining debt
+## Verification baseline
 
-The configuration parses the complete project with zero fatal/parser errors.
-Focused disposable probes verified valid snake_case code, rejection of explicit
-`any`, acceptance of a reasoned exception, rejection of an unexplained exception,
-floating-promise detection, and naming enforcement.
+The complete project is checked with zero fatal/parser errors, zero ESLint
+warnings, and zero ESLint errors. The replacement runtime and documentation
+workflow use the same strict rules; broad suppressions are not accepted.
 
-At this maintenance checkpoint, ESLint reports 911 errors and zero warnings in
-existing code under the new standard. These are not waived or hidden; migration
-and renderer work must address relevant violations as affected code is replaced.
-The prior configuration reported six errors and 68 warnings, so these counts are
-not directly comparable measures of regressions. New migration configuration and
-browser tests pass their lint checks.
+Run `npm run lint` for the repository gate. Run `npm run lint:format` and
+`npm run lint:code` separately when diagnosing a failure. Formatting and code
+lint are independent checks, and generated output remains excluded.
 
-Repository-wide formatting still fails on eight unrelated skill documents that
-already failed before this work. Those files were preserved. All changed files
-pass formatting. Therefore the repository's aggregate lint command is **not yet
-green**; passing type checks/build/tests does not mean lint debt is resolved.
+The current verification baseline is recorded in the phase closeout evidence
+under [`specifications/history/`](history/README.md).
 
 See [toolchain maintenance](toolchain-maintenance.md) for version choices and
 runtime verification. No >90% replacement-framework coverage is claimed here.

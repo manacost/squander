@@ -320,8 +320,19 @@ game.scenes.events.emit("resume", undefined);
 \`\`\`
 
 Scene removal disposes the scene permanently. Shared manifest assets remain
-usable while one scene leaves. Richer scene-owned Svelte UI is available
-through the Svelte host examples, not through the core runtime.
+usable while one scene leaves. Scene-owned Svelte UI is available through the
+optional \`Game\` host and remains outside the core runtime:
+
+\`\`\`svelte
+<Game onReady={({ scenes }) => {
+  scenes.switch(scenes.create(({ create_ui }) => ({
+    name: "hud",
+    enter: () => create_ui(Hud, { score: 0 }),
+  })));
+}} />
+\`\`\`
+
+Use \`GameHost\` or \`create_game_adapter\` for the lower-level typed state bridge.
 
 ## Text and fonts
 
@@ -341,9 +352,10 @@ runtime scope.
 
 ## Svelte 5 game UI bridge
 
-Use \`GameHost\` for the common path or \`create_game_adapter\` for a custom
-host. The game publishes readonly state snapshots; the UI calls typed commands.
-The command object preserves synchronous and asynchronous return types.
+Use \`GameHost\` for the common state/command bridge, \`Game\` for scene-owned
+Svelte UI, or \`create_game_adapter\` for a custom host. The game publishes
+readonly state snapshots; the UI calls typed commands. The command object
+preserves synchronous and asynchronous return types.
 
 \`\`\`svelte
 <GameHost initial_state={{ score: 0 }} {commands} {create}>
