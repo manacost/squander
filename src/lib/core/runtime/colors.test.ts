@@ -8,7 +8,7 @@ const expect_color = (actual: Color, expected: Color): void => {
   expect(actual.alpha).toBeCloseTo(expected.alpha, 12);
 };
 
-describe("[color] shared color helpers", () => {
+describe("shared color helpers", () => {
   it("normalizes equivalent RGB, HSL, and hex authoring forms", () => {
     const expected = rgba(1, 0, 0, 0.5);
 

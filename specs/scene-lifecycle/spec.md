@@ -7,7 +7,8 @@ the Phase 2 game lifecycle, error, and disposal guarantees.
 
 ## Status
 
-Accepted. Target phase: Phase 3-a, Slice 1. Implemented and verified.
+Implemented. Target phase: Phase 3-a, Slice 1. Lifecycle, ordering, failure,
+replacement, teardown, and trusted-origin browser evidence are verified.
 
 ## Requirements
 

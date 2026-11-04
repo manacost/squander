@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { degrees } from "./angles.js";
 
-describe("[angles] degree conversion", () => {
+describe("degree conversion helper", () => {
   it("converts agreed clockwise radian values", () => {
     expect(degrees(0)).toBe(0);
     expect(degrees(90)).toBeCloseTo(Math.PI / 2);

@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted. Target phase: Phase 3-a, Slice 3. Implementation in progress.
+Implemented. Target phase: Phase 3-a, Slice 3. Typed dispatch, listener
+mutation, error routing, scoped cleanup, disposal, and trusted-origin browser
+evidence are verified.
 
 ## Goal
 
@@ -75,10 +77,12 @@ game.scenes.events.emit("score", { points: 10 });
 
 Automated evidence marker: [scene-signals]
 
-- `src/lib/core/runtime/scene.test.ts` covers ordering, `once`, mutation,
+- [`src/lib/core/runtime/scene.test.ts`](../../src/lib/core/runtime/scene.test.ts)
+  covers ordering, `once`, mutation,
   listener errors, and game disposal.
-- `type-tests/scene.ts` covers event payload and name misuse.
-- `type-tests/svelte-scenes.ts` covers EventMap propagation through
+- [`type-tests/scene.ts`](../../type-tests/scene.ts) covers event payload and
+  name misuse.
+- [`type-tests/svelte-scenes.ts`](../../type-tests/svelte-scenes.ts) covers EventMap propagation through
   `GameReadyContext`.
 - `tests/webgpu-scene-signals.spec.ts` covers trusted-origin browser delivery
   and listener cleanup after scene removal when the WebGPU fixture is runnable.
@@ -86,12 +90,12 @@ Automated evidence marker: [scene-signals]
 ## Notes
 
 The bus is game-scoped, not process-global. `clear()` is idempotent and is
-called by game disposal. Browser communication evidence is pending because the
-managed environment currently denies the preview-server bind.
+called by game disposal. Browser communication evidence uses the trusted local
+preview origin and proves removed listeners stop receiving events.
 
 ## Verification
 
 Focused scene tests cover typed payload dispatch, `once`, ordering, mutation,
 listener errors, and disposal. Public type tests cover payload inference and
-rejected event names and payloads. Trusted-origin browser communication evidence
-remains pending until the environment permits the project preview server.
+rejected event names and payloads. Trusted-origin browser communication
+evidence covers listener cleanup after scene removal.

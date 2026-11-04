@@ -19,7 +19,7 @@ const pointer = (type: string, values: Record<string, unknown> = {}): PointerEve
   return event as PointerEvent;
 };
 
-describe("create_browser_input_adapter", () => {
+describe("[input-routing] create_browser_input_adapter", () => {
   it("normalizes host keyboard events and prevents only requested defaults", () => {
     const host = document.createElement("div");
     document.body.append(host);

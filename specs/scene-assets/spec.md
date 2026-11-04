@@ -2,8 +2,9 @@
 
 ## Status
 
-Accepted. Target phase: Phase 3-a, Slice 2. CPU implementation and ownership
-evidence are verified; browser evidence remains pending.
+Implemented. Target phase: Phase 3-a, Slice 2. Required and lazy scene asset
+ownership, shared lifetime, retry, cancellation, and trusted-origin image
+upload/draw evidence are verified.
 
 ## Goal
 
@@ -50,8 +51,7 @@ Test evidence: the focused [`scene.test.ts`](../../src/lib/core/runtime/scene.te
 covers required dependency acquisition, shared-scene lifetime, surviving-scene
 use, cancellation, retry, and late completion. Real browser image upload/draw
 evidence is exercised by [`webgpu-scene-assets.spec.ts`](../../tests/webgpu-scene-assets.spec.ts)
-when the trusted preview server is runnable; the current managed environment
-denies that server bind.
+on the trusted local preview origin.
 
 ## Notes
 
@@ -80,5 +80,5 @@ release their independent handles; frame-local draw data is not an asset.
 ## Verification
 
 Focused tests cover manifest inference, required loading, lazy loading, shared
-acquisition, cancellation, retry, and late completion. A browser fixture must
-verify real image upload and draw after one scene is removed.
+acquisition, cancellation, retry, and late completion. The browser fixture
+verifies real image upload and draw after one scene is removed.

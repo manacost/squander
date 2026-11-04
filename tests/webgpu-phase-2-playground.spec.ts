@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("[phase-2-playground] composes runtime capabilities through GameHost", async ({ page }) => {
+test("[feature-documentation] composes runtime capabilities through GameHost", async ({ page }) => {
   const console_messages: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "warning" || message.type() === "error") console_messages.push(message.text());

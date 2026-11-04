@@ -8,7 +8,7 @@ behavior explicit.
 
 ## Status
 
-Implemented.
+Implemented. Target phase: Phase 3-b.
 
 ## Requirements
 

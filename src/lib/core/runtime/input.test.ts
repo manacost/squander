@@ -10,7 +10,7 @@ const key_down = (key: string): InputEvent => ({
   modifiers: { alt: false, ctrl: false, meta: false, shift: false },
 });
 
-describe("create_input_router", () => {
+describe("[input-routing] create_input_router", () => {
   it("dispatches to the newest scene first and falls back to globals", () => {
     const router = create_input_router();
     const calls: string[] = [];

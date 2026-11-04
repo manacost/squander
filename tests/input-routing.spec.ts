@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("input routing demo proves scene priority and native browser behavior", async ({ page }) => {
+test("[input-routing] demo proves scene priority and native browser behavior", async ({ page }) => {
   await page.goto("/docs/examples/input");
   await expect(page.getByRole("heading", { level: 1, name: "Input routing" })).toBeVisible();
   await expect(page.locator('a.nested[href="/docs/examples/input"]')).toHaveAttribute("href", "/docs/examples/input");

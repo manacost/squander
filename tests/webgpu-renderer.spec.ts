@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import type { ResourceHandle } from "../src/lib/core/runtime/resource_ownership.js";
 import type { WebGpuTexture } from "../src/lib/core/runtime/webgpu_renderer.js";
 
-test("[visual-evidence] captures a readable renderer capability gallery", async ({ page }) => {
+test("captures a readable renderer capability gallery", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(async () => {
     const canvas = document.createElement("canvas");

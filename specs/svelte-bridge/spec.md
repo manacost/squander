@@ -12,9 +12,9 @@ The adapter exposes one readonly view containing `state`, lifecycle `status`,
 an initialization `error`, and typed `commands`; game code receives the only
 `publish` function.
 
-The Phase 2 contract is implemented and verified below. Phase 3-a adds the
-recommended `<Game onReady={...}>` host and scene-owned Svelte UI through a
-contextual `create_ui()` helper; the core runtime remains Svelte-independent.
+The Phase 2 bridge contract is implemented and verified below. Scene-owned UI
+is documented separately in the [`scene-ui`](../scene-ui/spec.md) capability;
+the core runtime remains Svelte-independent.
 
 ## Requirements
 
@@ -23,9 +23,6 @@ contextual `create_ui()` helper; the core runtime remains Svelte-independent.
 - Keep the core independent of Svelte. Publish UI-relevant changes rather than forcing the whole simulation to be reactive each frame.
 - The Svelte host owns its game instance and disposes it on unmount; subscriptions are cleaned up.
 - Use per-instance hosts rather than a global game/UI root.
-- The `Game` component owns its private scene UI layer. A scene creates, mounts,
-  updates, and disposes its own UI through `create_ui`; consumers do not mount a
-  separate overlay host.
 
 ## Scenarios
 
@@ -51,9 +48,9 @@ State and commands from one game remain isolated from another.
 
 ## Usage description
 
-Illustrative: use `<Game onReady={start_game}>`, then call
-`scenes.switch(scenes.create(({ create_ui }) => ...))` from `start_game`.
-Scene UI props remain typed and callbacks remain application-owned.
+Use `<GameHost>` for the standard render-prop bridge, or use
+`create_game_adapter` when the application needs a custom Svelte host. State
+snapshots are readonly and commands preserve their inferred return types.
 
 ## Test references
 
@@ -74,14 +71,8 @@ The real browser fixture
 mounts the host, observes ready state, invokes a typed command, navigates away,
 and recreates an isolated host instance.
 
-The scene-owned UI path is covered by
-[`src/lib/svelte/Game.ssr.test.ts`](../../src/lib/svelte/Game.ssr.test.ts),
-[`type-tests/svelte-scenes.ts`](../../type-tests/svelte-scenes.ts), and the real
-WebGPU fixture
-[`tests/webgpu-scene-ui.spec.ts`](../../tests/webgpu-scene-ui.spec.ts). It
-verifies SSR-safe initial markup, typed scene UI props, two isolated `Game`
-instances, stacked UI ordering, callback-driven switching, failed `onReady`, and
-renderer readback.
+The separate [`scene-ui`](../scene-ui/spec.md) capability covers the
+`<Game onReady={...}>` host and scene-owned UI lifecycle.
 
 Notification scheduling is covered by the adapter unit suite, and the isolated
 consumer smoke test covers published adapter import, runtime, and declarations.
@@ -104,8 +95,7 @@ Svelte, and the component entry is compiled by Svelte-aware consumers.
 
 AD-017. The Phase 2 subscription shape, SSR boundary, readonly view, command
 disposal behavior, and notification scheduling are implemented as documented;
-scene-owned Svelte UI is implemented by the Phase 3-a `Game` host; richer
-reactive helpers remain future work.
+richer reactive helpers remain future work.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
