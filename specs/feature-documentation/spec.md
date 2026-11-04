@@ -47,7 +47,7 @@ Browse focused Core guides by capability, then use the Demos to explore features
 ## Test references
 
 The crossover rule and current inventory are recorded in
-[`specifications/checkpoints/phase-2-feature-documentation-audit.md`](../../specifications/checkpoints/phase-2-feature-documentation-audit.md).
+[`specifications/history/phase-2/checkpoints/phase-2-feature-documentation-audit.md`](../../specifications/history/phase-2/checkpoints/phase-2-feature-documentation-audit.md).
 The Core sidebar and focused text guide are covered by
 [`tests/docs-core.spec.ts`](../../tests/docs-core.spec.ts),
 [`tests/text-example.spec.ts`](../../tests/text-example.spec.ts), and the real

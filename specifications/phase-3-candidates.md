@@ -15,9 +15,9 @@ now promoted and listed below for historical traceability.
 
 - **Phase 3-a composition stack:** scene lifecycle, scene asset dependencies,
   typed event communication, and scene-owned Svelte UI. See
-  [`phase-3-a.md`](phase-3-a.md).
+  [`phase-3-a.md`](history/phase-3/phase-3-a.md).
 - **Phase 3-b input routing:** keyboard, pointer, and gamepad input with
-  scene-first routing and browser adapters. See [`phase-3-b.md`](phase-3-b.md).
+  scene-first routing and browser adapters. See [`phase-3-b.md`](history/phase-3/phase-3-b.md).
 
 ## Requested future directions
 
@@ -82,4 +82,4 @@ Phase 3-a; future scene behavior must extend its existing lifecycle contract.
 
 Fixed-step scheduling and mipmaps belong in the [Phase 4 log](phase-4-candidates.md).
 WebGL2 fallback and general 3D are not planned. See the
-[decision log](decisions.md) and [Phase 2 scope](phase-2.md).
+[decision log](decisions.md) and [Phase 2 scope](history/phase-2/phase-2.md).

@@ -1,5 +1,8 @@
 # Phase 3-a: composition stack
 
+> Historical plan. For current behavior, read `specs/README.md` and the
+> relevant capability specification.
+
 > This document records the original Phase 3-a plan. The plan is complete;
 > Phase 3-b is specified separately in [`phase-3-b.md`](phase-3-b.md).
 
@@ -30,7 +33,7 @@ designs before planning or implementation:
 
 ## Goals alignment
 
-Phase 3-a advances the goals in [`goals.md`](goals.md):
+Phase 3-a advances the goals in [`goals.md`](../../goals.md):
 
 - composition over inheritance through factory-based scenes and explicit
   ownership;
@@ -171,7 +174,7 @@ At completion, update:
   review verdict, gap report verdict, limitations, and next slice;
 - the local ledger at `.codex/plans/phase-3-a.status.md`;
 - the local worklog at `.codex/plans/phase-3-a.worklog.md`;
-- a versioned checkpoint under `specifications/checkpoints/`.
+- a versioned checkpoint under `specifications/history/phase-3/checkpoints/`.
 
 Commit only the coherent slice with a Conventional Commit. Record the commit in
 the ledger and worklog before selecting the next slice.
@@ -426,7 +429,7 @@ verification scripts.
 - `npm run lint` passes with zero warnings and errors.
 - All future changes preserve that result; no broad suppression or lowered
   severity hides new diagnostics.
-- [Tooling standards](tooling-standards.md) documents the expectation and the
+- [Tooling standards](../../tooling-standards.md) documents the expectation and the
   verification workflow.
 
 ## Global definition of done

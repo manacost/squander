@@ -1,5 +1,8 @@
 # Planning review: 2026-10-23
 
+> Historical planning review. For current behavior, read `specs/README.md` and
+> the relevant capability specification.
+
 ## Scope
 
 Reviewed the spec-system capability and 15 Phase 2 capability drafts using the
@@ -23,10 +26,10 @@ summaries, decision log, and phase candidate logs for consistency with the inter
 
 ## Readiness limits
 
-The [open contract list](open-questions.md) records decisions that must be resolved
-before their dependent slices. The [implementation guidance](implementation-readiness.md)
+The [open contract list](../../open-questions.md) records decisions that must be resolved
+before their dependent slices. The [implementation guidance](../../implementation-readiness.md)
 defines how to write observable criteria and select effective tests. The proposed
-[sequence](phase-2.md) starts with verification feasibility so an unavailable GPU
+[sequence](../phase-2/phase-2.md) starts with verification feasibility so an unavailable GPU
 environment is discovered before substantial rendering implementation.
 
 Runtime tests, type tests, coverage collection, and GPU experiments were not run

@@ -1,15 +1,18 @@
 # Phase 2: WebGPU rendering foundation
 
+> Historical plan. For current behavior, read `specs/README.md` and the
+> relevant capability specification.
+
 ## Purpose and status
 
 Replace PixiJS with a standalone TypeScript 2D foundation and optional first-class
 Svelte/SvelteKit integration. The final breaking package shape exposes the core
 from the package root and `squander/core`, with Svelte integration at
 `squander/svelte`. The interview direction is consolidated into
-[15 capability drafts](../specs/README.md). They are not implemented contracts:
-[open details](open-questions.md) must be resolved for each dependent slice.
+[15 capability drafts](../../../specs/README.md). They were not implemented contracts
+at the time of this plan; current status is recorded in the capability index.
 
-Phase 2 starts only after the [Phase 1 readiness gate](phase-1-readiness.md)
+Phase 2 starts only after the [Phase 1 readiness gate](../phase-1/phase-1-readiness.md)
 has recorded verification tooling, migration inventory, and specification
 validation results. A passing structural check does not promote a capability or
 replace real WebGPU evidence.
@@ -113,15 +116,15 @@ for one large rewrite. Resolve relevant contract gaps before starting each slice
    coverage, type contracts, and the real rendering suite.
 
 Tests and documentation accompany each slice; step 7 completes integration rather
-than postponing verification. See [implementation readiness](implementation-readiness.md).
+than postponing verification. See [implementation readiness](../../implementation-readiness.md).
 
 ## Deferred or unplanned
 
 Scene/ECS/event-bus layers, input, safe storage/math, custom shaders, render targets,
 advanced effects, richer text, and desktop packaging remain future candidates.
 Fixed-step scheduling and mipmaps are Phase 4 candidates. WebGL2 and general 3D
-are not planned. Consult the [Phase 3](phase-3-candidates.md) and
-[Phase 4](phase-4-candidates.md) logs; candidate placement does not promise delivery.
+are not planned. Consult the [Phase 3](../../phase-3-candidates.md) and
+[Phase 4](../../phase-4-candidates.md) logs; candidate placement does not promise delivery.
 
-Accepted rationale is in the [decision log](decisions.md). Detailed behavioral
+Accepted rationale is in the [decision log](../../decisions.md). Detailed behavioral
 criteria and planned verification live in the capability specs.

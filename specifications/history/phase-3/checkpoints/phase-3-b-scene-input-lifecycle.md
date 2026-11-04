@@ -26,7 +26,7 @@ removal/replacement/disposal -> `InputRouter.remove_scene()`.
 - `src/lib/core/runtime/scene.ts`: scene input registration and teardown.
 - `src/lib/core/runtime/input.ts`: indexed scene insertion.
 - `src/lib/core/runtime/scene.test.ts`: lifecycle and global fallback evidence.
-- `specifications/phase-3-b.md`: slice ordering.
+- `specifications/history/phase-3/phase-3-b.md`: slice ordering.
 - `specs/input-routing/spec.md`: lifecycle requirements and scenarios.
 
 ## Evidence

@@ -1,178 +1,41 @@
-# Implementation-slice contract gates
+# Open contract questions
 
-The numbered interview established direction, not every API detail. These are
-implementation-readiness questions, not reopened decisions. Resolve the relevant
-ones before a dependent slice starts; record outcomes in its spec and the decision
-log when architectural. No fixed implementation values below are implied.
+No blocking contract questions remain for the completed Phase 1, Phase 2,
+Phase 3-a, or Phase 3-b scope. Their accepted behavior is recorded in the
+[decision log](decisions.md) and the implemented capability specs under
+[`../specs/`](../specs/README.md).
 
-## Phase 1 disposition
+This file contains only questions that must be answered before a future
+capability becomes an implementation contract. A candidate is not promoted by
+answering these questions alone; it also needs a capability specification,
+acceptance evidence, and the relevant documentation.
 
-The questionnaire decisions through AD-053 are recorded in
-[decisions.md](decisions.md) and reflected in the capability drafts. Items
-listed below are retained only when they require an implementation experiment or
-a capability-specific API choice. They are pre-slice gates: a Phase 2 slice must
-resolve its relevant items in the capability spec and, when architectural, the
-decision log before implementation begins.
+## Future capability gates
 
-Phase 1 does not invent test references or claim that these gates are already
-implemented. The selected verification baseline and evidence policy are in
-[phase-1-readiness.md](phase-1-readiness.md).
+- **ECS integration:** Decide whether Squander ships a minimal ECS or exposes
+  composition seams for an application-owned ECS. Define ownership, update
+  ordering, and disposal boundaries.
+- **Action mapping:** Define action names, rebinding, device precedence, and
+  how mapped actions coexist with the raw input router.
+- **Text input and IME:** Define composition events, editable-control policy,
+  and the boundary between browser text editing and gameplay input.
+- **Camera extensions:** Define cursor-anchored zoom, swappable projections,
+  and any screen-space stroke policy before implementation.
+- **Rendering extensions:** Define culling correctness, custom shaders, render
+  targets, blend modes, curved fills, holes, and fill rules with measured
+  performance and real-device evidence.
+- **Text and assets:** Define rich layout, shaping, fallback, supplied atlas
+  import, generated manifests, and advanced font workflows.
+- **Simulation and packaging:** Define fixed-step overload behavior, desktop
+  wrapper support, safe storage/math utilities, and the supported OS/GPU matrix.
 
-## Lifecycle and runtime
+See the [Phase 3 candidate log](phase-3-candidates.md) and
+[Phase 4 candidate log](phase-4-candidates.md) for current placement. Do not
+reopen accepted decisions in this file; add a superseding decision when a
+future capability changes the architecture.
 
-- `game-lifecycle`: factory/setup/cleanup signatures, typed errors,
-  and how external custom setup cleanup cooperates with cancellation.
-- `game-timing`: the timing fields, cap, first/resume delta, snapshot lifetime, and
-  synchronous callback scheduling are agreed (AD-019 and AD-020).
-- `webgpu-runtime`: supported Chromium/OS baseline, GPU limits, unavailable-adapter
-  handling, and intentional teardown versus unexpected device loss.
+## Slice gate for future work
 
-## Assets
-
-- `asset-loading`: descriptor/cache identity and cancellation of one concurrent
-  requester without disrupting others.
-- `dynamic-assets`: supported image encodings and size limits; duplicate-input policy.
-- `resource-ownership`: release/scope API and internal
-  completion/reclamation strategy. AD-038 defines safe release semantics.
-
-## Rendering
-
-- `sprite-drawing`: color helper signatures/ranges and error types, color/alpha encoding and invalid per-draw opacity handling,
-  atlas metadata, and negative-scale policy.
-- `shape-drawing`: transformation pivots, the exact miter limit, very wide strokes,
-  antialiasing, and nonuniform object-scale behavior.
-- `paths-and-polygons`: exact command shapes, update-operation name (revisit `replace`),
-  numerical validation tolerances and overlapping/touching edges, rebuild scheduling,
-  command sequencing/empty subpaths, tessellation tolerance,
-  and the exact geometry release API (ownership is agreed in AD-039).
-- `viewport-sizing`: pixel rounding, zero-size hosts, DPR policy, bar color, and
-  whether policy changes require recreation.
-- `camera-2d`: exported bounds type name, numerical visibility tolerances, synchronous-callback enforcement, camera lifetime, optional in-scope mutation enforcement, position/rotation value validation, and extreme-value numerical behavior.
-- `texture-filtering`: descriptor names, sampler changes, and font sampling defaults.
-
-## Text and integration
-
-- `text-drawing`: rich layout/shaping, fallback and arbitrary-script scope,
-  first-use readiness policy beyond supported glyphs, and supplied-atlas import.
-  Browser-font loading was accepted; BMFont JSON import was only proposed.
-- `svelte-bridge`: exact read-only subscription and command types, runtime alias
-  protection, SSR boundary, notification scheduling, and commands after disposal.
-- `feature-documentation`: feature route inventory, demo organization, and the
-  playground's composition flows. Feature-specific tests and demos are required.
-
-## Verification and migration
-
-- Select real GPU test infrastructure, visual tolerances, type-test runner, and
-  coverage instrumentation/merging. The four greater-than-90% metrics and runtime
-  scope are already agreed.
-- Identify which legacy demos can be adapted and which are removed or archived;
-  preserve unrelated work and avoid a broad unreviewed deletion.
-- Defer package entry-point and dependency-metadata changes until the final
-  Phase 2 breaking migration. The target is a core API at the package root and
-  `squander/core`, with optional Svelte integration at `squander/svelte`.
-
-See [capability drafts](../specs/README.md) and [readiness guidance](implementation-readiness.md).
-
-## Approved project maintenance
-
-Strict type-aware ESLint, reasoned narrow suppressions, and consistent naming are
-agreed in AD-021. The coordinated Svelte/SvelteKit toolchain upgrade is complete; see
-[maintenance verification](toolchain-maintenance.md) and the remaining
-[lint debt](tooling-standards.md).
-
-The lifecycle/timing and maintenance questionnaire is complete. Continue with the
-remaining capability contracts above before their dependent implementation slices.
-
-## Rendering questionnaire progress
-
-The six-question rendering block is complete:
-
-- Radians with a `degrees()` helper (AD-022).
-- Image flips preserve geometry and origins (AD-023).
-- Equal color helpers return a shared readonly `Color` (AD-024).
-- Invalid colors throw at construction; finite hue wraps (AD-025).
-- Per-draw opacity multiplies alpha (AD-026).
-- Phase 2 uses normal source-over blending; additional modes are Phase 3 candidates (AD-027).
-
-This completes the block, not all rendering contracts. Exact helper contracts and
-internal encodings remain open.
-
-## Geometry questionnaire progress
-
-The five-question geometry block is complete:
-
-- Rectangle starting corners with signed dimensions, circle centers, and line endpoints (AD-028, refined by AD-032).
-- Centered strokes (AD-029).
-- World-unit stroke widths (AD-030).
-- Flat caps and limited sharp joins (AD-031); the exact miter limit remains open.
-- Invalid basic geometry throws; valid zero-size geometry draws nothing (AD-032).
-
-Future alignment, constant screen thickness, and configurable/rounded styles are
-recorded in the candidate log. This block does not resolve all geometry contracts.
-
-## Reusable geometry questionnaire progress
-
-The four-question reusable geometry block is complete:
-
-- Editable declarative command arrays with explicit validated updates (AD-033).
-- Multiple disconnected subpaths (AD-034).
-- Implicitly closed point-array polygons with the same editing contract (AD-035).
-- Either winding, duplicate-point cleanup, and strict polygon validation (AD-036).
-
-Revisit the update verb; `replace` was not accepted as final naming. Remaining
-numerical and path-sequencing details are listed above. The next block covers
-geometry resource lifetime.
-
-## Geometry lifetime questionnaire progress
-
-The three-question geometry lifetime block is complete:
-
-- Frame-local draws and documented create/load release obligations (AD-037).
-- Immediate handle invalidation with safe retention for prior accepted draws (AD-038).
-- Game-owned prepared geometry, early release, and game-disposal cleanup (AD-039).
-
-Single-game use is the primary ergonomic target. Cross-game rejection is a guard,
-not a request for cross-game sharing features.
-
-## Camera questionnaire progress
-
-The four-question camera semantics block is complete:
-
-- Centered world focus (AD-040).
-- Origin-centered defaults (AD-041).
-- Positive magnification and rejected invalid zoom values (AD-042).
-- Clockwise world orientation with inverse view rotation (AD-043).
-
-Cursor-anchored zoom remains a Phase 3 candidate. Continue with camera integration
-and viewport behavior; the next block initially estimates three questions, starting
-with how the camera is applied to drawing.
-
-## Camera integration questionnaire progress
-
-The three-question camera integration block is complete:
-
-- Reusable cameras with synchronous callback scopes (AD-044/045).
-- Inner scopes replace and restore outer cameras; nesting is secondary (AD-046).
-- Unscoped screen coordinates start at the logical content viewport’s top-left (AD-047).
-
-Camera lifetime and numerical edge cases remain open; AD-051 keeps snapshot mechanics internal.
-
-## Visibility checkpoint
-
-The scope split is agreed (AD-048): Phase 2 includes conservative
-`camera.is_in_view(bounds)`; automatic offscreen and occlusion culling are Phase 3
-candidates. Rendering culling must not automatically suppress gameplay updates.
-Both visibility questions are resolved: world-axis-aligned rectangle bounds
-(AD-049), signed-dimension normalization, inclusive touching, point/line queries,
-and nonfinite-input rejection (AD-050).
-
-## Camera lifecycle questionnaire progress
-
-The three-question camera lifecycle block is complete:
-
-- Configure cameras outside draw scopes; snapshot mechanics stay internal (AD-051).
-- Cameras are lightweight CPU-side values with no manual release (AD-052).
-- Position and rotation reject nonfinite values but accept any finite values (AD-053).
-
-Renderer-owned camera caching is an internal optimization. Camera semantics are
-now sufficiently specified for dependent implementation planning.
+Before implementation, resolve the capability's public contract, ownership and
+failure behavior, lifecycle boundaries, type-test misuse cases, documentation
+surface, and the CPU/browser/WebGPU evidence needed to prove it.

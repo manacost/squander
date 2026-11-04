@@ -1,5 +1,8 @@
 # Phase 3-b: input routing and device state
 
+> Historical plan. For current behavior, read `specs/README.md` and the
+> relevant capability specification.
+
 ## Purpose
 
 Phase 3-b adds browser input to the Phase 3-a composition stack. It covers

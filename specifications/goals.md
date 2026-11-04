@@ -39,8 +39,8 @@ layers will build on the core loop and renderer rather than dictate their intern
 
 ## Delivery plan
 
-- [Phase 1](phase-1.md): establish lightweight specifications and capture decisions.
-- [Phase 2](phase-2.md): remove PixiJS and deliver the initial rendering foundation.
+- [Phase 1 history](history/phase-1/phase-1.md): establish lightweight specifications and capture decisions.
+- [Phase 2 history](history/phase-2/phase-2.md): remove PixiJS and deliver the initial rendering foundation.
 - [Phase 3 candidates](phase-3-candidates.md): potential higher-level capabilities.
 - [Phase 4 candidates](phase-4-candidates.md): fixed-step scheduling and mipmaps.
 

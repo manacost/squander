@@ -34,7 +34,7 @@ subscriptions to scene teardown.
 - `src/lib/core/runtime/input.test.ts`: behavioral seam tests.
 - `type-tests/input.ts`: event narrowing and rejected misuse.
 - `specs/input-routing/spec.md`: capability contract.
-- `specifications/phase-3-b.md`: phase scope and browser policy.
+- `specifications/history/phase-3/phase-3-b.md`: phase scope and browser policy.
 
 ## Evidence
 
@@ -50,7 +50,7 @@ subscriptions to scene teardown.
 - `git diff --check`: passed.
 
 `npm run lint:format` still reports the pre-existing formatting warning in
-`specifications/checkpoints/phase-3-a-composition-stack.md`; all new Phase 3-b
+`specifications/history/phase-3/checkpoints/phase-3-a-composition-stack.md`; all new Phase 3-b
 files pass Prettier.
 
 ## Review and gap status

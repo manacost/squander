@@ -1,12 +1,15 @@
 # Phase 1 readiness record
 
+> Historical readiness record. For current behavior, read `specs/README.md` and
+> the relevant capability specification.
+
 Status: **Ready for Phase 2**. This record captures the closeout evidence and
 the handoff boundary before Phase 2 implementation begins.
 
 ## Contract disposition
 
 - Accepted architecture decisions are authoritative in
-  [decisions.md](decisions.md).
+  [decisions.md](../../decisions.md).
 - Decisions AD-019 through AD-054 are reflected in the relevant capability
   drafts. Details that remain genuinely implementation-specific stay in the
   capability's Notes section and must be resolved before its implementation
@@ -15,7 +18,7 @@ the handoff boundary before Phase 2 implementation begins.
   No capability is promoted to `Accepted` or `Implemented` by this readiness
   update; Phase 2 evidence is still required.
 - The remaining contract details are grouped by implementation slice in
-  [open-questions.md](open-questions.md). They are pre-slice gates, not hidden
+  [open-questions.md](../../open-questions.md). They are pre-slice gates, not hidden
   requirements or claims of implementation.
 
 ## Verification baseline
