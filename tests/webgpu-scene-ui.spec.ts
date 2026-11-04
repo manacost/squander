@@ -8,7 +8,7 @@ declare global {
 }
 
 test("[scene-ui] Game owns scene UI through onReady", async ({ page }) => {
-  await page.goto("/docs/examples/scene-ui");
+  await page.goto("/scene-ui");
   const gpu_environment = await page.evaluate(async () => {
     const adapter = await navigator.gpu.requestAdapter();
     const device = adapter === null ? null : await adapter.requestDevice();
@@ -61,4 +61,19 @@ test("[scene-ui] Game owns scene UI through onReady", async ({ page }) => {
   await expect.poll(async () => page.evaluate(() => globalThis.__scene_ui_readback?.length ?? 0)).toBeGreaterThan(0);
   const readback = await page.evaluate(() => Array.from(globalThis.__scene_ui_readback ?? []).slice(0, 4));
   expect(readback.some((channel) => channel !== 0)).toBe(true);
+});
+
+test("[scene-ui] public example composes removable stack layers", async ({ page }) => {
+  await page.goto("/docs/examples/scene-ui");
+  await expect(page.getByRole("region", { name: "HUD scene" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Pause" }).click();
+  await expect(page.getByRole("region", { name: "Pause scene" })).toBeVisible();
+  await page.getByRole("button", { name: "Resume" }).click();
+  await expect(page.getByRole("region", { name: "Pause scene" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Dialogue" }).click();
+  await expect(page.getByRole("region", { name: "Dialogue scene" })).toBeVisible();
+  await page.getByRole("button", { name: "Close dialogue" }).click();
+  await expect(page.getByRole("region", { name: "Dialogue scene" })).toHaveCount(0);
 });

@@ -69,12 +69,12 @@ test("Svelte bridge samples render source syntax instead of HTML entities", asyn
   await expect(host_sample).not.toContainText("=&gt;");
 });
 
-test("scene UI documentation explains lifecycle ownership with copyable samples", async ({ page }) => {
+test("scene UI documentation explains stacked use cases with copyable samples", async ({ page }) => {
   await page.goto("/docs/examples/scene-ui");
   await expect(page.getByRole("heading", { level: 1, name: "Scene-owned UI" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "Mount UI when the scene enters" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "Understand ownership and failure behavior" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "Public types and constraints" })).toBeVisible();
-  await expect(page.locator("pre code").filter({ hasText: "create_ui(StatusPanel" }).first()).toContainText("await scenes.switch");
-  await expect(page.locator("pre code").filter({ hasText: "$props" }).first()).toContainText("Scene status");
+  await expect(page.getByRole("heading", { level: 2, name: "What this example shows" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Mount a persistent layer" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Add and remove temporary layers" })).toBeVisible();
+  await expect(page.locator("pre code").filter({ hasText: "await scenes.mount(hud" }).first()).toContainText("index: 1");
+  await expect(page.locator("pre code").filter({ hasText: "pause_handle" }).first()).toContainText("scenes.remove");
 });
