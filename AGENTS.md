@@ -56,6 +56,12 @@ Name unit tests `*.test.ts` or `*.spec.ts` beneath `src/`; Vitest only discovers
 
 We never allow documentation to go stale. Update affected documentation and examples in the same atomic commit as changes to public APIs, behavior, configuration, or workflows. Before completing a change, verify that the relevant documentation matches the implementation and correct any discrepancies.
 
+Keep `src/routes/llms.txt/+server.ts` up to date with every change that affects
+Squander's capabilities, public API, usage, examples, configuration, or
+workflow. Treat the `llms.txt` update as part of the same atomic change, and
+verify its code samples and limitations against the current implementation
+before completing the work.
+
 ### Feature/documentation crossovers
 
 When a feature has visually observable behavior or a real rendering/evidence
