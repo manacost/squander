@@ -246,6 +246,6 @@ export const core_guides = [
     limitations:
       "Core remains Svelte-independent; scene-owned UI is available through the optional Svelte Game host, while richer reactive helpers are deferred.",
   },
-] as const satisfies readonly CoreGuide[];
+] satisfies readonly CoreGuide[];
 
 export const core_guide_by_slug = new Map(core_guides.map((guide) => [guide.slug, guide]));

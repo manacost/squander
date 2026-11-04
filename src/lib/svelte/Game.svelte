@@ -39,7 +39,8 @@
       scheduler: {
         request_frame: (callback) => requestAnimationFrame(callback),
         cancel_frame: (handle) => {
-          cancelAnimationFrame(handle as number);
+          if (typeof handle !== "number") throw new TypeError("animation frame handle must be a number");
+          cancelAnimationFrame(handle);
         },
         now_seconds: () => performance.now() / 1000,
       },

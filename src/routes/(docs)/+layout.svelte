@@ -7,7 +7,7 @@
 
   let page_path = $derived(page.url.pathname);
 
-  const links = [["about", "/"]] as const;
+  const links = [["about", "/"]] satisfies readonly (readonly [string, string])[];
 
   const documentation = [
     {
@@ -161,14 +161,31 @@
   @media screen and (min-width: 64rem) {
     .content {
       padding: 0rem 0rem;
-      display: grid;
-      grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
-      gap: 2.5vw;
+      display: block;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 10;
+      box-sizing: border-box;
+      width: 14rem;
       height: 100vh;
+      overflow-y: auto;
     }
 
     .page {
+      margin-left: calc(14rem + 2.5vw);
       padding: 0;
+    }
+  }
+
+  @media screen and (max-width: 63.99rem) {
+    .sidebar {
+      position: static;
+      height: auto;
+      overflow: visible;
     }
   }
 

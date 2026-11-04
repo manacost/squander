@@ -27,6 +27,10 @@ Documentation is under `src/routes/(docs)/`; playable examples are under `src/ro
 
 Use two-space indentation, double quotes, trailing commas, and a 140-character print width. Prettier and ESLint enforce these rules. Functions and variables generally use `snake_case`; components and types use `PascalCase`. Keep SvelteKit names such as `+page.svelte`. Use Svelte 5 runes (`$props`, `$state`) in new components and perform DOM work inside lifecycle code.
 
+### Type safety rule
+
+Write production code that TypeScript can verify without type assertions. Narrow values with runtime checks, type predicates, discriminated unions, or typed helpers; use `satisfies` when checking a value against a type without changing its inferred type. The ESLint configuration rejects both `as` assertions and angle-bracket type assertions in production code. Test fixtures may use explicit assertions when a browser or GPU boundary cannot be represented by a real object, but keep those assertions local to the fixture.
+
 ## Testing Guidelines
 
 Name unit tests `*.test.ts` or `*.spec.ts` beneath `src/`; Vitest only discovers that tree. Place browser flows in `tests/`. Coverage is minimal, so add focused tests and manually exercise the relevant demo for rendering or lifecycle work. Run `npm run package` when changing exports.

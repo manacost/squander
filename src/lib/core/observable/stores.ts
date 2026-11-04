@@ -76,7 +76,9 @@ export const create_derived = <S extends [Readable<unknown>, ...Readable<unknown
   fn: (values: StoresValues<S>) => T,
   initial_value?: T,
 ): Readable<T> => {
-  const get = (): T => fn(stores.map((store) => store.get()) as StoresValues<S>);
+  const get_store_values = <Values extends Readable<unknown>[]>(source: Values): StoresValues<Values> =>
+    source.map((store) => store.get()) as StoresValues<Values>; // eslint-disable-line no-restricted-syntax -- Tuple element types are erased by Array.prototype.map.
+  const get = (): T => fn(get_store_values(stores));
   const inner_value: T = initial_value ?? get();
   return create_readable(inner_value, (set) => {
     const unsubscribes: Unsubscriber[] = stores.map((store) =>

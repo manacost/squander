@@ -84,6 +84,7 @@ export const create_scene_event_bus = <EventMap extends SceneEventMap = SceneEve
     if (disposed) return () => undefined;
     const invoke = (payload: unknown): void => {
       try {
+        // eslint-disable-next-line no-restricted-syntax -- The event map is erased by the heterogeneous callback registry.
         callback(payload as EventMap[EventName]);
       } catch (cause) {
         on_error(cause);
@@ -195,6 +196,15 @@ type SceneComposerOptions<Manifest extends AssetManifest, EventMap extends Scene
 
 type PendingMutation = () => Promise<void>;
 
+function narrow_resource_handle<Resource>(handle: ResourceHandle<unknown>): ResourceHandle<Resource>;
+function narrow_resource_handle(handle: ResourceHandle<unknown>): ResourceHandle<unknown> {
+  return handle;
+}
+
+const is_scene_definition = <Manifest extends AssetManifest, EventMap extends SceneEventMap>(
+  value: object,
+): value is SceneDefinition<Manifest, EventMap> => "name" in value && typeof value.name === "string" && value.name.length > 0;
+
 const scene_error = (message: string): Error => {
   const error = new Error(message);
   error.name = "SceneLifecycleError";
@@ -207,11 +217,10 @@ const assert_definition = <Manifest extends AssetManifest, EventMap extends Scen
   if (definition === null || typeof definition !== "object") {
     throw scene_error("scene factory must return a definition with a non-empty name");
   }
-  const candidate = definition as { name?: unknown };
-  if (typeof candidate.name !== "string" || candidate.name.length === 0) {
+  if (!is_scene_definition<Manifest, EventMap>(definition)) {
     throw scene_error("scene factory must return a definition with a non-empty name");
   }
-  return candidate as SceneDefinition<Manifest, EventMap>;
+  return definition;
 };
 
 const create_scene_asset_scope = <Manifest extends AssetManifest>(
@@ -237,14 +246,14 @@ const create_scene_asset_scope = <Manifest extends AssetManifest>(
     }
     handles.add(handle);
     loaded.set(key, handle);
-    return handle;
+    return narrow_resource_handle<AssetResource<Manifest, Key>>(handle);
   };
 
   const get = <Key extends keyof Manifest>(key: Key): ResourceHandle<AssetResource<Manifest, Key>> => {
     if (disposed) throw new Error("scene asset scope is disposed");
     const handle = loaded.get(key);
     if (handle === undefined) throw new Error(`scene asset has not been loaded: ${String(key)}`);
-    return handle as ResourceHandle<AssetResource<Manifest, Key>>;
+    return narrow_resource_handle<AssetResource<Manifest, Key>>(handle);
   };
 
   const dispose = (): void => {

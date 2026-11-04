@@ -18,23 +18,32 @@ export type GameBridgeController<State, Commands extends BridgeCommands> = Reado
   dispose: () => void;
 }>;
 
-const readonly_snapshot = <Value>(value: Value): Value => {
+function readonly_snapshot<Value>(value: Value): Value;
+function readonly_snapshot(value: unknown): unknown {
   if (value === null || typeof value !== "object" || Object.isFrozen(value)) {
     return value;
   }
-  if (Array.isArray(value)) {
-    const snapshot: unknown[] = (value as unknown[]).map((entry) => readonly_snapshot(entry));
-    return Object.freeze(snapshot) as unknown as Value;
+  if (value instanceof Array) {
+    const snapshot: unknown[] = value.map((entry: unknown) => readonly_snapshot(entry));
+    return Object.freeze(snapshot);
   }
   const copy: Record<string, unknown> = Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, readonly_snapshot(entry)]));
-  return Object.freeze(copy) as unknown as Value;
-};
+  return Object.freeze(copy);
+}
+
+function create_command_map<Commands extends BridgeCommands>(
+  entries: [string, (...args: never[]) => unknown][],
+  _template: Commands,
+): GameBridge<unknown, Commands>["commands"];
+function create_command_map(entries: [string, (...args: never[]) => unknown][], _template: BridgeCommands): unknown {
+  return Object.freeze(Object.fromEntries(entries));
+}
 
 export const create_game_bridge = <State, Commands extends BridgeCommands>(
   initial_state: State,
   commands: Commands,
 ): GameBridgeController<State, Commands> => {
-  let current_state = readonly_snapshot(initial_state) as Readonly<State>;
+  let current_state: Readonly<State> = readonly_snapshot(initial_state);
   let disposed = false;
   const subscribers = new Set<StateSubscriber<State>>();
 
@@ -53,7 +62,7 @@ export const create_game_bridge = <State, Commands extends BridgeCommands>(
     };
   };
 
-  const command_entries = Object.entries(commands).map(([key, command]) => [
+  const command_entries: [string, (...args: never[]) => unknown][] = Object.entries(commands).map(([key, command]) => [
     key,
     (...args: never[]) => {
       if (disposed) throw new Error("game bridge is disposed");
@@ -62,7 +71,7 @@ export const create_game_bridge = <State, Commands extends BridgeCommands>(
   ]);
   const bridge = Object.freeze({
     state: Object.freeze({ get: () => current_state, subscribe }),
-    commands: Object.freeze(Object.fromEntries(command_entries)) as GameBridge<State, Commands>["commands"],
+    commands: create_command_map(command_entries, commands),
   });
 
   const dispose = (): void => {

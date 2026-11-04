@@ -2,8 +2,7 @@ import { assert } from "#lib/core/assert.js";
 
 type Unsubscriber = () => void;
 
-type EventCallback = (event: CustomEvent<unknown>) => unknown;
-type EventEntry = { original: unknown; callback: EventCallback };
+type EventEntry = { original: unknown; callback: (event: CustomEvent<never>) => unknown };
 
 export type EventDispatcher<EventMap extends Record<string, unknown> = Record<string, unknown>> = {
   on: <EventName extends keyof EventMap>(type: EventName, callback: (event: CustomEvent<EventMap[EventName]>) => unknown) => Unsubscriber;
@@ -18,7 +17,7 @@ export const create_event_dispatcher = <EventMap extends Record<string, unknown>
   const signal: EventDispatcher<EventMap> = {
     on: (type, callback) => {
       const list = events.get(type) ?? [];
-      list.push({ original: callback, callback: (event) => callback(event as CustomEvent<EventMap[typeof type]>) });
+      list.push({ original: callback, callback: (event) => callback(event) });
       events.set(type, list);
 
       return () => {
@@ -42,7 +41,8 @@ export const create_event_dispatcher = <EventMap extends Record<string, unknown>
       const event = new CustomEvent(type, { detail });
 
       callbacks.forEach((entry) => {
-        entry.callback(event);
+        // eslint-disable-next-line no-restricted-syntax -- The event map is erased by the heterogeneous callback registry.
+        entry.callback(event as CustomEvent<never>);
       });
     },
 

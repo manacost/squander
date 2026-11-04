@@ -36,6 +36,11 @@ type PendingEntry = {
 
 const create_abort_error = (): Error => new DOMException("asset load was aborted", "AbortError");
 
+function narrow_resource_handle<Resource>(handle: ResourceHandle<unknown>): ResourceHandle<Resource>;
+function narrow_resource_handle(handle: ResourceHandle<unknown>): ResourceHandle<unknown> {
+  return handle;
+}
+
 export const create_asset_cache = <Manifest extends AssetManifest>(
   manifest: Manifest,
   resources: ResourceOwner,
@@ -58,11 +63,13 @@ export const create_asset_cache = <Manifest extends AssetManifest>(
       throw create_abort_error();
     }
     const descriptor = manifest[key];
-    const destroy_resource = descriptor.destroy as unknown as (resource: unknown) => void;
+    const destroy_resource = (resource: unknown): void => {
+      Reflect.apply(descriptor.destroy, undefined, [resource]);
+    };
 
     const existing_handle = shared_handles.get(key);
     if (existing_handle !== undefined) {
-      return existing_handle.share() as ResourceHandle<AssetResource<Manifest, Key>>;
+      return narrow_resource_handle<AssetResource<Manifest, Key>>(existing_handle.share());
     }
 
     let entry = pending.get(key);
@@ -104,7 +111,7 @@ export const create_asset_cache = <Manifest extends AssetManifest>(
       }
       const handle = shared_handles.get(key);
       if (handle === undefined) throw new Error(`asset load completed without a shared handle: ${String(key)}`);
-      return handle.share() as ResourceHandle<AssetResource<Manifest, Key>>;
+      return narrow_resource_handle<AssetResource<Manifest, Key>>(handle.share());
     } finally {
       options.signal?.removeEventListener("abort", abort);
       if (!request_state.aborted) {

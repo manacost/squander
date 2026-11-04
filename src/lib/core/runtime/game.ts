@@ -90,6 +90,11 @@ const create_loop_options = (
   max_delta_seconds: options.max_delta_seconds,
 });
 
+function normalize_manifest<Manifest extends AssetManifest>(manifest: Manifest | undefined): Manifest;
+function normalize_manifest(manifest: AssetManifest | undefined): AssetManifest {
+  return manifest ?? {};
+}
+
 export const create_game = <Manifest extends AssetManifest = AssetManifest, EventMap extends SceneEventMap = SceneEventMap>(
   options: GameOptions<Manifest>,
 ): Game<Manifest, EventMap> => {
@@ -99,8 +104,8 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
   let renderer_disposed = false;
   const renderer_factory = options.renderer_factory ?? create_webgpu_renderer;
   const renderer_ready = Promise.resolve().then(() => renderer_factory(options.renderer));
-  const assets = create_asset_cache((options.manifest ?? {}) as Manifest, resources, renderer_ready);
-  const manifest = (options.manifest ?? {}) as Manifest;
+  const manifest = normalize_manifest(options.manifest);
+  const assets = create_asset_cache(manifest, resources, renderer_ready);
   const abort_controller = new AbortController();
   const input = create_input_router({ on_error: (cause) => options.on_error?.(new GameRuntimeError(cause)) });
   let loop: FrameLoop | undefined;

@@ -177,7 +177,7 @@
               draw: { font: current_font, text, options: { x: 50, y: 300 + index * 30, size: 14, color: rgba(0.75, 0.85, 1, 1) } },
             })),
             {
-              kind: "text",
+              kind: "text" as const,
               draw: {
                 font: current_font,
                 text: `TICKS ${String(ticks)}`,
@@ -185,7 +185,7 @@
               },
             },
             {
-              kind: "text",
+              kind: "text" as const,
               draw: { font: current_font, text: `FPS ${String(fps)}`, options: { x: 700, y: 410, size: 18, color: rgba(0.5, 1, 0.65, 1) } },
             },
           ]),

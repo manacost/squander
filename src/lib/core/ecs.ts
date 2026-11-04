@@ -65,7 +65,7 @@ export type EntityComponentManager = {
   /**
    * Similar to "get", but asserts the entity has specific components
    */
-  tap: <AssertedKeys extends keyof ComponentRecord>(entity: Entity) => QueriedComponentRecord<AssertedKeys>;
+  tap: (entity: Entity) => ComponentRecord;
 };
 
 const map = new Map<Entity, ComponentRecord>();
@@ -137,8 +137,9 @@ const ecs_manager: EntityComponentManager = {
     return result;
   },
 
-  tap: <AssertedKeys extends keyof ComponentRecord>(entity: Entity) => {
-    const result = map.get(entity) as QueriedComponentRecord<AssertedKeys>;
+  tap: (entity: Entity) => {
+    const result = map.get(entity);
+    if (result === undefined) throw new Error();
     return result;
   },
 };

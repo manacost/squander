@@ -35,6 +35,18 @@ export default defineConfig(
       },
     },
     rules: {
+      // Keep the type system honest: narrow values or introduce a typed helper instead of asserting.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "TSAsExpression",
+          message: "Use type narrowing, a type predicate, or a typed helper instead of a type assertion.",
+        },
+        {
+          selector: "TSTypeAssertion",
+          message: "Use type narrowing, a type predicate, or a typed helper instead of a type assertion.",
+        },
+      ],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
@@ -71,10 +83,19 @@ export default defineConfig(
     },
   },
   {
+    // Documentation demos intentionally model browser boundaries and keep their evidence hooks local.
+    files: ["src/routes/(docs)/**/*.svelte", "src/lib/docs/**/*.svelte"],
+    rules: {
+      "no-restricted-syntax": "off",
+    },
+  },
+  {
     // Async test doubles often mirror promise-returning framework APIs without awaiting work.
     files: ["src/**/*.test.ts", "src/**/*.spec.ts", "tests/**/*.ts"],
     rules: {
       "@typescript-eslint/require-await": "off",
+      // Test fixtures may need explicit boundary shapes for browser and GPU doubles.
+      "no-restricted-syntax": "off",
     },
   },
   {

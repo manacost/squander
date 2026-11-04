@@ -9,14 +9,20 @@
     class?: string;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- The generic component view needs the caller's exact command map.
+  function create_empty_commands<T>(): T;
+  function create_empty_commands(): Record<string, never> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Object.create is the platform primitive for a prototype-free map.
+    return Object.create(null);
+  }
+
   let { initial_state, commands, create, children, class: class_name }: Props<AssetManifest> = $props();
   let canvas = $state<HTMLCanvasElement>();
   const get_initial_view = (): GameAdapterView<State, Commands> => ({
     state: initial_state,
     status: "loading",
     error: undefined,
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- Svelte's generic component checker cannot infer the empty command map.
-    commands: {} as unknown as GameAdapterView<State, Commands>["commands"],
+    commands: create_empty_commands<GameAdapterView<State, Commands>["commands"]>(),
   });
   let view = $state<GameAdapterView<State, Commands>>();
 

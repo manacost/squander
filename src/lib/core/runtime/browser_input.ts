@@ -38,19 +38,21 @@ const normalize_pointer_type = (pointer_type: string): PointerInputEvent["pointe
 const pointer_event = (event: PointerEvent | WheelEvent, host: HTMLElement, phase: PointerInputEvent["phase"]): PointerInputEvent => {
   const bounds = host.getBoundingClientRect();
   const is_wheel = phase === "wheel";
+  const pointer = "pointerId" in event ? event : null;
+  const wheel = "deltaX" in event ? event : null;
   return {
     type: "pointer",
     phase,
-    pointer_id: is_wheel ? 0 : (event as PointerEvent).pointerId,
-    pointer_type: is_wheel ? "mouse" : normalize_pointer_type((event as PointerEvent).pointerType),
+    pointer_id: is_wheel ? 0 : (pointer?.pointerId ?? 0),
+    pointer_type: is_wheel ? "mouse" : normalize_pointer_type(pointer?.pointerType ?? "mouse"),
     x: event.clientX - bounds.left,
     y: event.clientY - bounds.top,
-    button: is_wheel ? -1 : (event as PointerEvent).button,
+    button: is_wheel ? -1 : (pointer?.button ?? -1),
     buttons: event.buttons,
-    movement_x: is_wheel ? 0 : (event as PointerEvent).movementX,
-    movement_y: is_wheel ? 0 : (event as PointerEvent).movementY,
-    wheel_x: is_wheel ? (event as WheelEvent).deltaX : 0,
-    wheel_y: is_wheel ? (event as WheelEvent).deltaY : 0,
+    movement_x: is_wheel ? 0 : (pointer?.movementX ?? 0),
+    movement_y: is_wheel ? 0 : (pointer?.movementY ?? 0),
+    wheel_x: is_wheel ? (wheel?.deltaX ?? 0) : 0,
+    wheel_y: is_wheel ? (wheel?.deltaY ?? 0) : 0,
     modifiers: modifiers(event),
   };
 };
@@ -74,7 +76,7 @@ export const create_browser_input_adapter = (options: BrowserInputAdapterOptions
 
   const on_pointer = (event: PointerEvent): void => {
     if (options.focus_on_pointer_down && event.type === "pointerdown") host.focus();
-    const phase = event.type.replace("pointer", "") as PointerInputEvent["phase"];
+    const phase = event.type === "pointerdown" ? "down" : event.type === "pointerup" ? "up" : "move";
     const disposition = router.dispatch(pointer_event(event, host, phase));
     apply_disposition(event, disposition);
     if (event.type === "pointerdown" && disposition !== "pass" && typeof host.setPointerCapture === "function") {

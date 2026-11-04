@@ -48,7 +48,7 @@
         const current_font = font;
         void active_game?.renderer.draw_commands([
           {
-            kind: "text",
+            kind: "text" as const,
             draw: { font: current_font, text: "Bundled text works", options: { x: 32, y: 32, size: 30, color: rgba(1, 0.82, 0.3, 1) } },
           },
           ...character_rows.map((text, index) => ({

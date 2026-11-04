@@ -46,7 +46,7 @@ const maybe_destroy = <Resource>(record: ResourceRecord<Resource>): void => {
 };
 
 export const create_resource_owner = (): ResourceOwner => {
-  const records = new Set<ResourceRecord<unknown>>();
+  const records = new Set<() => void>();
   let disposed = false;
 
   const acquire = <Resource>(resource: Resource, destroy: ResourceDestroyer<Resource>): ResourceHandle<Resource> => {
@@ -61,7 +61,10 @@ export const create_resource_owner = (): ResourceOwner => {
       lease_count: 0,
       destroyed: false,
     };
-    records.add(record as ResourceRecord<unknown>);
+    records.add(() => {
+      record.handles.clear();
+      maybe_destroy(record);
+    });
 
     const create_handle = (): ResourceHandle<Resource> => {
       const token = {};
@@ -115,10 +118,7 @@ export const create_resource_owner = (): ResourceOwner => {
       return;
     }
     disposed = true;
-    for (const record of records) {
-      record.handles.clear();
-      maybe_destroy(record);
-    }
+    for (const dispose_record of records) dispose_record();
   };
 
   return Object.freeze({ acquire, dispose });

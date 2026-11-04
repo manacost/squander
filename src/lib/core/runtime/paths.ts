@@ -27,7 +27,7 @@ export const move_to = (x: number, y: number): PathCommand => point("move", x, y
 export const line_to = (x: number, y: number): PathCommand => point("line", x, y);
 
 export const quadratic_to = (control_x: number, control_y: number, x: number, y: number): PathCommand =>
-  Object.freeze({ kind: "quadratic" as const, control_x, control_y, x, y });
+  Object.freeze({ kind: "quadratic", control_x, control_y, x, y });
 
 export const cubic_to = (
   control_1_x: number,
@@ -36,9 +36,9 @@ export const cubic_to = (
   control_2_y: number,
   x: number,
   y: number,
-): PathCommand => Object.freeze({ kind: "cubic" as const, control_1_x, control_1_y, control_2_x, control_2_y, x, y });
+): PathCommand => Object.freeze({ kind: "cubic", control_1_x, control_1_y, control_2_x, control_2_y, x, y });
 
-export const close = (): PathCommand => Object.freeze({ kind: "close" as const });
+export const close = (): PathCommand => Object.freeze({ kind: "close" });
 
 const assert_finite = (value: number, name: string): void => {
   if (!Number.isFinite(value)) throw new RangeError(`${name} must be finite`);
@@ -57,7 +57,7 @@ const snapshot_command = (command: PathCommand, index: number): PathCommand => {
       assert_finite(command.x, `path command ${String(index)} x`);
       assert_finite(command.y, `path command ${String(index)} y`);
       return Object.freeze({
-        kind: "quadratic" as const,
+        kind: "quadratic",
         control_x: command.control_x,
         control_y: command.control_y,
         x: command.x,
@@ -71,7 +71,7 @@ const snapshot_command = (command: PathCommand, index: number): PathCommand => {
       assert_finite(command.x, `path command ${String(index)} x`);
       assert_finite(command.y, `path command ${String(index)} y`);
       return Object.freeze({
-        kind: "cubic" as const,
+        kind: "cubic",
         control_1_x: command.control_1_x,
         control_1_y: command.control_1_y,
         control_2_x: command.control_2_x,
@@ -80,7 +80,7 @@ const snapshot_command = (command: PathCommand, index: number): PathCommand => {
         y: command.y,
       });
     case "close":
-      return Object.freeze({ kind: "close" as const });
+      return Object.freeze({ kind: "close" });
   }
 };
 

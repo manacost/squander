@@ -62,7 +62,7 @@ export type GameProps<Manifest extends AssetManifest = AssetManifest, EventMap e
   class?: string;
 }>;
 
-type MountedUi = { update: (patch: Record<string, unknown>) => void };
+type MountedUi = ReturnType<typeof mount>;
 
 type SceneUiScope = Readonly<{
   create_ui: CreateUi;
@@ -72,7 +72,7 @@ type SceneUiScope = Readonly<{
 
 const create_scene_ui_scope = (): SceneUiScope => {
   const element = document.createElement("div");
-  const handles = new Set<UiHandle<Record<string, unknown>>>();
+  const handles = new Set<{ dispose: () => void }>();
   let disposed = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Svelte's Component props constraint is intentionally any-based.
@@ -83,7 +83,7 @@ const create_scene_ui_scope = (): SceneUiScope => {
     const dispose = (): void => {
       if (disposed_handle) return;
       disposed_handle = true;
-      handles.delete(handle as UiHandle<Record<string, unknown>>);
+      handles.delete(handle);
       if (mounted !== undefined) void unmount(mounted);
       host?.remove();
       mounted = undefined;
@@ -98,20 +98,23 @@ const create_scene_ui_scope = (): SceneUiScope => {
         mounted = mount(UiMount, {
           target: host,
           props: {
+            // eslint-disable-next-line no-restricted-syntax -- Svelte's generic component boundary is erased by UiMount.
             component: component as Component<Record<string, unknown>>,
+            // eslint-disable-next-line no-restricted-syntax -- Svelte's generic props boundary is erased by UiMount.
             initial_props: initial_props as Record<string, unknown>,
           },
-        }) as MountedUi;
+        });
         return Promise.resolve();
       },
       update: (patch) => {
         if (disposed || disposed_handle) return;
         if (mounted === undefined) throw new Error("scene UI is not mounted");
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- Svelte's generated component return type is intentionally opaque.
         mounted.update(patch);
       },
       dispose,
     });
-    handles.add(handle as UiHandle<Record<string, unknown>>);
+    handles.add(handle);
     return handle;
   };
 
@@ -140,7 +143,10 @@ export const create_svelte_scenes = <Manifest extends AssetManifest, EventMap ex
   const active = new Map<SceneHandle, SceneUiScope>();
   const pending = new Set<SceneUiScope>();
   const order: SceneHandle[] = [];
-  const templates = new WeakMap<SceneFactory<Manifest, EventMap>, SvelteSceneFactory<Manifest, EventMap>>();
+  const templates = new WeakMap<
+    SvelteSceneFactory<Manifest, EventMap> | SceneFactory<Manifest, EventMap>,
+    SvelteSceneFactory<Manifest, EventMap>
+  >();
   let disposed = false;
 
   const clear_pending = (scope: SceneUiScope | undefined): void => {
@@ -200,7 +206,7 @@ export const create_svelte_scenes = <Manifest extends AssetManifest, EventMap ex
   const resolve_factory = (
     factory: SvelteSceneFactory<Manifest, EventMap> | SceneFactory<Manifest, EventMap>,
     on_scope: (scope: SceneUiScope) => void,
-  ): SceneFactory<Manifest, EventMap> => adapt(templates.get(factory as SceneFactory<Manifest, EventMap>) ?? factory, on_scope);
+  ): SceneFactory<Manifest, EventMap> => adapt(templates.get(factory) ?? factory, on_scope);
 
   const mount = async (
     factory: SvelteSceneFactory<Manifest, EventMap> | SceneFactory<Manifest, EventMap>,

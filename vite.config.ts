@@ -5,11 +5,16 @@ import { mdsvex } from "mdsvex";
 import { defineConfig } from "vitest/config";
 
 const configured_base = process.argv.includes("dev") ? "" : (process.env.BASE_PATH ?? "");
-if (configured_base !== "" && (!configured_base.startsWith("/") || configured_base.endsWith("/"))) {
-  throw new Error("BASE_PATH must be empty or start with / without a trailing /");
+const is_valid_base = (value: string): value is `/${string}` => value.startsWith("/") && !value.endsWith("/");
+function normalize_base(value: string): "" | `/${string}`;
+function normalize_base(value: string): "" | `/${string}` {
+  if (value === "") return value;
+  if (!is_valid_base(value)) {
+    throw new Error("BASE_PATH must be empty or start with / without a trailing /");
+  }
+  return value;
 }
-// Validation above narrows the environment string to SvelteKit’s base-path contract.
-const base = configured_base as "" | `/${string}`;
+const base = normalize_base(configured_base);
 
 export default defineConfig({
   plugins: [

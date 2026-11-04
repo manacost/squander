@@ -49,7 +49,7 @@ the Svelte package supplies the `<Game onReady>` host and contextual `create_ui`
   and explicit capability-spec fixture references. Runtime coverage is
   96.92/95.27/97.87/97.88, and the coverage gate passes.
 - Browser verification rerun with local server binding enabled: `npm run
-  test:webgpu` passed 47/47 tests, including scene asset upload/draw and scene
+test:webgpu` passed 47/47 tests, including scene asset upload/draw and scene
   signal cleanup; `npm run test:integration` passed 7/7 tests. The browser used
   the configured trusted origins and explicit WebGPU/GPU launch flags.
 
