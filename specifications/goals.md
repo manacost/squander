@@ -1,49 +1,91 @@
 # Framework goals
 
-This document captures the original project goals and the direction agreed during
-the architecture interview. It describes intended outcomes, not implemented behavior.
+This document captures the current goals for Squander. It describes the product
+direction and architectural boundaries; observable behavior belongs in the
+capability specifications, and durable rationale belongs in the decision log.
 
 ## Product vision
 
-- Build a TypeScript-first game framework with LÖVE's minimalist callback-driven
-  ergonomics and MonoGame's structured resources, pipeline, and math inspiration.
-- Run in a browser and remain suitable for future desktop embedding. Desktop
-  packaging is a later concern, not a Phase 2 deliverable.
-- Commit to 2D. Allow camera or projection extensibility later without designing
-  the initial framework around general 3D support.
-- Favor composition over inheritance. Allow OOP without requiring it.
-- Use strong typing throughout public APIs, preferring `type` over `interface`
-  with justified exceptions.
-- Provide type-safe asset references and explicit resource ownership and disposal.
-- Provide GPU-powered rendering through WebGPU. An HTML canvas can be the
-  presentation surface, but Canvas 2D is not the game renderer.
-- Keep the core independent of Svelte while preserving first-class optional
-  Svelte/SvelteKit integration and game-to-UI bridging. Svelte handles UI.
-- Deliver a strong test suite with greater than 90% code coverage. Measure statements, branches, functions, and lines across framework runtime
-  code, excluding demos/generated/type-only files. Complement coverage with type
-  tests and real WebGPU rendering tests. Tooling and environment remain to be selected.
-- Document the framework well, including usage, capability behavior, limitations,
-  architecture decisions, and connections to tests.
+- Build a TypeScript-first toolkit for polished 2D browser games.
+- Keep game code expressive and focused on gameplay while the framework owns
+  WebGPU setup, frame scheduling, resource lifetime, and predictable teardown.
+- Combine LÖVE's minimal callback-driven ergonomics with MonoGame's structured
+  resources, pipeline, and math without requiring inheritance or a class-heavy
+  architecture.
+- Favor composition, ECS-friendly foundations, and flexible programming styles.
+- Provide strong public types, useful inference, and runtime boundaries that make
+  invalid ownership and lifecycle behavior difficult to express.
+- Make rendering, input, scenes, UI integration, and verification work together
+  as one coherent developer experience.
 
-## Architectural direction
+## Runtime architecture
 
-A complete API break from the existing PixiJS-based toolkit is allowed. WebGPU
-is the sole planned backend; a WebGL2 fallback is not promised. Favor a modern
-foundation, with eventual product distribution targeting a controlled,
-WebGPU-capable runtime. Browser distribution primarily serves development,
-testing, and showcases. Chromium or V8 alone does not guarantee GPU compatibility.
+- Use WebGPU as the rendering path. An HTML canvas is the presentation surface;
+  Canvas 2D is not the game renderer, and a WebGL fallback is not promised.
+- Keep the core runtime independent of Svelte, SvelteKit, and any application
+  framework.
+- Give each game explicit ownership of its renderer, frame loop, input router,
+  assets, resources, geometry, and scenes.
+- Separate update and draw work, provide deterministic lifecycle transitions,
+  and make initialization, failure, pause, visibility, and disposal observable.
+- Use explicit handles and disposal for persistent GPU-backed resources. Keep
+  frame-local drawing separate from resources that applications own.
+- Support composed scenes, scene-owned assets and UI, signals, and input
+  routing without requiring a persistent rendering scene graph.
+- Treat real WebGPU rendering evidence as distinct from CPU tests, type tests,
+  and coverage. Shader, blending, draw-order, and readback claims require a real
+  device.
 
-The intended higher-level development style combines composed systems, ECS,
-scene mounting/unmounting and stacking, and event-based communication. These
-layers will build on the core loop and renderer rather than dictate their internals.
+## UI and experience delivery
 
-## Delivery plan
+- Svelte is the UI layer. It renders menus, HUDs, overlays, controls, loading
+  states, errors, and other presentation around the game runtime.
+- Keep mutable gameplay state and business rules in game code. Publish only the
+  readonly state needed by the UI through a typed bridge, and send user intent
+  back through typed commands.
+- Use `GameHost` for the common Svelte integration and
+  `create_game_adapter` for custom hosts. Each host owns one game instance,
+  subscriptions, and disposal for that mount.
+- Make the bridge preserve inferred state, command parameters, and synchronous
+  or asynchronous command return types without coupling the core runtime to
+  Svelte.
+- Use SvelteKit as the application medium for delivering the experience:
+  routing, documentation, runnable examples, composition demos, and the
+  browser/server boundary belong there. SvelteKit delivers the surrounding
+  experience; it does not own simulation, rendering, or core resource lifetime.
+- Keep WebGPU creation and other browser-only work on the client side, while
+  allowing SvelteKit to provide the application shell and delivery workflow.
 
-- [Phase 1 history](history/phase-1/phase-1.md): establish lightweight specifications and capture decisions.
-- [Phase 2 history](history/phase-2/phase-2.md): remove PixiJS and deliver the initial rendering foundation.
-- [Phase 3 candidates](phase-3-candidates.md): potential higher-level capabilities.
-- [Phase 4 candidates](phase-4-candidates.md): fixed-step scheduling and mipmaps.
+## Developer experience and quality
 
-Future candidates are not commitments. See the [decision log](decisions.md) for
-accepted architecture choices and the [spec-system capability](../specs/specs/spec.md)
-for how behavioral specifications will be maintained.
+- Expose a small, discoverable package surface with clear core, runtime, and
+  Svelte entry points.
+- Document supported behavior, limitations, ownership rules, and usage patterns
+  with focused guides, copyable examples, and live demonstrations.
+- Prefer APIs that TypeScript can verify without assertions in production code.
+- Test framework runtime code with focused unit tests, type tests, browser flows,
+  and real WebGPU fixtures where the behavior crosses the GPU boundary.
+- Keep coverage, type safety, lifecycle correctness, and GPU correctness as
+  separate quality signals.
+- Preserve a fast feedback loop for contributors and coding agents through
+  strict formatting, linting, diagnostics, package validation, and explicit
+  repository conventions.
+
+## Scope and boundaries
+
+- Squander is browser-first and currently targets 2D games. Future desktop
+  embedding can build on the same runtime but is not a current product
+  requirement.
+- Advanced projections, custom shaders, render targets, mipmaps, fixed-step
+  scheduling, action mapping, and other deferred capabilities must earn their
+  own contracts and evidence before becoming supported behavior.
+- The core runtime must remain useful without Svelte. Svelte and SvelteKit are
+  integration and delivery choices, not prerequisites for game simulation or
+  rendering.
+
+## Source of truth
+
+For current behavior, start with the relevant capability specification under
+`specs/`, then read the architecture decision log and implementation. Historical
+plans and checkpoints are preserved for auditability, but they do not define the
+current product goals or supported contract.
