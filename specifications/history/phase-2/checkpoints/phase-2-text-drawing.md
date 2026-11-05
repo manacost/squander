@@ -1,0 +1,64 @@
+# Phase 2 text drawing checkpoint
+
+## Scope
+
+- Added typed `WebGpuFont`, `FontOptions`, `TextDrawOptions`, and font errors.
+- Added `renderer.create_font_from_url` and `assets.load_font` with owned,
+  explicitly releasable font handles.
+- Prepared glyphs with Canvas 2D, packed them into a non-evicting atlas that
+  grows up to 4096×4096, and added automatic preparation for supported glyphs
+  requested by later strings.
+- Routed text through reusable per-glyph GPU textures so color, opacity,
+  viewport, and active camera transforms use the established GPU behavior. The
+  packed atlas remains the non-evicting preparation/capacity source; a focused
+  Chromium probe showed atlas-region sampling could produce clipped glyphs, so
+  draw-time glyph textures avoid that environment-specific defect.
+
+## Code trace
+
+`src/lib/core/index.ts` → `Game.assets.load_font` or
+`WebGpuRenderer.create_font_from_url` → `FontFace` loading and Canvas 2D glyph
+preparation → `WebGpuRenderer.draw_text` → reusable glyph texture draws → source-
+over WebGPU sampling and deterministic readback.
+
+## Verification
+
+- `npm run test:type` — passed.
+- `npm run check` — passed with zero Svelte diagnostics.
+- The focused real-WebGPU font test first failed with 351 lit pixels for a
+  default-filtered glyph against the `<330` legibility guard, then passed after
+  nearest filtering and reusable glyph textures were added.
+- The composition playground now renders a readable `P`, digits, common
+  symbols, uppercase letters, and lowercase letters; its screenshot baseline
+  covers the static character sheet using the repository-served
+  `static/fonts/GeostarFill-Regular.ttf` fixture.
+- Focused asset/game unit tests — passed, 26 tests.
+- `npm run test:webgpu -- --grep 'text-drawing'` — passed, one real Chromium
+  WebGPU test covering bundled font loading, glyph sampling, repeated rendering,
+  and atlas identity reuse, including automatic preparation of a newly requested
+  glyph.
+- `npm run test:webgpu -- --grep 'phase-2-playground' --update-snapshots` —
+  passed after intentionally replacing the Arial screenshot with the bundled
+  Geostar character-sheet baseline.
+- `npm run test:integration -- --grep 'text example documentation'` — passed;
+  the focused docs page exposes the loading and drawing samples.
+- `npm run test:webgpu -- --grep 'text-drawing'` — passed two tests, including
+  the focused `/docs/examples/text` proof page with non-black WebGPU readback.
+- `npm run test:coverage:runtime` and `npm run check:coverage` — passed with
+  the replacement-runtime four-metric gate above 90% for every included file.
+
+## Evidence boundary
+
+The bundled Geostar URL, glyph reuse/addition, typed capacity and failure paths,
+camera integration through the shared command transform, and real readback
+tolerances are evidenced. The focused example is implemented at
+`src/routes/(docs)/docs/examples/text/+page.svelte`, with normal navigation
+coverage in `tests/text-example.spec.ts` and real WebGPU proof in
+`tests/webgpu-text-example.spec.ts`. Rich layout, shaping, fallback, and
+arbitrary-script support remain outside Phase 2.
+
+## Go/no-go
+
+**Promote `text-drawing`.** Font loading, preparation, atlas limits, glyph reuse,
+camera-aware WebGPU rendering, bundled asset provenance, type tests, and runtime
+coverage satisfy the Phase 2 contract.

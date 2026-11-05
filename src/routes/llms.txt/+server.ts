@@ -1,0 +1,420 @@
+const llms_text = `# Squander
+
+Squander is a TypeScript-first browser-game toolkit. It provides a WebGPU
+renderer, a game lifecycle, resource and asset ownership, 2D drawing
+primitives, cameras, viewports, input routing, scenes, and an optional Svelte 5
+adapter. The core runtime is independent of Svelte and is designed for
+composition, ECS-friendly game code, and agent-assisted development.
+
+## Why use Squander
+
+- Keep game code focused on gameplay while Squander owns WebGPU setup and GPU
+  resource lifetime.
+- Use strongly typed, functional APIs without adopting a class-heavy engine
+  architecture.
+- Build browser games with deterministic lifecycle behavior, explicit handles,
+  and verifiable rendering.
+- Connect a game to Svelte 5 UI without coupling the core runtime to Svelte.
+- Give coding agents discoverable package exports, focused examples, and clear
+  supported and deferred behavior.
+
+Squander targets 2D browser games. WebGPU is the rendering path; a WebGL
+fallback is not promised. Advanced projections, custom shaders, render targets,
+mipmaps, and fixed-step simulation are future work rather than current APIs.
+
+## Author and project
+
+- Author and maintainer: Rory Duncan
+- GitHub: https://github.com/ancient-cat/squander
+- npm: https://www.npmjs.com/package/squander
+- License: MIT
+- Current package version in this repository: 8.0.0
+
+## Table of contents
+
+- [Install](#install)
+- [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
+- [Core concepts](#core-concepts)
+- [Game lifecycle and timing](#game-lifecycle-and-timing)
+- [WebGPU renderer](#webgpu-renderer)
+- [Assets and resources](#assets-and-resources)
+- [Sprites and textures](#sprites-and-textures)
+- [Shapes](#shapes)
+- [Paths and polygons](#paths-and-polygons)
+- [Cameras and viewports](#cameras-and-viewports)
+- [Input](#input)
+- [Scenes](#scenes)
+- [Text and fonts](#text-and-fonts)
+- [Svelte 5 game UI bridge](#svelte-5-game-ui-bridge)
+- [TypeScript and ownership rules](#typescript-and-ownership-rules)
+- [Verification](#verification)
+- [Repository map](#repository-map)
+
+## Install
+
+Squander requires Node.js 22.17 or newer for development. Install the package
+and Svelte when using the optional adapter:
+
+\`\`\`sh
+npm install squander@^8 svelte@^5
+\`\`\`
+
+The core package has no Svelte dependency. Import from the package root for the
+usual API, from \`squander/core\` for the core API, or from
+\`squander/core/runtime\` for lower-level runtime types.
+
+## Use Squander in a SvelteKit project
+
+Create a client-side game component with a canvas. WebGPU needs a secure
+context, such as localhost during development or HTTPS in production. Keep
+browser-only game creation in a component or another client-only module; do not
+create a WebGPU device during server-side rendering.
+
+\`\`\`svelte
+<script lang="ts">
+  import { onMount } from "svelte";
+  import { create_game, type Game } from "squander";
+
+  let canvas: HTMLCanvasElement;
+  let game: Game | undefined;
+
+  onMount(() => {
+    game = create_game({
+      renderer: { canvas, width: 800, height: 450 },
+      scheduler: {
+        request_frame: (callback) => requestAnimationFrame(callback),
+        cancel_frame: (handle) => cancelAnimationFrame(handle),
+        now_seconds: () => performance.now() / 1000,
+      },
+      update: (_time) => {},
+      draw: () => {},
+    });
+
+    return () => {
+      void game?.dispose();
+    };
+  });
+</script>
+
+<canvas bind:this={canvas} width="800" height="450"></canvas>
+\`\`\`
+
+For Svelte-driven HUDs, import \`GameHost\` from \`squander/svelte\` or use
+\`create_game_adapter\` from \`squander/svelte/adapter\`. The host owns one game
+instance per mount and disposes it when unmounted. Use Svelte 5 runes in new
+application components, and keep gameplay state in the game unless it is UI
+state that the bridge intentionally publishes.
+
+## Core concepts
+
+The package root exports the core runtime. A game owns its renderer, frame
+loop, input router, asset cache, resource owner, geometry owner, and scene
+composer. Setup runs before the frame loop starts. The \`update\` callback
+advances game state, and \`draw\` submits frame-local commands.
+
+\`\`\`ts
+import { create_game } from "squander";
+
+const game = create_game({
+  renderer: { canvas, width: 800, height: 450 },
+  scheduler,
+  setup: async ({ assets }) => {
+    // Load game-owned assets before the first frame.
+    void assets;
+  },
+  update: ({ delta_seconds }) => {
+    // Advance the player, enemies, and simulation.
+    void delta_seconds;
+  },
+  draw: () => {
+    // Submit renderer commands here.
+  },
+});
+
+await game.ready;
+\`\`\`
+
+## Game lifecycle and timing
+
+Use \`game.ready\` to await renderer creation and setup. Use \`pause\`,
+\`resume\`, and \`set_visibility\` for lifecycle control. Call \`dispose\`
+when a game leaves the page. The frame loop clamps unusually large deltas,
+resets timing after suspension, and does not update while paused.
+
+\`\`\`ts
+await game.ready;
+game.pause();
+game.resume();
+await game.dispose();
+\`\`\`
+
+Current timing is variable-step browser-frame timing. A fixed-step simulation is
+not part of the current runtime.
+
+## WebGPU renderer
+
+The renderer creates the adapter, device, canvas context, pipelines, textures,
+samplers, and readback path. It requires \`navigator.gpu\` and a secure context.
+Use \`create_webgpu_renderer\` directly when a standalone renderer is useful;
+normally \`create_game\` creates and owns it.
+
+\`\`\`ts
+import { create_webgpu_renderer } from "squander/core/runtime";
+
+const renderer = await create_webgpu_renderer({ canvas, width: 800, height: 450 });
+await renderer.clear({ red: 0.04, green: 0.05, blue: 0.1, alpha: 1 });
+renderer.dispose();
+\`\`\`
+
+Handle \`WebGpuUnavailableError\` and \`GameDeviceLostError\` at an
+application boundary. Custom shaders and render targets are not currently
+public features.
+
+## Assets and resources
+
+Load textures and fonts through the game-owned asset cache, or create dynamic
+textures from \`Blob\` and \`File\` values. Asset loading honors cancellation.
+Resources returned by asset and geometry APIs are explicit handles: release
+them when the owner no longer needs them. Accepted draws retain a safe lease
+until the renderer can release the underlying resource.
+
+\`\`\`ts
+const hero = await assets.load_texture(hero_blob, { magnification: "nearest" });
+renderer.draw_texture(hero.read(), { x: 400, y: 225, width: 64, height: 64 });
+hero.release();
+\`\`\`
+
+Use \`game.resources\` and \`game.geometry\` for resources that need a game
+lifetime. Do not keep or read a handle after releasing it.
+
+## Sprites and textures
+
+Use \`renderer.draw_texture\` for sprites and atlas regions. A draw can specify
+position, size, source region, origin, scale, rotation, horizontal or vertical
+flip, tint, opacity, and submission order. Use \`nearest\` filtering for
+pixel-art games and \`linear\` filtering for smooth art.
+
+\`\`\`ts
+renderer.draw_texture(hero.read(), {
+  x: player.x,
+  y: player.y,
+  width: 48,
+  height: 48,
+  origin: { x: 0.5, y: 0.5 },
+  rotation: degrees(player.angle),
+  flip_x: player.facing_left,
+  tint: rgba(1, 0.9, 0.9, 1),
+  opacity: player.invulnerable ? 0.5 : 1,
+});
+\`\`\`
+
+Draw order is observable. Selectable blend modes, mipmaps, and anisotropic
+filtering are not currently exposed.
+
+## Shapes
+
+Shapes are frame-local commands for HUDs, debug overlays, hit effects, and game
+geometry. Supported commands include filled and outlined rectangles, circles,
+and lines. Invalid geometry throws; valid zero-area geometry draws nothing.
+
+\`\`\`ts
+renderer.draw_commands([
+  {
+    kind: "rectangle",
+    draw: { rectangle: { x: 20, y: 20, width: 180, height: 24 }, color: rgba(0.1, 0.1, 0.15, 1) },
+  },
+  {
+    kind: "circle",
+    draw: { circle: { x: player.x, y: player.y, radius: 18 }, color: rgba(0.2, 0.8, 0.4, 1) },
+  },
+]);
+\`\`\`
+
+Rounded caps and joins, dashed strokes, and inside/outside stroke alignment are
+deferred.
+
+## Paths and polygons
+
+Create reusable paths for curved effects, trails, and outlines. Create polygons
+for filled game regions and collision-like visualizations. Constructors copy
+caller data, and updates validate before replacing geometry.
+
+\`\`\`ts
+const trail = create_path([move_to(0, 0), quadratic_to(40, -30, 80, 0)]);
+const island = create_polygon([
+  { x: 0, y: 0 },
+  { x: 80, y: 10 },
+  { x: 45, y: 60 },
+]);
+
+trail.update([move_to(player.x, player.y), line_to(player.x - 80, player.y + 20)]);
+\`\`\`
+
+Use the exported path, flattening, stroke, polygon, and triangulation helpers
+from \`squander/core/runtime\`. Holes, fill rules, and filled curved paths are
+not current features.
+
+## Cameras and viewports
+
+Use a 2D camera to draw world coordinates through position, zoom, and rotation.
+Use viewport sizing helpers to keep logical coordinates stable as CSS size,
+letterboxing, device pixels, and physical canvas size change.
+
+\`\`\`ts
+const camera = create_camera({
+  x: player.x,
+  y: player.y,
+  zoom: 2,
+  rotation: degrees(0),
+  viewport: game.get_viewport(),
+});
+
+camera.draw(() => {
+  renderer.draw_texture(hero.read(), { x: player.x, y: player.y });
+});
+\`\`\`
+
+Drawing inside a camera scope uses world space; drawing outside it uses screen
+space. Camera scope restoration is synchronous, including when a callback
+throws. Automatic culling and cursor-anchored zoom are deferred.
+
+## Input
+
+The game owns an input router for keyboard, pointer, and gamepad input. Route
+input to the active scene first, then use a global fallback for controls such as
+pause or opening a menu. Keep input handlers short and update game state in the
+game loop when ordering matters.
+
+\`\`\`ts
+const remove_pause_input = game.input.on_global((event) => {
+  if (event.type === "key" && event.phase === "down" && event.code === "Escape") {
+    game.pause();
+    return "consume";
+  }
+  return "pass";
+});
+\`\`\`
+
+Call \`remove_pause_input\` when the game no longer needs the global handler.
+
+The exact event types and registration methods are exported from
+\`squander/core/runtime\`; prefer those types over browser events when writing
+game systems.
+
+## Scenes
+
+Scenes are game-owned lifecycle objects. Mount, replace, and remove scenes
+asynchronously. Active scenes update and draw from the bottom of the stack to
+the top, making overlays and menus natural composition units. Scene factories
+can declare typed asset dependencies and use the game-owned event bus.
+
+\`\`\`ts
+const menu = await game.scenes.mount(({ events }) => ({
+  name: "pause menu",
+  init: () => events.on("resume", () => void game.scenes.remove(menu)),
+  update: () => {},
+  draw: () => draw_pause_menu(),
+}));
+
+game.scenes.events.emit("resume", undefined);
+\`\`\`
+
+Scene removal disposes the scene permanently. Shared manifest assets remain
+usable while one scene leaves. Scene-owned Svelte UI is available through the
+optional \`Game\` host and remains outside the core runtime:
+
+\`\`\`svelte
+<Game onReady={({ scenes }) => {
+  scenes.switch(scenes.create(({ create_ui }) => ({
+    name: "hud",
+    enter: () => create_ui(Hud, { score: 0 }),
+  })));
+}} />
+\`\`\`
+
+Use \`GameHost\` or \`create_game_adapter\` for the lower-level typed state bridge.
+
+## Text and fonts
+
+Load a bundled font through the font-loading API, prepare its glyphs, and draw
+changing game labels or HUD text with the renderer. Font atlas textures follow
+the same ownership and filtering rules as other textures.
+
+\`\`\`ts
+const font = await assets.load_font(font_url, { filter: "nearest" });
+renderer.draw_text(font.read(), "SCORE 1200", { x: 24, y: 24, size: 24 });
+font.release();
+\`\`\`
+
+Use the text example in the documentation site as the current end-to-end
+reference. Rich text layout and advanced font shaping are outside the current
+runtime scope.
+
+## Svelte 5 game UI bridge
+
+Use \`GameHost\` for the common state/command bridge, \`Game\` for scene-owned
+Svelte UI, or \`create_game_adapter\` for a custom host. The game publishes
+readonly state snapshots; the UI calls typed commands. The command object
+preserves synchronous and asynchronous return types.
+
+\`\`\`svelte
+<GameHost initial_state={{ score: 0 }} {commands} {create}>
+  {#snippet children(view)}
+    <output>{view.state.score}</output>
+    <button onclick={() => view.commands.increment(1)}>+1</button>
+  {/snippet}
+</GameHost>
+\`\`\`
+
+The adapter is optional, Node-safe, and does not make the core runtime depend on
+Svelte. A host owns its subscriptions and game and disposes both on unmount.
+
+## TypeScript and ownership rules
+
+- Import public types from the package exports instead of reaching into source
+  files.
+- Prefer the package root or \`squander/core\` for normal game code.
+- Use \`squander/core/runtime\` for lower-level runtime types and helpers.
+- Keep the core runtime Svelte-independent; use the Svelte adapter only at the
+  application boundary.
+- Treat asset, resource, geometry, and scene handles as owned values and release
+  them through their documented owner.
+- Do not use a released handle or pass a resource between games.
+- Use runtime narrowing and typed helpers rather than TypeScript assertions in
+  production game code.
+
+## Verification
+
+For a repository checkout, run focused CPU tests with \`npm run test:unit\`,
+type checks with \`npm run test:type\`, and Svelte diagnostics with
+\`npm run check\`. Run \`npm run test:integration\` for browser flows and
+\`npm run test:webgpu\` for real WebGPU rendering.
+
+Real WebGPU verification must use trusted local HTTP or HTTPS, assert secure
+context, adapter creation, and device creation, and verify deterministic pixel
+or buffer readback. A missing \`navigator.gpu\` or adapter is a failed
+verification environment, not a passing skip.
+
+## Repository map
+
+- \`src/lib/core/runtime/\` — lifecycle, assets, geometry, camera, text, input,
+  scenes, and WebGPU runtime.
+- \`src/lib/svelte/\` — optional Svelte 5 adapter and \`GameHost\`.
+- \`src/routes/(docs)/docs/core/\` — focused runtime guides.
+- \`src/routes/(docs)/docs/examples/\` — runnable feature and composition demos.
+- \`tests/\` — Playwright integration and real WebGPU fixtures.
+- \`specifications/\` — capability contracts, decisions, and evidence.
+
+Read the focused documentation and source exports together when an API detail
+matters. The documentation site is at https://github.com/ancient-cat/squander.
+`;
+
+// eslint-disable-next-line @typescript-eslint/naming-convention -- SvelteKit requires the GET export name.
+export const GET = (_request: Request): Response =>
+  new Response(llms_text, {
+    headers: {
+      "content-type": "text/markdown; charset=utf-8",
+    },
+  });
+
+export const prerender = true;

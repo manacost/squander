@@ -1,0 +1,71 @@
+# feature-documentation
+
+## Goal
+
+Make every Phase 2 feature independently learnable and verifiable, then demonstrate composition.
+
+## Status
+
+Implemented.
+
+The Phase 2 documentation contract is implemented and verified through the guide
+inventory, focused examples, composition playground, type tests, coverage gate,
+and real WebGPU browser suites.
+
+## Requirements
+
+- Provide an organized documentation library with focused runnable demos and relevant automated tests for each individual feature.
+- Document ownership, required release, release method, and owner/game cleanup for every resource-returning create/load API, in both API/editor documentation and usage examples (AD-037). Explain that draw calls and pure value helpers do not return disposable resources.
+- Explain usage and limitations and connect capability specs to tests and demos.
+- Provide a final playground/kitchen-sink experience in addition to focused demos.
+- Demonstrate composition without making deferred scene/ECS/input systems prerequisites.
+- Meet the agreed runtime coverage goal alongside type tests and real WebGPU tests; mocks alone do not establish rendered correctness.
+
+## Scenarios
+
+### Learn one feature
+
+A reader finds a feature, reads its limitations, runs its small demo, and follows its test references.
+
+### Check composition
+
+The playground combines geometry, sprites, labels, camera/viewport behavior, asset lifetimes, and Svelte interaction without replacing the focused tests.
+
+## Acceptance criteria
+
+- Audit the resource-returning create/load API inventory for ownership/release documentation and examples that show cleanup; identify any missing lifecycle guidance.
+- Inventory every Phase 2 feature against a documentation entry, focused runnable demo, and relevant automated verification; identify missing entries explicitly.
+- Verify documentation routes and demo controls work in browser tests.
+- Exercise the combined playground’s loading, interaction, pause, disposal/recreation, and handled failure flows.
+- Report statements, branches, functions, and lines each greater than 90% for framework runtime code, including renderer CPU logic and Svelte integration, excluding demos/generated/type-only files.
+- Record real GPU rendering and type-test results separately from runtime coverage; no passing claim may rely on silently skipped GPU tests.
+
+## Usage description
+
+Browse focused Core guides by capability, then use the Demos to explore features together. Documentation should identify unsupported behavior rather than implying it works.
+
+## Test references
+
+The crossover rule and current inventory are recorded in
+[`specifications/history/phase-2/checkpoints/phase-2-feature-documentation-audit.md`](../../specifications/history/phase-2/checkpoints/phase-2-feature-documentation-audit.md).
+The Core sidebar and focused text guide are covered by
+[`tests/docs-core.spec.ts`](../../tests/docs-core.spec.ts),
+[`tests/text-example.spec.ts`](../../tests/text-example.spec.ts), and the real
+WebGPU proof in
+[`tests/webgpu-text-example.spec.ts`](../../tests/webgpu-text-example.spec.ts).
+The generated Core guide registry covers every remaining runtime area, and the
+guide inventory is browser-verified by
+[`tests/docs-core.spec.ts`](../../tests/docs-core.spec.ts). Each guide links to
+the live playground or Svelte demo, explains scope and limitations, lists public
+types, and includes a usage sample. The composition playground remains
+supplementary evidence.
+
+Use `[feature-documentation]` in relevant suite names and keep the inventory
+synchronized when capabilities change.
+
+## Notes
+
+AD-018. Open: route inventory and demo design, supported test machine/browser baseline, visual tolerances, coverage tooling, and CI GPU availability.
+
+See the [decision log](../../specifications/decisions.md) and
+[implementation readiness guidance](../../specifications/implementation-readiness.md).

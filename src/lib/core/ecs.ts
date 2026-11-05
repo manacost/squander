@@ -65,13 +65,13 @@ export type EntityComponentManager = {
   /**
    * Similar to "get", but asserts the entity has specific components
    */
-  tap: <AssertedKeys extends keyof ComponentRecord>(entity: Entity) => QueriedComponentRecord<AssertedKeys>;
+  tap: (entity: Entity) => ComponentRecord;
 };
 
 const map = new Map<Entity, ComponentRecord>();
 let id = 0;
 
-const ECS: EntityComponentManager = {
+const ecs_manager: EntityComponentManager = {
   create: function (): Entity {
     const entity: Entity = ++id;
     map.set(entity, {
@@ -97,7 +97,7 @@ const ECS: EntityComponentManager = {
   addComponent: function (entity: Entity, component: ComponentType): void {
     const record: ComponentRecord | undefined = map.get(entity);
 
-    // @ts-ignore
+    // @ts-expect-error ComponentMap is intentionally open to future component keys.
     record[component.type] = component;
 
     // if (component.type === "position") {
@@ -117,7 +117,7 @@ const ECS: EntityComponentManager = {
     // }
   },
   removeComponent: function (entity: Entity, ...components: Component[]): void {
-    const record = ECS.get(entity);
+    const record = ecs_manager.get(entity);
     components.forEach((component) => {
       record[component] = undefined;
     });
@@ -137,8 +137,9 @@ const ECS: EntityComponentManager = {
     return result;
   },
 
-  tap: <AssertedKeys extends keyof ComponentRecord>(entity: Entity) => {
-    const result = map.get(entity) as QueriedComponentRecord<AssertedKeys>;
+  tap: (entity: Entity) => {
+    const result = map.get(entity);
+    if (result === undefined) throw new Error();
     return result;
   },
 };
@@ -147,5 +148,5 @@ const ECS: EntityComponentManager = {
  * Retrieves the ECS singleton
  */
 export const entity_component_system: () => EntityComponentManager = () => {
-  return ECS;
+  return ecs_manager;
 };

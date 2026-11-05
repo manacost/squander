@@ -1,24 +1,28 @@
-import { assert } from "$lib/core/assert.js";
+import { assert } from "#lib/core/assert.js";
 
 type Unsubscriber = () => void;
 
-export interface EventDispatcher<EventMap extends Record<string, any> = Record<string, any>> {
+type EventEntry = { original: unknown; callback: (event: CustomEvent<never>) => unknown };
+
+export type EventDispatcher<EventMap extends Record<string, unknown> = Record<string, unknown>> = {
   on: <EventName extends keyof EventMap>(type: EventName, callback: (event: CustomEvent<EventMap[EventName]>) => unknown) => Unsubscriber;
   once: <EventName extends keyof EventMap>(type: EventName, callback: (event: CustomEvent<EventMap[EventName]>) => unknown) => Unsubscriber;
   off: <EventName extends keyof EventMap>(type: EventName, callback?: (event: CustomEvent<EventMap[EventName]>) => unknown) => void;
   emit: <EventName extends keyof EventMap>(event: EventName, detail?: EventMap[EventName]) => void;
   clear: () => void;
-}
+};
 
-export const create_event_dispatcher = <EventMap extends Record<string, any>>(): EventDispatcher<EventMap> => {
-  const events = new Map<keyof EventMap, CallableFunction[]>();
+export const create_event_dispatcher = <EventMap extends Record<string, unknown>>(): EventDispatcher<EventMap> => {
+  const events = new Map<keyof EventMap, EventEntry[]>();
   const signal: EventDispatcher<EventMap> = {
     on: (type, callback) => {
       const list = events.get(type) ?? [];
-      list.push(callback);
+      list.push({ original: callback, callback: (event) => callback(event) });
       events.set(type, list);
 
-      return () => signal.off(type, callback);
+      return () => {
+        signal.off(type, callback);
+      };
     },
 
     once: (type, callback) => {
@@ -36,19 +40,20 @@ export const create_event_dispatcher = <EventMap extends Record<string, any>>():
 
       const event = new CustomEvent(type, { detail });
 
-      callbacks.forEach((cb) => {
-        cb(event);
+      callbacks.forEach((entry) => {
+        // eslint-disable-next-line no-restricted-syntax -- The event map is erased by the heterogeneous callback registry.
+        entry.callback(event as CustomEvent<never>);
       });
     },
 
-    off: (type, callback = undefined) => {
+    off: (type, callback) => {
       if (callback === undefined) {
         events.set(type, []);
       } else {
         const list = events.get(type) ?? [];
         events.set(
           type,
-          list.filter((cb) => cb !== callback),
+          list.filter((entry) => entry.original !== callback),
         );
       }
     },

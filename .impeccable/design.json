@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-29T00:00:00-07:00",
+  "title": "Design System: Squander",
+  "extensions": {
+    "colorMeta": {
+      "signal-red": {
+        "role": "primary",
+        "displayName": "Signal red",
+        "canonical": "var(--red-4)",
+        "tonalRamp": ["#3d1114", "#681d22", "#92292f", "#bb353b", "#dd464c", "#e86d71", "#f29a9d", "#f8d0d1"]
+      },
+      "carbon-rail": {
+        "role": "neutral",
+        "displayName": "Carbon rail",
+        "canonical": "#232121",
+        "tonalRamp": ["#171616", "#232121", "#3a3737", "#514c4c", "#6a6464", "#918b8b", "#bdb7b7", "#e5e0e0"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#151923",
+        "tonalRamp": ["#0b0d12", "#151923", "#252b3b", "#39435b", "#56627b", "#7d879c", "#aeb6c5", "#dfe3ea"]
+      },
+      "instrument-slate": {
+        "role": "neutral",
+        "displayName": "Instrument slate",
+        "canonical": "#39435b",
+        "tonalRamp": ["#161a24", "#252c3c", "#39435b", "#4a5a7b", "#667694", "#8c9ab2", "#b7c1d1", "#e0e5ed"]
+      },
+      "slate-hover": {
+        "role": "neutral",
+        "displayName": "Slate hover",
+        "canonical": "#4a5a7b",
+        "tonalRamp": ["#1c2230", "#2d374e", "#4a5a7b", "#6076a8", "#7f92b7", "#a2b0ca", "#c6cedd", "#e7ebf2"]
+      },
+      "canvas-black": {
+        "role": "neutral",
+        "displayName": "Canvas black",
+        "canonical": "#05070d",
+        "tonalRamp": ["#05070d", "#111622", "#202839", "#344158", "#53617a", "#7d899d", "#adb5c3", "#dce0e7"]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#eef2fb",
+        "tonalRamp": ["#222c42", "#3e4c68", "#6076a8", "#8798bf", "#aebbd3", "#cad5e8", "#dfe6f3", "#eef2fb"]
+      },
+      "paper-ink": {
+        "role": "neutral",
+        "displayName": "Paper ink",
+        "canonical": "#26334e",
+        "tonalRamp": ["#121a2b", "#26334e", "#3e4f70", "#5b6e91", "#7e8eac", "#a5b1c6", "#cbd3e0", "#e8ebf1"]
+      },
+      "muted-blue": {
+        "role": "neutral",
+        "displayName": "Muted blue",
+        "canonical": "#6076a8",
+        "tonalRamp": ["#202a40", "#3e4f70", "#6076a8", "#7d91bc", "#9eadd0", "#bbc7df", "#d7dfea", "#edf0f7"]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#202020", "#444444", "#666666", "#888888", "#aaaaaa", "#cccccc", "#e6e6e6", "#ffffff"]
+      },
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "canonical": "#444444",
+        "tonalRamp": ["#202020", "#333333", "#444444", "#5c5c5c", "#777777", "#999999", "#bbbbbb", "#dddddd"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Geo display", "purpose": "Product identity and headings in the documentation rail and pages." },
+      "body": { "displayName": "System utility", "purpose": "Readable explanations and documentation prose." },
+      "label": { "displayName": "Compact metadata", "purpose": "Eyebrows and technical labels with restrained tracking." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "smooth-scroll", "value": "behavior: smooth", "purpose": "Return readers to the top of a new documentation route." }
+    ],
+    "breakpoints": [
+      { "name": "documentation-desktop", "value": "64rem" },
+      { "name": "proof-stack", "value": "40rem" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Navigation link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Compact rail navigation with a quiet glyph marker and active state.",
+      "html": "<a class=\"ds-nav-link\" href=\"#\">core</a>",
+      "css": ".ds-nav-link { display: flex; padding: 0.25em 0.5em; gap: 0.5rem; color: var(--red-4); background: transparent; text-decoration: none; } .ds-nav-link::before { content: '⋱'; color: #444444; } .ds-nav-link:hover { background: hsla(0deg, 0%, 0%, 0.1); } .ds-nav-link:focus-visible { outline: 2px solid var(--red-4); outline-offset: 2px; }"
+    },
+    {
+      "name": "Active navigation link",
+      "kind": "nav",
+      "refersTo": "nav-link-active",
+      "description": "The current documentation location in the rail.",
+      "html": "<a class=\"ds-nav-active\" href=\"#\">core</a>",
+      "css": ".ds-nav-active { display: flex; padding: 0.25em 0.5em; gap: 0.5rem; color: #ffffff; background: hsla(0deg, 0%, 0%, 0.2); text-decoration: none; } .ds-nav-active::before { content: '⋊'; color: #444444; } .ds-nav-active:focus-visible { outline: 2px solid var(--red-4); outline-offset: 2px; }"
+    },
+    {
+      "name": "Proof surface",
+      "kind": "card",
+      "refersTo": "proof-surface",
+      "description": "A dark, flat container for live runtime evidence.",
+      "html": "<section class=\"ds-proof\"><h2>Live proof</h2><p>Runtime output appears here.</p><a class=\"ds-proof-button\" href=\"#\">Run again</a></section>",
+      "css": ".ds-proof { display: grid; gap: 0.5rem; padding: 1.25rem 0; border-block: 1px solid #39435b; color: #ffffff; } .ds-proof h2, .ds-proof p { margin: 0; } .ds-proof-button { justify-self: start; margin-top: 0.75rem; padding: 0.65rem 0.9rem; background: #39435b; color: #ffffff; text-decoration: none; } .ds-proof-button:hover { background: #4a5a7b; } .ds-proof-button:focus-visible { outline: 2px solid var(--red-4); outline-offset: 2px; }"
+    },
+    {
+      "name": "Code block",
+      "kind": "custom",
+      "refersTo": "code-surface",
+      "description": "Scrollable code evidence with a quiet dark surface.",
+      "html": "<pre class=\"ds-code\"><code>const game = create_game({ ... });</code></pre>",
+      "css": ".ds-code { overflow: auto; margin: 0.5rem 0; padding: 1rem 0; border-block: 1px solid #39435b; color: #b9b5b8; font-family: 'Fira Mono', Menlo, Monaco, monospace; font-size: 1rem; line-height: 1.375; }"
+    },
+    {
+      "name": "Scope note",
+      "kind": "custom",
+      "refersTo": "paper",
+      "description": "A light explanatory note for scope, limits, or important caveats.",
+      "html": "<aside class=\"ds-note\">This example covers the public runtime path.</aside>",
+      "css": ".ds-note { margin-top: 2rem; padding: 1rem 0; border-block: 1px solid #6076a8; color: #26334e; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The game engine workbench",
+    "overview": "Squander's interface should feel like a well-used workbench for making game systems: focused, capable, and built around the tools rather than decoration. The visual language is distinct, creative, and tech-y through geometric type, dark instrument surfaces, compact navigation, and a single signal-red accent. It stays grounded in the actual work of reading API contracts, copying code, and inspecting live rendering proofs.\n\nThe system is flat and practical. Contrast, borders, spacing, and tonal changes make hierarchy legible without relying on glows, gradients, or ornamental effects. Controls should feel compact and quietly tactile: small enough to stay out of the way, clear enough to invite use. Panels and examples stay open to the page instead of becoming rounded wells.",
+    "keyCharacteristics": [
+      "Workbench-like rather than showroom-like",
+      "Geometric headings with restrained utility text",
+      "Carbon rail, dark proof surfaces, and signal-red navigation",
+      "Flat depth with compact, square controls",
+      "Creative through composition and type, not effects"
+    ],
+    "rules": [
+      {
+        "name": "The Signal Rule",
+        "body": "Use the red accent as a deliberate navigation signal, not as a general decoration or a full-surface wash.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Glow Rule",
+        "body": "Do not use luminous halos, neon glows, or gradients to make the interface feel technical. Let structure and contrast do that work.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Speed Type Rule",
+        "body": "Headings carry the personality; body and code carry the information. Never make utility text compete with a guide title.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Workbench Rule",
+        "body": "Depth comes from adjacent surfaces and clear edges. Reserve stronger contrast for an active, actionable, or rendered state.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do make the interface feel like a capable game-engine workbench.",
+      "Do let Geo headings, compact spacing, and dark instrument surfaces carry the identity.",
+      "Do use the signal-red accent sparingly for navigation and meaningful emphasis.",
+      "Do keep proof panels, code examples, and controls close to the content they explain.",
+      "Do preserve flat depth, thin structural borders, and quietly tactile radii.",
+      "Do keep technical surfaces readable at mobile widths through wrapping or scrolling."
+    ],
+    "donts": [
+      "Don't use hacker clichés, terminal-wall decoration, or novelty code rain as visual identity.",
+      "Don't add glows, neon halos, gradient backgrounds, or gradient text.",
+      "Don't turn every surface into a floating card with a shadow.",
+      "Don't over-round controls into pills or make the documentation feel like a marketing landing page.",
+      "Don't spend the accent color everywhere; its rarity is part of the system."
+    ]
+  }
+}

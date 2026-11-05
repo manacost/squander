@@ -33,4 +33,21 @@ describe("create_signal", () => {
     expect(once.mock.calls).toEqual([["first"]]);
     expect(persistent.mock.calls).toEqual([["first"], ["second"]]);
   });
+
+  it("dispatches from a stable snapshot when listeners mutate subscriptions", () => {
+    const signal = create_signal<number>();
+    const events: string[] = [];
+    const second_subscription: { unsubscribe: () => void } = { unsubscribe: () => undefined };
+    signal.subscribe(() => {
+      events.push("first");
+      second_subscription.unsubscribe();
+      signal.subscribe(() => events.push("late"));
+    });
+    second_subscription.unsubscribe = signal.subscribe(() => events.push("second"));
+
+    signal.emit(1);
+    signal.emit(2);
+
+    expect(events).toEqual(["first", "second", "first", "late"]);
+  });
 });

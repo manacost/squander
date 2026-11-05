@@ -11,7 +11,7 @@ describe("entity component system", () => {
   it("creates entities and manages their components", () => {
     const entity = ecs.create();
     const update = vi.fn();
-    const gametime = { type: "gametime", update } as const;
+    const gametime = { type: "gametime", update } satisfies { type: "gametime"; update: (delta: number) => void };
 
     ecs.addComponent(entity, gametime);
 
