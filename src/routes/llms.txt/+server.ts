@@ -46,6 +46,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Scenes](#scenes)
 - [Text and fonts](#text-and-fonts)
 - [Svelte 5 game UI bridge](#svelte-5-game-ui-bridge)
+- [Snake example](#snake-example)
 - [TypeScript and ownership rules](#typescript-and-ownership-rules)
 - [Verification](#verification)
 - [Repository map](#repository-map)
@@ -369,6 +370,32 @@ preserves synchronous and asynchronous return types.
 The adapter is optional, Node-safe, and does not make the core runtime depend on
 Svelte. A host owns its subscriptions and game and disposes both on unmount.
 
+## Snake example
+
+The Snake example at \`/docs/examples/snake\` is a complete 50×50 arcade game
+built into the documentation site. It keeps the simulation in an example-local
+state machine and uses \`GameHost\` for menus, score, pause state, and touch
+controls. WebGPU shape commands draw the near-black board, readable snake
+segments, and randomly colored fruit.
+
+The example supports arrow keys, WASD, and an accessible touch D-pad. Wall and
+self collisions end a run; fruit increases the score and gradually increases
+movement speed. The example does not add package exports, gamepad support,
+persistent scores, audio, or network play.
+
+\`\`\`ts
+type SnakeState = Readonly<{
+  status: "start" | "playing" | "paused" | "game-over";
+  snake: readonly GridPoint[];
+  fruit: GridPoint | null;
+  score: number;
+}>;
+\`\`\`
+
+Use the live page as the end-to-end reference for combining a pure game model,
+\`create_game\`, renderer shape commands, browser input routing, and a typed
+\`GameHost\` bridge.
+
 ## TypeScript and ownership rules
 
 - Import public types from the package exports instead of reaching into source
@@ -402,6 +429,7 @@ verification environment, not a passing skip.
 - \`src/lib/svelte/\` — optional Svelte 5 adapter and \`GameHost\`.
 - \`src/routes/(docs)/docs/core/\` — focused runtime guides.
 - \`src/routes/(docs)/docs/examples/\` — runnable feature and composition demos.
+- \`src/routes/(docs)/docs/examples/snake/\` — the complete Snake arcade example and its simulation tests.
 - \`tests/\` — Playwright integration and real WebGPU fixtures.
 - \`specifications/\` — capability contracts, decisions, and evidence.
 

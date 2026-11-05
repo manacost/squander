@@ -28,6 +28,7 @@
         { label: "playground", href: "/docs/examples/playground", target: "/(docs)/docs/examples/playground" },
         { label: "scenes", href: "/docs/examples/scenes", target: "/(docs)/docs/examples/scenes" },
         { label: "scene UI", href: "/docs/examples/scene-ui", target: "/(docs)/docs/examples/scene-ui" },
+        { label: "snake", href: "/docs/examples/snake", target: "/(docs)/docs/examples/snake" },
         { label: "svelte", href: "/docs/examples/svelte", target: "/(docs)/docs/examples/svelte" },
       ],
     },
