@@ -47,9 +47,12 @@ Name unit tests `*.test.ts` or `*.spec.ts` beneath `src/`; Vitest only discovers
 
 ## Git Guidelines
 
+- Before planning or editing, inspect `git status --short --branch`, fetch `origin/main`, and work from a feature branch created from the current `origin/main`; do not work directly from `main`.
+- Prefer rebasing feature branches onto the current `origin/main` before integration. Preserve unrelated user work and resolve conflicts deliberately.
 - Commit frequently at meaningful checkpoints, once a coherent change is complete and its relevant checks pass. Each commit must be atomic: one logical change, independently understandable and revertible.
 - Use Conventional Commits: `type(scope): imperative summary`. Use `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `build`, `ci`, or `perf`; omit the scope for repository-wide changes. Examples: `fix(scenes): correct current scene`, `feat(viewport): add zoom limits`, and `chore: update project rules`.
 - Stage only files belonging to the current change. Preserve unrelated work and avoid mixing generated files with source changes.
+- Before every push, run `npm run build` on the exact commit being pushed and require a successful result. If the repository supports a configured deployment base path, run the build with that same `BASE_PATH` as an additional gate. Do not push a commit with a failing build.
 - Pull requests should explain the behavior change, list validation performed, link related issues, and include screenshots or recordings for visible UI or rendering changes.
 
 ## Documentation Guidelines

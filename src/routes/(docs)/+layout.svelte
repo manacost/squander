@@ -7,29 +7,29 @@
 
   let page_path = $derived(page.url.pathname);
 
-  const links = [["about", "/"]] satisfies readonly (readonly [string, string])[];
+  const links = [["about", resolve("/(docs)")]] satisfies readonly (readonly [string, string])[];
 
   const documentation = [
     {
       label: "core",
-      href: "/docs/core",
+      href: resolve("/(docs)/docs/core"),
       target: "/(docs)/docs/core",
       children: [
-        { label: "text", href: "/docs/examples/text" },
-        { label: "input routing", href: "/docs/examples/input" },
-        ...core_guides.map((guide) => ({ label: guide.label, href: `/docs/core/${guide.slug}` })),
+        { label: "text", href: resolve("/(docs)/docs/examples/text") },
+        { label: "input routing", href: resolve("/(docs)/docs/examples/input") },
+        ...core_guides.map((guide) => ({ label: guide.label, href: resolve("/(docs)/docs/core/[guide]", { guide: guide.slug }) })),
       ],
     },
     {
       label: "demos",
-      href: "/docs/examples/playground",
+      href: resolve("/(docs)/docs/examples/playground"),
       target: "/(docs)/docs/examples/playground",
       children: [
-        { label: "playground", href: "/docs/examples/playground", target: "/(docs)/docs/examples/playground" },
-        { label: "scenes", href: "/docs/examples/scenes", target: "/(docs)/docs/examples/scenes" },
-        { label: "scene UI", href: "/docs/examples/scene-ui", target: "/(docs)/docs/examples/scene-ui" },
-        { label: "snake", href: "/docs/examples/snake", target: "/(docs)/docs/examples/snake" },
-        { label: "svelte", href: "/docs/examples/svelte", target: "/(docs)/docs/examples/svelte" },
+        { label: "playground", href: resolve("/(docs)/docs/examples/playground"), target: "/(docs)/docs/examples/playground" },
+        { label: "scenes", href: resolve("/(docs)/docs/examples/scenes"), target: "/(docs)/docs/examples/scenes" },
+        { label: "scene UI", href: resolve("/(docs)/docs/examples/scene-ui"), target: "/(docs)/docs/examples/scene-ui" },
+        { label: "snake", href: resolve("/(docs)/docs/examples/snake"), target: "/(docs)/docs/examples/snake" },
+        { label: "svelte", href: resolve("/(docs)/docs/examples/svelte"), target: "/(docs)/docs/examples/svelte" },
       ],
     },
   ] as const;
@@ -69,7 +69,6 @@
         <a class="link" class:active={doc.href === page_path} href={resolve(doc.target)}>{doc.label}</a>
         {#if doc.children}
           {#each doc.children as child (child.href)}
-            <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- child URLs are explicit public docs paths. -->
             <a class="link nested" class:active={child.href === page_path} href={child.href}>{child.label}</a>
           {/each}
         {/if}
