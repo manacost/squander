@@ -372,14 +372,19 @@ changing game labels or HUD text with the renderer. Font atlas textures follow
 the same ownership and filtering rules as other textures.
 
 \`\`\`ts
+import { asset } from "$app/paths";
+
+const font_url = \`url("\${asset("fonts/example.ttf")}")\`;
 const font = await assets.load_font(font_url, { filter: "nearest" });
 renderer.draw_text(font.read(), "SCORE 1200", { x: 24, y: 24, size: 24 });
 font.release();
 \`\`\`
 
 Use the text example in the documentation site as the current end-to-end
-reference. Rich text layout and advanced font shaping are outside the current
-runtime scope.
+reference. When the site loads a font from its \`static/\` directory, use
+SvelteKit's \`asset("fonts/example.ttf")\` helper when building the CSS font
+source so the configured deployment base is preserved. Rich text layout and
+advanced font shaping are outside the current runtime scope.
 
 ## Svelte 5 game UI bridge
 
