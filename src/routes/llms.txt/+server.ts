@@ -3,8 +3,10 @@ const llms_text = `# Squander
 Squander is a TypeScript-first browser-game toolkit. It provides a WebGPU
 renderer, a game lifecycle, resource and asset ownership, 2D drawing
 primitives, cameras, viewports, input routing, scenes, and an optional Svelte 5
-adapter. The core runtime is independent of Svelte and is designed for
-composition, ECS-friendly game code, and agent-assisted development.
+adapter. Svelte is the UI layer, while SvelteKit is the application medium for
+delivering routes, documentation, examples, and browser experiences. The core
+runtime is independent of both and is designed for composition, ECS-friendly
+game code, and agent-assisted development.
 
 ## Why use Squander
 
@@ -22,10 +24,33 @@ Squander targets 2D browser games. WebGPU is the rendering path; a WebGL
 fallback is not promised. Advanced projections, custom shaders, render targets,
 mipmaps, and fixed-step simulation are future work rather than current APIs.
 
+## Current goals
+
+- Build a TypeScript-first toolkit for polished 2D browser games with
+  composition-friendly, ECS-oriented foundations.
+- Keep game code focused on gameplay while Squander owns WebGPU setup, frame
+  scheduling, explicit resource lifetime, input routing, scenes, and predictable
+  teardown.
+- Keep the core runtime independent of Svelte, SvelteKit, and application
+  frameworks.
+- Use Svelte as the UI layer. Game code owns mutable gameplay state and
+  business rules; a typed bridge publishes readonly state and accepts typed
+  commands from Svelte UI.
+- Use SvelteKit as the delivery medium for routing, documentation, runnable
+  examples, composition demos, and the browser/server boundary. SvelteKit
+  delivers the surrounding experience; it does not own simulation, rendering,
+  or core resource lifetime.
+- Provide strong TypeScript inference, explicit ownership, focused
+  documentation, and separate CPU, type, coverage, browser, and real-WebGPU
+  verification signals.
+- Keep deferred capabilities contract-driven: advanced projections, custom
+  shaders, render targets, mipmaps, fixed-step scheduling, and action mapping
+  require their own supported behavior and evidence before inclusion.
+
 ## Author and project
 
 - Author and maintainer: Rory Duncan
-- GitHub: https://github.com/ancient-cat/squander
+- GitHub: https://github.com/manacost/squander
 - npm: https://www.npmjs.com/package/squander
 - License: MIT
 - Current package version in this repository: 8.0.0
@@ -33,6 +58,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 ## Table of contents
 
 - [Install](#install)
+- [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
 - [Game lifecycle and timing](#game-lifecycle-and-timing)
@@ -100,11 +126,15 @@ create a WebGPU device during server-side rendering.
 <canvas bind:this={canvas} width="800" height="450"></canvas>
 \`\`\`
 
-For Svelte-driven HUDs, import \`GameHost\` from \`squander/svelte\` or use
-\`create_game_adapter\` from \`squander/svelte/adapter\`. The host owns one game
-instance per mount and disposes it when unmounted. Use Svelte 5 runes in new
-application components, and keep gameplay state in the game unless it is UI
-state that the bridge intentionally publishes.
+For Svelte-driven HUDs and controls, use Svelte as the UI layer: import
+\`GameHost\` from \`squander/svelte\` or use \`create_game_adapter\` from
+\`squander/svelte/adapter\`. The bridge publishes readonly game snapshots and
+accepts typed commands from the UI. The host owns one game instance per mount
+and disposes it when unmounted. In a SvelteKit application, keep WebGPU creation
+in client-side lifecycle code and use SvelteKit for routing, delivery, and the
+surrounding experience. Use Svelte 5 runes in new application components, and
+keep gameplay state in the game unless it is UI state that the bridge
+intentionally publishes.
 
 ## Core concepts
 
@@ -354,9 +384,11 @@ runtime scope.
 ## Svelte 5 game UI bridge
 
 Use \`GameHost\` for the common state/command bridge, \`Game\` for scene-owned
-Svelte UI, or \`create_game_adapter\` for a custom host. The game publishes
-readonly state snapshots; the UI calls typed commands. The command object
-preserves synchronous and asynchronous return types.
+Svelte UI, or \`create_game_adapter\` for a custom host. Svelte owns the UI
+presentation; the game publishes readonly state snapshots, and the UI calls
+typed commands. The command object preserves synchronous and asynchronous
+return types. SvelteKit can deliver this UI through routes and browser
+experiences without becoming a dependency of the core runtime.
 
 \`\`\`svelte
 <GameHost initial_state={{ score: 0 }} {commands} {create}>
@@ -436,7 +468,7 @@ verification environment, not a passing skip.
 - \`specifications/\` — capability contracts, decisions, and evidence.
 
 Read the focused documentation and source exports together when an API detail
-matters. The documentation site is at https://github.com/ancient-cat/squander.
+matters. The documentation site is at https://github.com/manacost/squander.
 `;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention -- SvelteKit requires the GET export name.
