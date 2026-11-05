@@ -37,6 +37,7 @@
   let active_snake: SnakeGame | undefined;
   let publish_state: ((state: SnakeState) => void) | undefined;
   let active_renderer: WebGpuRenderer | undefined;
+  let focus_game: (() => void) | undefined;
 
   const publish_current_state = (): void => {
     const state = active_snake?.get_state();
@@ -45,16 +46,28 @@
 
   const commands: SnakeCommands = {
     start: () => {
-      if (active_snake?.start()) publish_current_state();
+      if (active_snake?.start()) {
+        publish_current_state();
+      }
+      focus_game?.();
     },
     toggle_pause: () => {
-      if (active_snake?.toggle_pause()) publish_current_state();
+      if (active_snake?.toggle_pause()) {
+        publish_current_state();
+      }
+      focus_game?.();
     },
     restart: () => {
-      if (active_snake?.restart()) publish_current_state();
+      if (active_snake?.restart()) {
+        publish_current_state();
+      }
+      focus_game?.();
     },
     set_direction: (direction) => {
-      if (active_snake?.set_direction(direction)) publish_current_state();
+      if (active_snake?.set_direction(direction)) {
+        publish_current_state();
+      }
+      focus_game?.();
     },
   };
 
@@ -149,11 +162,15 @@
         active_renderer = renderer;
         const remove_input = input.on_global(handle_input);
         const browser_input = create_browser_input_adapter({ host: canvas, router: input, focus_on_pointer_down: true });
+        focus_game = browser_input.focus;
+        canvas.dataset.snakeInputReady = "true";
         signal.addEventListener(
           "abort",
           () => {
             remove_input();
             browser_input.dispose();
+            focus_game = undefined;
+            delete canvas.dataset.snakeInputReady;
           },
           { once: true },
         );
@@ -299,7 +316,8 @@
   <p>
     The example keeps gameplay in a small, deterministic state machine and uses the existing WebGPU shape commands for every board element.
     The typed <code>GameHost</code> bridge publishes readonly state to Svelte, while commands provide the narrow control surface for menus and
-    touch input.
+    touch input. Starting, resuming, restarting, or changing direction through the D-pad returns keyboard focus to the board, so arrow keys stay
+    with the game instead of scrolling the documentation page.
   </p>
 
   <h2>Public shape</h2>

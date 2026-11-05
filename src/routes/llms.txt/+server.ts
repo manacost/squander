@@ -378,10 +378,12 @@ state machine and uses \`GameHost\` for menus, score, pause state, and touch
 controls. WebGPU shape commands draw the near-black board, readable snake
 segments, and randomly colored fruit.
 
-The example supports arrow keys, WASD, and an accessible touch D-pad. Wall and
-self collisions end a run; fruit increases the score and gradually increases
-movement speed. The example does not add package exports, gamepad support,
-persistent scores, audio, or network play.
+The example supports arrow keys, WASD, and an accessible touch D-pad. Starting,
+resuming, restarting, or changing direction through the D-pad returns keyboard
+focus to the board, so arrow keys stay with the game instead of scrolling the
+documentation page. Wall and self collisions end a run; fruit increases the
+score and gradually increases movement speed. The example does not add package
+exports, gamepad support, persistent scores, audio, or network play.
 
 \`\`\`ts
 type SnakeState = Readonly<{
