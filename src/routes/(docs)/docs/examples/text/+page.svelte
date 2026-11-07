@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { asset } from "$app/paths";
   import GameHost from "../../../../../lib/svelte/GameHost.svelte";
   import CodeBlock from "../../../../../lib/docs/CodeBlock.svelte";
   import { create_game, rgba, type RuntimeGame } from "../../../../../lib/core/index.js";
@@ -12,6 +13,7 @@
   let active_game: RuntimeGame | undefined;
   let font: WebGpuFont | undefined;
   let ticks = 0;
+  const font_source = `url("${asset("fonts/GeostarFill-Regular.ttf")}")`;
   const character_rows = ["0123456789", "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|~`", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"];
 
   const create_text_game = ({
@@ -32,7 +34,7 @@
         now_seconds: () => performance.now() / 1000,
       },
       setup: async ({ assets }) => {
-        const font_handle = await assets.load_font('url("/fonts/GeostarFill-Regular.ttf")', {
+        const font_handle = await assets.load_font(font_source, {
           characters: character_rows.join(""),
           size: 28,
         });
@@ -92,7 +94,7 @@
 
   <h2>What you'll see</h2>
   <ul>
-    <li>A bundled font loaded from <code>/fonts/GeostarFill-Regular.ttf</code>.</li>
+    <li>A bundled font loaded through SvelteKit's base-aware <code>asset</code> helper.</li>
     <li>Digits, common symbols, uppercase letters, and lowercase letters rendered as glyphs.</li>
     <li>Typed font ownership through <code>assets.load_font</code>.</li>
     <li>Reusable glyph preparation in a live WebGPU canvas.</li>
@@ -102,7 +104,8 @@
   <h2>Load a font</h2>
   <CodeBlock
     code={`const font_handle = await assets.load_font(
-  'url("/fonts/GeostarFill-Regular.ttf")',
+  // Use SvelteKit's base-aware asset path for files in static/.
+  \`url("\${asset("fonts/GeostarFill-Regular.ttf")}")\`,
   { characters: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", size: 28 },
 );
 

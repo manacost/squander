@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { asset } from "$app/paths";
   import GameHost from "../../../../../lib/svelte/GameHost.svelte";
   import {
     create_camera,
@@ -45,6 +46,7 @@
   let simulation_paused = false;
   let texture: WebGpuTexture | undefined;
   let font: WebGpuFont | undefined;
+  const font_source = `url("${asset("fonts/GeostarFill-Regular.ttf")}")`;
   const camera = create_camera({ x: 400, y: 225, viewport: { logical_width: 800, logical_height: 450 } });
   const polygon = create_polygon([
     { x: 520, y: 120 },
@@ -126,7 +128,7 @@
           minification: "linear",
         });
         texture = texture_handle.read();
-        font = await renderer.create_font_from_url('url("/fonts/GeostarFill-Regular.ttf")', {
+        font = await renderer.create_font_from_url(font_source, {
           characters: playground_characters,
           size: 18,
         });

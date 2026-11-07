@@ -104,6 +104,8 @@ Keep API names, file names, code, test names, and established product names exac
 
 Inspect `git status` before editing and preserve unrelated work in a dirty tree. Prefer source code over stale examples when behavior differs. Keep changes scoped and report pre-existing check failures separately.
 
+Read [FRICTION_LOG.md](FRICTION_LOG.md) before changing deployment paths, static resources, or GitHub Pages behavior. Apply its prevention notes and add a dated entry when a new recurring repository friction is found.
+
 For multi-slice plans or requests to continue working, use the repository workflow in
 [`.agents/skills/plan-execution/SKILL.md`](.agents/skills/plan-execution/SKILL.md).
 Local plan files and ledgers belong in the gitignored `.codex/plans/` directory unless the
