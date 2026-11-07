@@ -225,7 +225,9 @@ where they remain compatible with a denser implementation.
 The next planning slices are:
 
 1. Compare local schema maps, component tokens, and world-scoped component
-   factories with type tests before choosing the public seam.
+   factories with type tests before choosing the public seam. See the
+   [typing and storage options](design-options.md) for the current comparison
+   and provisional direction.
 2. Prototype and benchmark at least two storage/query strategies, such as
    sparse-set columns and archetype tables, using the same million-entity
    workloads.
@@ -238,8 +240,9 @@ The next planning slices are:
 
 ### Open design questions
 
-- Should the primary seam be a `World<Schema>` generic, a schema object passed
-  to `create_world`, component tokens, or a combination of these?
+- Can the leading local schema plus component-token seam deliver the desired
+  ergonomics, and should an optional name-keyed helper exist for the common
+  case?
 - Should component storage default to sparse-set columns, archetypes, or a
   hybrid selected per component/query workload? Which data shapes deserve a
   typed-array path, and how can object-valued components remain ergonomic?
@@ -253,6 +256,9 @@ The next planning slices are:
   table, or support both modes?
 - How should schema migrations and custom codecs be registered without
   reintroducing ambient global state?
+- Is an optional nominal `WorldKey` worth requiring for applications that need
+  compile-time separation between worlds with identical schemas, or are
+  runtime ownership checks sufficient for the common path?
 - Is a built-in ECS the supported Phase 3 capability, or should Squander ship
   only a deep integration seam for application-owned ECS implementations?
 
