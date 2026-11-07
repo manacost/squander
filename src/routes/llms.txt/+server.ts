@@ -46,6 +46,10 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - Keep deferred capabilities contract-driven: advanced projections, custom
   shaders, render targets, mipmaps, fixed-step scheduling, and action mapping
   require their own supported behavior and evidence before inclusion.
+- ECS integration is currently a Phase 3 Draft capability. Its design goals
+  include isolated worlds, local component typing without an ambient global
+  registry, indexed queries, explicit system lifecycle, and versioned
+  serialization. It is not a supported public API yet.
 
 ## Author and project
 

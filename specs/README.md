@@ -47,6 +47,10 @@ listed below. Historical plans and slice evidence are archived under
 - [scene-ui](scene-ui/spec.md)
 - [input-routing](input-routing/spec.md)
 
+### Phase 3 draft capabilities
+
+- [ecs-system](ecs-system/spec.md)
+
 ## Verification baseline
 
 Use focused checks first, then the repository gates:
@@ -70,10 +74,10 @@ readback. Coverage and mocked GPU tests do not replace real-device evidence.
 
 ## Future work
 
-Read the candidate logs for deferred behavior such as ECS integration, action
-mapping, cursor-anchored zoom, automatic culling, custom shaders, fixed-step
-scheduling, and mipmaps. Do not treat a candidate as an accepted contract until
-it has its own capability specification and evidence plan.
+Read the candidate logs for deferred behavior such as action mapping,
+cursor-anchored zoom, automatic culling, custom shaders, fixed-step scheduling,
+and mipmaps. The [ecs-system](ecs-system/spec.md) document is a Draft contract;
+do not treat it as an accepted implementation until its evidence plan passes.
 
 ## Adding or changing a capability
 
