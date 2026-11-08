@@ -1,4 +1,4 @@
-import { create_world, define_component, define_components } from "../src/lib/core/ecs.js";
+import { create_world, define_component, define_components } from "../src/lib/ecs/index.js";
 
 type Position = { x: number; y: number };
 type Velocity = { x: number; y: number };

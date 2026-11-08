@@ -23,7 +23,7 @@ test("Getting Started explains installation and the first game loop", async ({ p
   await expect(page.locator("a.link").filter({ hasText: "getting started" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1, name: "Getting started" })).toBeVisible();
   await expect(page.getByText("running Squander game in 60 seconds")).toBeVisible();
-  await expect(page.locator("pre code").first()).toHaveText("npm install squander@^8 svelte@^5 @sveltejs/kit@^3");
+  await expect(page.locator("pre code").first()).toHaveText("npm install squander@latest svelte@latest @sveltejs/kit@latest");
   const game_sample = page.locator("pre code").filter({ hasText: 'import { Game, type GameReadyContext } from "squander/svelte";' });
   await expect(game_sample).toContainText('<Game class="game-canvas" onReady={start_game} />');
   await expect(game_sample).toContainText("await scenes.mount");
