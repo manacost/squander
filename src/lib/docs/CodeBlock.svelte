@@ -1,13 +1,10 @@
 <script lang="ts">
-  import Prism from "prismjs";
-  import "prismjs/components/prism-typescript.js";
+  import { highlight_code, type CodeLanguage } from "./highlight-code.js";
 
-  type Language = "typescript" | "svelte";
-  type Props = { code: string; language?: Language };
+  type Props = { code: string; language?: CodeLanguage };
 
   let { code, language = "typescript" }: Props = $props();
-  const grammar = $derived(language === "svelte" ? Prism.languages.markup : (Prism.languages.typescript ?? Prism.languages.javascript));
-  const highlighted_code = $derived(Prism.highlight(code, grammar, language));
+  const highlighted_code = $derived(highlight_code(code, language));
 </script>
 
 <!-- eslint-disable-next-line svelte/no-at-html-tags -- Prism returns escaped markup for the trusted code sample. -->
