@@ -308,7 +308,7 @@
   }
 
   .active:before {
-    content: "⋊";
+    content: "■\00a0";
     color: #444;
 
     text-decoration: none;
