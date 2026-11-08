@@ -90,59 +90,41 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 
 ## Getting started
 
-Squander requires Node.js 22.17 or newer for development. Install the package
-and Svelte when using the optional adapter:
+Squander is ready in 60 seconds with the SvelteKit path. Squander requires
+Node.js 22.17 or newer for development. Install Squander, Svelte, and SvelteKit:
 
 \`\`\`sh
-npm install squander@^8 svelte@^5
+npm install squander@^8 svelte@^5 @sveltejs/kit@^3
 \`\`\`
 
-The core package has no Svelte dependency. Import from the package root for the
-usual API, from \`squander/core\` for the core API, or from
-\`squander/core/runtime\` for lower-level runtime types.
+Create a route such as \`src/routes/+page.svelte\` and mount the exported
+\`Game\` component. It creates the browser-side game after mount, owns the
+renderer and frame loop, and disposes them when the page unmounts:
 
-For a first browser game, render a canvas and create the game from client-only
-code after the canvas exists:
+\`\`\`svelte
+<script lang="ts">
+  import { Game, type GameReadyContext } from "squander/svelte";
 
-\`\`\`html
-<canvas id="game" width="800" height="450"></canvas>
+  const start_game = async ({ scenes }: GameReadyContext): Promise<void> => {
+    await scenes.mount(({ renderer }) => ({
+      name: "main",
+      draw: () => {
+        void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
+      },
+    }));
+  };
+</script>
+
+<Game class="game-canvas" onReady={start_game} />
 \`\`\`
 
-\`\`\`ts
-import { create_game } from "squander";
-
-const canvas = document.querySelector<HTMLCanvasElement>("#game");
-if (canvas === null) throw new Error("Missing #game canvas");
-
-const scheduler = {
-  request_frame: (callback: () => void) => requestAnimationFrame(callback),
-  cancel_frame: (handle: unknown) => {
-    if (typeof handle === "number") cancelAnimationFrame(handle);
-  },
-  now_seconds: () => performance.now() / 1000,
-};
-
-const game = create_game({
-  renderer: { canvas, width: 800, height: 450 },
-  scheduler,
-  update: ({ delta_seconds }) => {
-    // Advance gameplay state here.
-    void delta_seconds;
-  },
-  draw: () => {
-    // Submit drawing commands here.
-  },
-});
-
-await game.ready;
-const dispose_game = (): Promise<void> => game.dispose();
-\`\`\`
-
-WebGPU requires a secure context, such as localhost during development or
-HTTPS in production. In SvelteKit, create the game in \`onMount\` and dispose it
-from the returned cleanup function; do not create a WebGPU game during
-server-side rendering. Continue with the [game lifecycle guide](/docs/core/game-lifecycle)
-and [playground](/docs/examples/playground) for rendered examples.
+The first scene clears the canvas so a successful setup is visible. WebGPU
+requires a secure context, such as localhost during development or HTTPS in
+production. Keep \`Game\` in a Svelte component so WebGPU creation stays
+browser-only; do not create a game during server-side rendering. For lower-level
+control, import \`create_game\` from the package root or continue with the
+[game lifecycle guide](/docs/core/game-lifecycle). Use the
+[playground](/docs/examples/playground) for a larger rendered example.
 
 ## Use Squander in a SvelteKit project
 

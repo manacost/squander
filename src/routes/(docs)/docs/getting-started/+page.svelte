@@ -7,77 +7,64 @@
 
 <article class="getting-started">
   <h1>Getting started</h1>
-  <p class="summary">
-    Install Squander, create a browser-safe game instance, and get a clean update and draw loop running in your TypeScript project.
+  <p class="summary">Go from a fresh SvelteKit project to a running Squander game in 60 seconds.</p>
+
+  <h2>Install the stack</h2>
+  <p>From your SvelteKit project, install Squander alongside the Svelte runtime and SvelteKit:</p>
+  <pre class="shell"><code>npm install squander@^8 svelte@^5 @sveltejs/kit@^3</code></pre>
+  <p>
+    If you already have a SvelteKit project, its Svelte and SvelteKit packages are probably installed. The command above shows the complete
+    stack that the example uses.
   </p>
 
-  <h2>Install Squander</h2>
-  <p>Squander targets modern browsers with WebGPU and requires Node.js 22.17 or newer for local development.</p>
-  <pre class="shell"><code>npm install squander@^8</code></pre>
+  <h2>Mount the Game component</h2>
   <p>
-    The core package has no Svelte dependency. Add <code>svelte@^5</code> when you want Svelte to provide your UI layer; keep gameplay state and
-    the game loop in Squander.
+    Put this in a route such as <code>src/routes/+page.svelte</code>. <code>Game</code> creates the browser-side game after mount, owns its renderer
+    and frame loop, and disposes them when the page unmounts.
   </p>
-
-  <h2>First steps</h2>
-  <p>
-    Start with a canvas and a game loop. Run this code in the browser after the canvas exists, such as from a client-only module or a Svelte <code
-      >onMount</code
-    > callback.
-  </p>
-  <pre class="markup"><code>&lt;canvas id="game" width="800" height="450"&gt;&lt;/canvas&gt;</code></pre>
   <CodeBlock
-    code={`import { create_game } from "squander";
+    language="svelte"
+    code={`<script lang="ts">
+  import { Game, type GameReadyContext } from "squander/svelte";
 
-const canvas = document.querySelector<HTMLCanvasElement>("#game");
-if (canvas === null) throw new Error("Missing #game canvas");
+  const start_game = async ({ scenes }: GameReadyContext): Promise<void> => {
+    await scenes.mount(({ renderer }) => ({
+      name: "main",
+      draw: () => {
+        void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
+      },
+    }));
+  };
+\u003C/script>
 
-const scheduler = {
-  request_frame: (callback: () => void) => requestAnimationFrame(callback),
-  cancel_frame: (handle: unknown) => {
-    if (typeof handle === "number") cancelAnimationFrame(handle);
-  },
-  now_seconds: () => performance.now() / 1000,
-};
+<Game class="game-canvas" onReady={start_game} />
 
-const game = create_game({
-  renderer: { canvas, width: 800, height: 450 },
-  scheduler,
-  update: ({ delta_seconds }) => {
-    // Advance player, enemy, and world state here.
-    void delta_seconds;
-  },
-  draw: () => {
-    // Submit drawing commands here.
-  },
-});
-
-await game.ready;
-// The game is now initialized and its frame loop is running.
-
-const dispose_game = (): Promise<void> => game.dispose();
-// Call dispose_game() from your component or page cleanup function.`}
+<style>
+  :global(.game-canvas) {
+    width: min(100%, 800px);
+    aspect-ratio: 16 / 9;
+  }
+</style>`}
   />
 
-  <h2>What the first game owns</h2>
+  <h2>What you get</h2>
   <ul>
-    <li><code>create_game</code> creates the WebGPU renderer, frame loop, input router, asset cache, and resource owners.</li>
-    <li><code>update</code> advances gameplay from a bounded <code>delta_seconds</code> value.</li>
-    <li><code>draw</code> submits the commands that render the current state.</li>
-    <li><code>game.ready</code> resolves after the renderer and optional async setup are ready.</li>
-    <li><code>game.dispose()</code> stops the loop and releases game-owned resources when the page or scene goes away.</li>
+    <li>A WebGPU canvas initialized through the SvelteKit client lifecycle.</li>
+    <li>A running update and draw loop with a game-owned scene stack.</li>
+    <li>Automatic cleanup when the Svelte component unmounts.</li>
+    <li>A first scene that clears the canvas so you can see the game is alive.</li>
   </ul>
 
-  <h2>Browser and framework notes</h2>
+  <h2>Browser requirements</h2>
   <p>
     WebGPU requires a secure context: use <code>http://localhost</code> or <code>http://127.0.0.1</code> during development and HTTPS in
-    production. Do not create a game during server-side rendering. In SvelteKit, create it in <code>onMount</code> and dispose it from the returned
-    cleanup function.
+    production. Keep <code>Game</code> in a Svelte component so WebGPU creation stays browser-only; do not create a game during server-side rendering.
   </p>
   <p>
-    This first loop intentionally leaves drawing commands open so you can choose your game structure. Continue with the
-    <a href={resolve("/(docs)/docs/core/[guide]", { guide: "game-lifecycle" })}>game lifecycle guide</a>, then explore the
-    <a href={resolve("/(docs)/docs/examples/playground")}>playground</a> for a rendered example.
+    When you need lower-level lifecycle control, continue with the
+    <a href={resolve("/(docs)/docs/core/[guide]", { guide: "game-lifecycle" })}>game lifecycle guide</a>. For a larger rendered example,
+    open the
+    <a href={resolve("/(docs)/docs/examples/playground")}>playground</a>.
   </p>
 </article>
 
@@ -105,8 +92,5 @@ const dispose_game = (): Promise<void> => game.dispose();
   }
   .shell {
     border: 1px solid #39435b;
-  }
-  .markup {
-    margin-bottom: 1.5rem;
   }
 </style>

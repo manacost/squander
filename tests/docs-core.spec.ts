@@ -22,11 +22,12 @@ test("Getting Started explains installation and the first game loop", async ({ p
 
   await expect(page.locator("a.link").filter({ hasText: "getting started" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1, name: "Getting started" })).toBeVisible();
-  await expect(page.locator("pre code").first()).toHaveText("npm install squander@^8");
-  await expect(page.locator("pre code").nth(2)).toContainText('import { create_game } from "squander";');
-  await expect(page.locator("pre code").nth(2)).toContainText("await game.ready;");
-  await expect(page.locator("pre code").nth(2)).toContainText("const dispose_game");
-  await expect(page.locator("pre code").nth(2)).toContainText("game.dispose()");
+  await expect(page.getByText("running Squander game in 60 seconds")).toBeVisible();
+  await expect(page.locator("pre code").first()).toHaveText("npm install squander@^8 svelte@^5 @sveltejs/kit@^3");
+  const game_sample = page.locator("pre code").filter({ hasText: 'import { Game, type GameReadyContext } from "squander/svelte";' });
+  await expect(game_sample).toContainText('<Game class="game-canvas" onReady={start_game} />');
+  await expect(game_sample).toContainText("await scenes.mount");
+  await expect(game_sample).toContainText("renderer.clear");
   await expect(page.getByText("secure context")).toBeVisible();
   await expect(page.getByRole("link", { name: "game lifecycle guide" })).toHaveAttribute("href", "/docs/core/game-lifecycle");
 
