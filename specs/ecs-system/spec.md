@@ -54,13 +54,14 @@ contract. No new ECS implementation or public package export is promised yet.
   or structurally changed during iteration. The contract should distinguish
   read-only access from mutation where that distinction prevents accidental
   invalidation or makes optimization possible.
-- **Compose systems without inheritance.** Systems should be ordinary
-  functions or records that declare the data they read and write, operate on
-  typed queries, and compose in a deterministic order. The ECS must define
-  registration, execution, error, and disposal behavior without requiring a
-  base class or framework-owned global scheduler. Integration with the existing
-  game update/draw lifecycle should be an explicit adapter or composition
-  point, not an implicit dependency on scenes, rendering, input, or Svelte.
+- **Stay ignorant of system scheduling.** The ECS should provide worlds,
+  component access, and typed queries; it should not register, order, or invoke
+  systems. A system is a caller-owned composition module that may close over
+  one or more worlds, other systems, signals, assets, scenes, input, or domain
+  state. It may expose any domain methods and any subset of optional lifecycle
+  hooks such as `enter`, `update`, `draw`, and `exit`. The caller decides
+  whether the system is global, scene-owned, nested inside another system, or
+  used only as a state/query API.
 - **Support world-level export and import.** A world must be able to export a
   storage-independent snapshot and import one atomically. The core ECS should
   not require persistence metadata or codecs on every component. JSON, binary
@@ -113,13 +114,14 @@ serializer may convert that snapshot to JSON, binary data, IndexedDB, or a
 network payload. Invalid snapshots produce diagnostic errors without partially
 installing a world.
 
-### Compose systems with lifecycle control
+### Compose caller-owned systems with lifecycle control
 
-An application registers movement, collision, and presentation systems in a
-declared order. Each system sees the query data it declared. The world runs
-systems for one update, reports a failure through the documented error path,
-and disposes system resources and world storage exactly once when the owner
-tears it down.
+An application creates ordinary system modules that use typed world queries and
+other game features. One module exposes `enter` and `draw`, another exposes only
+domain methods and signals, and a third exposes `update`. The application may
+attach them to a scene, call them from a global game loop, or compose them into
+another module. The ECS does not require registration or provide a scheduler.
+The owner controls cleanup and disposal.
 
 ### Mutate structure during an update
 
@@ -141,8 +143,11 @@ accepted.
   type assertions to make invalid code compile.
 - Runtime tests prove entity creation and deletion, stale-handle behavior,
   world isolation, component add/remove, query membership, structural mutation
-  policy, deterministic system order, disposal idempotence, and useful error
-  diagnostics.
+  policy, disposal idempotence, and useful error diagnostics.
+- Composition tests and examples prove that a caller-owned system can use a
+  world without registration, can expose any subset of lifecycle hooks, and can
+  be nested, scene-owned, global, or hook-free. System ordering and hook
+  invocation belong to the caller or an existing runtime adapter, not the ECS.
 - A benchmark fixture and report measure at least 1,000,000 entities, or record
   the exact host limitation if that population cannot run. The report includes
   the browser or runtime version, workload shape, storage strategy, timings,
@@ -196,12 +201,25 @@ world
 
 const snapshot = world.export();
 world.import(snapshot);
+
+const encounters = create_encounter_system({ world, tile_system });
+
+// The scene chooses which hooks to expose. There is no ECS registration step.
+const scene = {
+  name: "exploration",
+  enter: () => encounters.enter(),
+  draw: encounters.draw,
+};
+
+const seeds = create_seed_system(); // no enter, update, or draw
 ```
 
 The final interface may instead use a typed schema factory, component tokens
 created by the world, or a query callback that passes component values directly.
 The exact query builder and snapshot shape are part of the design work below,
-not promises made by this example.
+not promises made by this example. The system factories are ordinary
+application code; they are shown to illustrate composition, not a required ECS
+protocol.
 
 ## Test references
 
@@ -231,6 +249,13 @@ has important limitations for Squander:
   reuse policy.
 - Persistence, versioning, runtime-only components, and system scheduling are
   outside the interface.
+
+The reference project also uses “system” as a broad name for a caller-owned
+composition module. `create_encounter_system` owns encounters, signals,
+subscriptions, commands, queries, and drawing. `create_seed_system` owns only
+state and domain methods. `create_guidance_system` owns `enter` and `draw`, and
+`create_battle_system` composes scenes. These modules do not share one scheduler
+contract, and the ECS should not force them to.
 
 The replacement should preserve the useful composition and query ergonomics
 where they remain compatible with a denser implementation.
@@ -265,8 +290,9 @@ The next planning slices are:
   session, or stable only within one serialized snapshot?
 - Are structural changes deferred during query iteration, or are query views
   stable enough to support immediate changes with documented costs?
-- Does the ECS own a system scheduler, or should it expose a lower-level query
-  and world seam that the existing game loop schedules?
+- Should Squander document a small optional-hook convention for caller-owned
+  systems, or leave even that shape entirely application-defined? The ECS must
+  remain scheduler-blind either way.
 - Does persistence preserve numeric entity IDs, remap them through a snapshot
   table, or support both modes?
 - What should the world snapshot contain, and where should external serializers

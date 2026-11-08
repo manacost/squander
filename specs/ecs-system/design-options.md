@@ -213,6 +213,60 @@ definitions composable while making the runtime token explicit. It also permits
 an ergonomic name-keyed helper for inspection or migration without making
 strings the hot-path query representation.
 
+## Systems are caller-owned composition modules
+
+The scheduler example is not the right default for this ECS. A scheduler that
+registers systems, orders them, and invokes `world.step()` turns the ECS into a
+second game loop. It also assumes that every useful system has the same shape.
+The reference project demonstrates a broader and more useful model:
+
+- `create_encounter_system(tile_system)` returns signals, commands, queries,
+  `enter`, cleanup, and `draw`, but no `update`.
+- `create_seed_system()` returns state and domain methods, but neither
+  `enter`, `update`, nor `draw`.
+- `create_guidance_system(seeds)` returns `enter` and `draw`.
+- `create_battle_system()` returns events and commands that compose a scene.
+- `createCollisionSystem()` returns event methods and targeted movement/query
+  operations rather than a generic scheduler callback.
+
+Some of these modules use entities and components; some do not. The name
+“system” describes a composition role, not an ECS protocol.
+
+The ECS should therefore expose only the world and query seam. A caller-owned
+module can use a lightweight structural convention when useful:
+
+```ts
+type OwnedSystem<Context> = {
+  enter?: (context: Context) => void | (() => void);
+  update?: (time: UpdateTime) => void;
+  draw?: () => void;
+  exit?: () => void;
+  // Other domain methods, signals, and state are intentionally allowed.
+};
+```
+
+This is an illustrative consumer-side type, not an ECS export. A scene, game
+loop, parent system, or application can choose which hooks to call and how to
+compose them:
+
+```ts
+const encounter = create_encounter_system({ world, tile_system });
+
+const scene = {
+  name: "exploration",
+  enter: () => encounter.enter?.(),
+  draw: () => encounter.draw?.(),
+};
+
+const seeds = create_seed_system(); // no lifecycle hooks required
+```
+
+The ECS must not expose `add_system`, `remove_system`, `step`, or a required
+system interface. A scheduler can still exist as an application-owned helper,
+and the existing scene/game runtime can act as one, but it belongs above the ECS
+seam. This preserves caller control over global systems, scene-owned systems,
+subsystems, and systems that are purely stateful APIs.
+
 ## Object-first component values
 
 The leading DX should treat every component as an object-shaped value:
@@ -332,6 +386,8 @@ particular storage implementation:
   world-local numeric IDs.
 - System queries expose only requested values; direct broad records are not a
   supported hot-loop seam.
+- Systems remain caller-owned factories or records with optional hooks; the ECS
+  does not register, order, or invoke them.
 - Component descriptors should carry runtime identity and type information;
   storage strategy and persistence format remain internal or world-level until
   benchmark evidence justifies another seam.
