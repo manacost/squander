@@ -245,10 +245,11 @@
 
 <style>
   .arena-page {
+    color-scheme: dark;
     min-height: 100vh;
     padding: 2rem clamp(1rem, 4vw, 3rem);
-    background: #eef2fb;
-    color: #26334e;
+    background: #232121;
+    color: #e9f3ff;
     font-family: system-ui, sans-serif;
   }
 
@@ -264,12 +265,12 @@
     justify-content: space-between;
     gap: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #6076a8;
+    border-bottom: 1px solid #39435b;
   }
 
   .arena-header h1 {
     margin: 0;
-    color: #26334e;
+    color: #ffffff;
     font-family: Geo, sans-serif;
     font-size: 2rem;
     font-weight: 400;
@@ -279,10 +280,18 @@
   .arena-header p {
     max-width: 38rem;
     margin: 0.5rem 0 0;
-    color: #42526d;
+    color: #b7c9e2;
   }
 
-  .arena-header a,
+  .arena-header a {
+    color: var(--red-4);
+    text-underline-offset: 0.2em;
+  }
+
+  .arena-header a:hover {
+    color: #ffffff;
+  }
+
   .arena-footer button,
   .arena-overlay button {
     border: 1px solid #4b7399;
@@ -293,7 +302,6 @@
     text-decoration: none;
   }
 
-  .arena-header a:hover,
   .arena-footer button:hover,
   .arena-overlay button:hover {
     background: #4a5a7b;
@@ -390,8 +398,8 @@
     justify-content: space-between;
     gap: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid #6076a8;
-    color: #42526d;
+    border-top: 1px solid #39435b;
+    color: #b7c9e2;
     font-size: 0.85rem;
   }
 
@@ -400,7 +408,7 @@
   }
 
   .arena-footer strong {
-    color: #d8e9ff;
+    color: #ffffff;
   }
 
   @media (max-width: 720px) {
