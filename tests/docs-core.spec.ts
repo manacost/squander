@@ -17,6 +17,67 @@ test("core documentation is present in the sidebar and links to focused guides",
   await expect(page.getByRole("heading", { level: 1, name: "Text drawing" })).toBeVisible();
 });
 
+test("Getting Started explains installation and the first game loop", async ({ page }) => {
+  await page.goto("/docs/getting-started");
+
+  await expect(page.locator("a.link").filter({ hasText: "getting started" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Getting started" })).toBeVisible();
+  await expect(page.getByText("running Squander game in 60 seconds")).toBeVisible();
+  await expect(page.locator("pre code").first()).toHaveText("npm install squander@^8 svelte@^5 @sveltejs/kit@^3");
+  const game_sample = page.locator("pre code").filter({ hasText: 'import { Game, type GameReadyContext } from "squander/svelte";' });
+  await expect(game_sample).toContainText('<Game class="game-canvas" onReady={start_game} />');
+  await expect(game_sample).toContainText("await scenes.mount");
+  await expect(game_sample).toContainText("renderer.clear");
+  await expect(page.getByText("secure context")).toBeVisible();
+  await expect(page.getByRole("link", { name: "game lifecycle guide" })).toHaveAttribute("href", "/docs/core/game-lifecycle");
+
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "Read Getting started →" })).toHaveAttribute("href", "/docs/getting-started");
+});
+
+test("the docs landing page leads with Squander's code-first value", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Build games with TypeScript — or worse, just squander your time" }),
+  ).toBeVisible();
+  await expect(page.getByText("code-first browser game toolkit")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Code-first, loop-owned" })).toBeVisible();
+  await expect(page.getByText("Love2D")).toBeVisible();
+  await expect(page.getByText("MonoGame")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Svelte for UI, atop your game" })).toBeVisible();
+  await expect(page.getByText("The web has made user interfaces powerful and flexible.")).toBeVisible();
+  await expect(page.getByText("agentically aligned development")).toBeVisible();
+  await expect(page.getByRole("link", { name: "llms.txt" })).toHaveAttribute("href", "/llms.txt");
+  await expect(page.getByRole("heading", { level: 2, name: "Start with a working game loop" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Read Getting started →" })).toHaveAttribute("href", "/docs/getting-started");
+
+  const heading_colors = await page.locator("main.page").evaluate((page_content) => {
+    const h1 = page_content.querySelector("h1");
+    const h2 = page_content.querySelector("h2");
+    if (h1 === null || h2 === null) throw new Error("landing page headings are missing");
+    const probe = document.createElement("span");
+    document.body.append(probe);
+    probe.style.color = "var(--red-5)";
+    const red_5 = getComputedStyle(probe).color;
+    probe.style.color = "var(--red-2)";
+    const red_2 = getComputedStyle(probe).color;
+    probe.remove();
+    return { h1: getComputedStyle(h1).color, h2: getComputedStyle(h2).color, red_5, red_2 };
+  });
+  expect(heading_colors.h1).toBe(heading_colors.red_5);
+  expect(heading_colors.h2).toBe(heading_colors.red_2);
+});
+
+test("docs pages keep bottom breathing room across layouts", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("main.page")).toHaveCSS("padding-bottom", "32px");
+
+  await page.setViewportSize({ width: 480, height: 800 });
+  await page.reload();
+  await expect(page.locator("main.page")).toHaveCSS("padding-bottom", "32px");
+});
+
 test("the removed examples landing page is no longer published", async ({ request }) => {
   const response = await request.get("/docs/examples");
   expect(response.status()).toBe(404);

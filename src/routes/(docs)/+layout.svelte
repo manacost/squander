@@ -8,7 +8,10 @@
   let page_path = $derived(page.url.pathname);
   let expanded_sections = $state<Record<string, boolean>>({});
 
-  const links = [["about", resolve("/(docs)")]] satisfies readonly (readonly [string, string])[];
+  const links = [
+    ["about", resolve("/(docs)")],
+    ["getting started", resolve("docs/getting-started")],
+  ] satisfies readonly (readonly [string, string])[];
 
   const documentation = [
     {
@@ -193,6 +196,14 @@
     line-height: 1.1;
   }
 
+  :global(.page h1) {
+    color: var(--red-5);
+  }
+
+  :global(.page :where(h2, h3, h4, h5)) {
+    color: var(--red-2);
+  }
+
   :global(.page :where(a, code, output)) {
     overflow-wrap: anywhere;
   }
@@ -216,7 +227,7 @@
 
     .page {
       margin-left: calc(14rem + 2.5vw);
-      padding: 0;
+      padding: 0 0 2rem;
     }
   }
 

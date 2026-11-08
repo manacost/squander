@@ -66,7 +66,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 
 ## Table of contents
 
-- [Install](#install)
+- [Getting started](#getting-started)
 - [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
@@ -88,18 +88,43 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Verification](#verification)
 - [Repository map](#repository-map)
 
-## Install
+## Getting started
 
-Squander requires Node.js 22.17 or newer for development. Install the package
-and Svelte when using the optional adapter:
+Squander is ready in 60 seconds with the SvelteKit path. Squander requires
+Node.js 22.17 or newer for development. Install Squander, Svelte, and SvelteKit:
 
 \`\`\`sh
-npm install squander@^8 svelte@^5
+npm install squander@^8 svelte@^5 @sveltejs/kit@^3
 \`\`\`
 
-The core package has no Svelte dependency. Import from the package root for the
-usual API, from \`squander/core\` for the core API, or from
-\`squander/core/runtime\` for lower-level runtime types.
+Create a route such as \`src/routes/+page.svelte\` and mount the exported
+\`Game\` component. It creates the browser-side game after mount, owns the
+renderer and frame loop, and disposes them when the page unmounts:
+
+\`\`\`svelte
+<script lang="ts">
+  import { Game, type GameReadyContext } from "squander/svelte";
+
+  const start_game = async ({ scenes }: GameReadyContext): Promise<void> => {
+    await scenes.mount(({ renderer }) => ({
+      name: "main",
+      draw: () => {
+        void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
+      },
+    }));
+  };
+</script>
+
+<Game class="game-canvas" onReady={start_game} />
+\`\`\`
+
+The first scene clears the canvas so a successful setup is visible. WebGPU
+requires a secure context, such as localhost during development or HTTPS in
+production. Keep \`Game\` in a Svelte component so WebGPU creation stays
+browser-only; do not create a game during server-side rendering. For lower-level
+control, import \`create_game\` from the package root or continue with the
+[game lifecycle guide](/docs/core/game-lifecycle). Use the
+[playground](/docs/examples/playground) for a larger rendered example.
 
 ## Use Squander in a SvelteKit project
 
