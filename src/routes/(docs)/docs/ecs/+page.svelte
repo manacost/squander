@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { create_world, define_component } from "../../../../../lib/core/index.js";
+  import { create_world, define_component } from "../../../../lib/core/index.js";
 
   type Position = { x: number; y: number };
 
@@ -35,10 +35,10 @@
   }
 </script>
 
-<svelte:head><title>Entity-component system · Squander Core</title></svelte:head>
+<svelte:head><title>Entity-component system · Squander ECS</title></svelte:head>
 
 <article class="guide">
-  <p class="eyebrow">Core guide</p>
+  <p class="eyebrow">ECS guide</p>
   <h1>Entity-component system</h1>
   <p class="summary">Create local schemas, query object-shaped components, and keep system composition in the caller.</p>
 
