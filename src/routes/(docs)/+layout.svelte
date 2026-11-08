@@ -6,6 +6,7 @@
   import type { LayoutData } from "./$types.js";
 
   let page_path = $derived(page.url.pathname);
+  let expanded_sections = $state<Record<string, boolean>>({});
 
   const links = [["about", resolve("/(docs)")]] satisfies readonly (readonly [string, string])[];
 
@@ -39,6 +40,15 @@
       ],
     },
   ] as const;
+
+  function section_id(label: string): string {
+    return `docs-section-${label.replaceAll(" ", "-")}`;
+  }
+
+  function toggle_section(label: string): void {
+    expanded_sections[label] = !expanded_sections[label];
+  }
+
   type Props = {
     data: LayoutData;
     children?: import("svelte").Snippet;
@@ -72,11 +82,29 @@
 
       <h5 class="sep subtitle">Docs</h5>
       {#each documentation as doc (doc.href)}
-        <a class="link" class:active={doc.href === page_path} href={resolve(doc.target)}>{doc.label}</a>
-        {#if doc.children}
-          {#each doc.children as child (child.href)}
-            <a class="link nested" class:active={child.href === page_path} href={child.href}>{child.label}</a>
-          {/each}
+        <div class="section-row">
+          <a class="link" class:active={doc.href === page_path} href={resolve(doc.target)}>{doc.label}</a>
+          {#if doc.children}
+            <button
+              class="section-toggle"
+              type="button"
+              aria-label={`Toggle ${doc.label} section`}
+              aria-expanded={expanded_sections[doc.label] ?? false}
+              aria-controls={section_id(doc.label)}
+              onclick={() => {
+                toggle_section(doc.label);
+              }}
+            >
+              <span aria-hidden="true"></span>
+            </button>
+          {/if}
+        </div>
+        {#if expanded_sections[doc.label]}
+          <div id={section_id(doc.label)} class="section-children">
+            {#each doc.children as child (child.href)}
+              <a class="link nested" class:active={child.href === page_path} href={child.href}>{child.label}</a>
+            {/each}
+          </div>
         {/if}
       {/each}
     </nav>
@@ -217,6 +245,47 @@
     text-decoration: none;
     background-color: hsla(0, 0, 100, 0);
     gap: 0.5rem;
+  }
+
+  .section-row {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .section-row .link {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .section-toggle {
+    display: grid;
+    width: 2rem;
+    min-height: 2rem;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--gray-5);
+    cursor: pointer;
+  }
+
+  .section-toggle:hover {
+    background-color: hsla(0deg, 0%, 0%, 0.1);
+    color: #fff;
+  }
+
+  .section-toggle span {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-inline-end: 1px solid currentColor;
+    border-block-end: 1px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 120ms ease-out;
+  }
+
+  .section-toggle[aria-expanded="true"] span {
+    transform: rotate(45deg);
   }
   .link:hover {
     background-color: hsla(0deg, 0%, 0%, 0.1);
