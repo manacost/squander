@@ -201,7 +201,6 @@
 <main class="arena-page">
   <header class="arena-header">
     <div>
-      <p class="eyebrow">ECS proof game</p>
       <h1>ECS Arena</h1>
       <p>Move the core, fire at the drones, and watch the ECS create, query, move, and destroy entities in real time.</p>
     </div>
@@ -213,7 +212,7 @@
       {#snippet children(view: GameAdapterView<ArenaState, typeof commands>)}
         <aside class="arena-hud" data-testid="ecs-arena-hud" aria-live="polite">
           <div class="hud-topline">
-            <span class="hud-kicker">world telemetry</span>
+            <span>world telemetry</span>
             <span data-testid="ecs-arena-status" class:game-over={view.state.status === "game-over"}>{view.state.status}</span>
           </div>
           <div class="hud-stats">
@@ -226,8 +225,7 @@
           <p class="hud-systems">{view.state.system_order.join(" → ")}</p>
           {#if view.state.status === "game-over"}
             <div class="arena-overlay">
-              <p class="eyebrow">Core breached</p>
-              <h2>Run complete</h2>
+              <h2>Core breached</h2>
               <p>You cleared {view.state.score} drones.</p>
               <button type="button" data-testid="ecs-arena-restart" onclick={commands.restart}>Restart run</button>
             </div>
@@ -248,16 +246,16 @@
 <style>
   .arena-page {
     min-height: 100vh;
-    padding: 3rem clamp(1rem, 4vw, 5rem);
-    background: #090d1d;
-    color: #e9f3ff;
-    font-family: "Tomorrow", system-ui, sans-serif;
+    padding: 2rem clamp(1rem, 4vw, 3rem);
+    background: #eef2fb;
+    color: #26334e;
+    font-family: system-ui, sans-serif;
   }
 
   .arena-header,
   .arena-footer {
     width: min(100%, 960px);
-    margin: 0 auto 1.5rem;
+    margin: 0 auto 1rem;
   }
 
   .arena-header {
@@ -265,26 +263,30 @@
     align-items: end;
     justify-content: space-between;
     gap: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #6076a8;
   }
 
   .arena-header h1 {
     margin: 0;
-    color: #85e8ff;
-    font-size: clamp(2.5rem, 6vw, 5rem);
-    letter-spacing: -0.06em;
-    line-height: 0.95;
+    color: #26334e;
+    font-family: Geo, sans-serif;
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1.2;
   }
 
   .arena-header p {
     max-width: 38rem;
-    color: #a9b9d4;
+    margin: 0.5rem 0 0;
+    color: #42526d;
   }
 
   .arena-header a,
   .arena-footer button,
   .arena-overlay button {
     border: 1px solid #4b7399;
-    background: #142441;
+    background: #39435b;
     color: #e9f3ff;
     cursor: pointer;
     padding: 0.7rem 0.9rem;
@@ -294,16 +296,7 @@
   .arena-header a:hover,
   .arena-footer button:hover,
   .arena-overlay button:hover {
-    background: #1b365e;
-  }
-
-  .eyebrow,
-  .hud-kicker {
-    margin: 0 0 0.55rem;
-    color: #6f9fc5;
-    font-size: 0.75rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    background: #4a5a7b;
   }
 
   .arena-shell {
@@ -312,7 +305,7 @@
     margin: 0 auto;
     overflow: hidden;
     border: 1px solid #294363;
-    box-shadow: 0 1.5rem 4rem #0008;
+    background: #05070d;
   }
 
   :global(.arena-canvas) {
@@ -324,14 +317,18 @@
   }
 
   :global(.arena-canvas:focus-visible) {
-    box-shadow: inset 0 0 0 3px #85e8ff;
+    outline: 3px solid #85e8ff;
+    outline-offset: -3px;
   }
 
   .arena-hud {
     position: absolute;
-    inset: 1rem 1rem auto;
+    inset: 0.75rem 0.75rem auto;
     pointer-events: none;
-    text-shadow: 0 2px 8px #000;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid #39435b;
+    background: #151923d9;
+    color: #e9f3ff;
   }
 
   .hud-topline,
@@ -343,9 +340,8 @@
 
   .hud-topline {
     justify-content: space-between;
-    color: #9dc4e6;
+    color: #b7c9e2;
     font-size: 0.8rem;
-    text-transform: uppercase;
   }
 
   .hud-topline .game-over {
@@ -376,16 +372,16 @@
   .arena-overlay {
     pointer-events: auto;
     width: min(22rem, 80vw);
-    margin: 7rem auto 0;
-    padding: 1.5rem;
+    margin: 6rem auto 0;
+    padding: 1.25rem;
     border: 1px solid #4b7399;
-    background: #0d1730ee;
+    background: #151923;
     text-align: center;
   }
 
   .arena-overlay h2 {
     margin: 0;
-    color: #ffbd82;
+    color: #e9f3ff;
   }
 
   .arena-footer {
@@ -393,7 +389,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    color: #91a7c5;
+    padding-top: 1rem;
+    border-top: 1px solid #6076a8;
+    color: #42526d;
     font-size: 0.85rem;
   }
 
