@@ -52,6 +52,15 @@ describe("ecs arena model", () => {
     expect(game.get_state()).toMatchObject({ score: 1, enemy_count: 0, projectile_count: 0, last_event: "Drone destroyed" });
   });
 
+  it("disposes projectiles that leave the arena", () => {
+    const game = create_ecs_arena_game({ initial_enemies: [], enemy_spawn_interval_seconds: 100 });
+
+    game.fire();
+    advance(game, 1);
+
+    expect(game.get_state().projectile_count).toBe(0);
+  });
+
   it("enters game over when a drone reaches the player and can restart", () => {
     const game = create_ecs_arena_game({
       initial_enemies: [{ x: arena_width / 2 + 20, y: arena_height / 2 }],
