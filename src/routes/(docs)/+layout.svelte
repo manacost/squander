@@ -10,8 +10,8 @@
 
   const links = [
     ["about", resolve("/(docs)")],
-    ["getting started", resolve("docs/getting-started")],
-    ["project structure", resolve("docs/project-structure")],
+    ["getting started", resolve("/(docs)/docs/getting-started")],
+    ["project structure", resolve("/(docs)/docs/project-structure")],
   ] satisfies readonly (readonly [string, string])[];
 
   const documentation = [
@@ -82,7 +82,7 @@
 
     <nav class="list">
       {#each links as [label, link] (link)}
-        <a class="link" class:active={link === page_path} href={resolve("/(docs)")}>{label}</a>
+        <a class="link" class:active={link === page_path} href={link}>{label}</a>
       {/each}
 
       <h5 class="sep subtitle">Docs</h5>

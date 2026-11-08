@@ -20,7 +20,10 @@ test("core documentation is present in the sidebar and links to focused guides",
 test("Getting Started explains installation and the first game loop", async ({ page }) => {
   await page.goto("/docs/getting-started");
 
-  await expect(page.locator("a.link").filter({ hasText: "getting started" })).toBeVisible();
+  const getting_started_link = page.locator("a.link").filter({ hasText: "getting started" });
+  const project_structure_link = page.locator("a.link").filter({ hasText: "project structure" });
+  await expect(getting_started_link).toHaveAttribute("href", "/docs/getting-started");
+  await expect(project_structure_link).toHaveAttribute("href", "/docs/project-structure");
   await expect(page.getByRole("heading", { level: 1, name: "Getting started" })).toBeVisible();
   await expect(page.getByText("running Squander game in 60 seconds")).toBeVisible();
   await expect(page.locator("pre code").first()).toHaveText("npm install squander@latest svelte@latest @sveltejs/kit@latest");
