@@ -261,6 +261,12 @@ The system factories are ordinary
 application code; they are shown to illustrate composition, not a required ECS
 protocol.
 
+The application-owned ECS Arena proof game in
+`src/routes/(game)/scenes/ecs-arena/+page.svelte` exercises this contract in a
+real WebGPU loop. It composes input, spawning,
+movement, combat, cleanup, and rendering around one local world without adding
+an ECS scheduler or scene adapter.
+
 ## Test references
 
 The focused runtime contract lives in

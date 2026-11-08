@@ -36,6 +36,7 @@
         { label: "scenes", href: resolve("/(docs)/docs/examples/scenes"), target: "/(docs)/docs/examples/scenes" },
         { label: "scene UI", href: resolve("/(docs)/docs/examples/scene-ui"), target: "/(docs)/docs/examples/scene-ui" },
         { label: "snake", href: resolve("/(docs)/docs/examples/snake"), target: "/(docs)/docs/examples/snake" },
+        { label: "ecs arena", href: resolve("/(game)/scenes/ecs-arena"), target: "/(game)/scenes/ecs-arena" },
         { label: "svelte", href: resolve("/(docs)/docs/examples/svelte"), target: "/(docs)/docs/examples/svelte" },
       ],
     },

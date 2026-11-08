@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import { create_world, define_component } from "../../../../lib/core/index.js";
   import CodeBlock from "../../../../lib/docs/CodeBlock.svelte";
 
@@ -50,6 +51,9 @@
   <p class="eyebrow">ECS guide</p>
   <h1>Entity-component system</h1>
   <p class="summary">Create local schemas, query object-shaped components, and keep system composition in the caller.</p>
+  <p class="proof-link">
+    <a href={resolve("/(game)/scenes/ecs-arena")}>Play ECS Arena</a> — a small WebGPU game that makes the ECS lifecycle visible.
+  </p>
 
   <section class="live-example" aria-labelledby="ecs-example-title">
     <p class="eyebrow">Live example</p>
@@ -166,6 +170,13 @@ const scene = {
   .summary {
     font-size: 1.25rem;
     max-width: 48rem;
+  }
+  .proof-link {
+    max-width: 48rem;
+    color: var(--gray-6);
+  }
+  .proof-link a {
+    color: #85e8ff;
   }
   .live-example {
     margin: 2rem 0;

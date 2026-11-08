@@ -272,7 +272,7 @@ export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsAre
     world
       .query()
       .with(position, lifetime, projectile_marker)
-      .each(({ entity, read, write, destroy }) => {
+      .each(({ read, write, destroy }) => {
         const current_position = read(position);
         const remaining = write(lifetime);
         remaining.remaining_seconds -= delta_seconds;

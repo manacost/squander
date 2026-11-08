@@ -82,6 +82,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Scenes](#scenes)
 - [Text and fonts](#text-and-fonts)
 - [Svelte 5 game UI bridge](#svelte-5-game-ui-bridge)
+- [ECS Arena proof game](#ecs-arena-proof-game)
 - [Snake example](#snake-example)
 - [TypeScript and ownership rules](#typescript-and-ownership-rules)
 - [Verification](#verification)
@@ -217,6 +218,21 @@ JSON, binary formats, migrations, and runtime-only value policies belong in an
 application-owned serializer. The ECS provides no scheduler or system registry;
 callers decide whether an ordinary system exposes \`enter\`, \`update\`,
 \`draw\`, or \`exit\`, and where to invoke those hooks.
+
+## ECS Arena proof game
+
+The live \`/scenes/ecs-arena\` route is a small top-down WebGPU game built on
+the ECS API. The caller owns the system order: input, spawn, fire, steering,
+movement, combat, and cleanup. The world creates drones and projectiles,
+updates position and velocity components through queries, and destroys
+colliding entities through deferred structural operations. The HUD reports
+score, wave, entity count, and the system order so the ECS behavior is visible
+while playing.
+
+Use WASD or arrow keys to move, Space to fire, P or Escape to pause, and R to
+restart. The proof game is an example application, not a scheduler or a new
+ECS package API. It intentionally omits assets, audio, progression, and
+multiplayer.
 
 ## Game lifecycle and timing
 
@@ -521,6 +537,7 @@ verification environment, not a passing skip.
 - \`src/lib/svelte/\` — optional Svelte 5 adapter and \`GameHost\`.
 - \`src/routes/(docs)/docs/core/\` — focused runtime guides.
 - \`src/routes/(docs)/docs/examples/\` — runnable feature and composition demos.
+- \`src/routes/(game)/scenes/ecs-arena/\` — the ECS Arena proof game and its deterministic model tests.
 - \`src/routes/(docs)/docs/examples/snake/\` — the complete Snake arcade example and its simulation tests.
 - \`tests/\` — Playwright integration and real WebGPU fixtures.
 - \`specifications/\` — capability contracts, decisions, and evidence.
