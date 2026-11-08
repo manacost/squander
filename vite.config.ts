@@ -38,7 +38,7 @@ export default defineConfig({
   },
   server: {
     fs: {
-      allow: ["./package.json"],
+      allow: ["./package.json", "./verification"],
     },
   },
 });

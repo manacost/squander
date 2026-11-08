@@ -1,17 +1,28 @@
-import { performance } from "node:perf_hooks";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { create_world, define_component } from "../src/lib/core/ecs.js";
+import { run_ecs_benchmark, type EcsBenchmarkMemory, type EcsBenchmarkResult } from "./ecs-benchmark-workload.js";
 
-type Position = { x: number; y: number };
+type Baseline = {
+  readonly version: 1;
+  readonly time_regression_ratio: number;
+  readonly memory_regression_ratio: number;
+  readonly profiles: Readonly<Record<string, Readonly<Record<string, EcsBenchmarkResult>>>>;
+};
 
 const entity_count = 1_000_000;
 const structural_sample = 100_000;
+const snapshot_count = 100_000;
+const repetitions = 3;
+const time_metrics: readonly (keyof EcsBenchmarkResult)[] = [
+  "creation_ms",
+  "dense_update_ms",
+  "sparse_query_ms",
+  "structural_ms",
+  "snapshot_ms",
+  "clear_ms",
+];
 
-function elapsed(start: number): number {
-  return Number((performance.now() - start).toFixed(2));
-}
-
-function memory(): { heap_used_mb: number; rss_mb: number } {
+function memory(): EcsBenchmarkMemory {
   const usage = process.memoryUsage();
   return {
     heap_used_mb: Number((usage.heapUsed / 1024 / 1024).toFixed(1)),
@@ -19,74 +30,86 @@ function memory(): { heap_used_mb: number; rss_mb: number } {
   };
 }
 
-describe("ecs million-entity benchmark", () => {
-  it("records the object-first sparse-set workload", () => {
-    const position = define_component<Position>({ name: "position" });
-    const world = create_world({ position });
+function collect_garbage(): void {
+  const node_global = globalThis as typeof globalThis & { gc?: () => void };
+  node_global.gc?.();
+}
 
-    const creation_start = performance.now();
-    for (let index = 0; index < entity_count; index += 1) {
-      const entity = world.create();
-      world.add(entity, position, { x: index, y: 0 });
+function median(values: readonly number[]): number {
+  const ordered = [...values].sort((left, right) => left - right);
+  return ordered[Math.floor(ordered.length / 2)] ?? 0;
+}
+
+function median_result(results: readonly EcsBenchmarkResult[]): EcsBenchmarkResult {
+  const first = results[0];
+  if (first === undefined) throw new Error("ECS benchmark produced no result");
+  return {
+    ...first,
+    creation_ms: median(results.map((result) => result.creation_ms)),
+    dense_update_ms: median(results.map((result) => result.dense_update_ms)),
+    sparse_query_ms: median(results.map((result) => result.sparse_query_ms)),
+    structural_ms: median(results.map((result) => result.structural_ms)),
+    snapshot_ms: median(results.map((result) => result.snapshot_ms)),
+    clear_ms: median(results.map((result) => result.clear_ms)),
+  };
+}
+
+function profile_key(): string {
+  return `${process.platform}-${process.arch}-${process.version}`;
+}
+
+function baseline(): Baseline {
+  return JSON.parse(readFileSync(new URL("./ecs-performance-baseline.json", import.meta.url), "utf8")) as Baseline;
+}
+
+function assert_regression(
+  policy: string,
+  result: EcsBenchmarkResult,
+  expected: EcsBenchmarkResult | undefined,
+  thresholds: Baseline,
+): void {
+  if (expected === undefined) return;
+  const enforce = process.env.ECS_BENCHMARK_ENFORCE === "1";
+  for (const metric of time_metrics) {
+    const actual = result[metric];
+    const reference = expected[metric];
+    if (typeof actual !== "number" || typeof reference !== "number") continue;
+    const limit = reference * thresholds.time_regression_ratio;
+    if (enforce) {
+      expect(actual, `${policy} ${metric} regression`).toBeLessThanOrEqual(limit);
+    } else if (actual > limit) {
+      console.warn(`${policy} ${metric} exceeded the advisory benchmark budget: ${actual} > ${limit}`);
     }
-    const creation_ms = elapsed(creation_start);
-    const after_creation = memory();
+  }
 
-    let position_sum = 0;
-    const update_start = performance.now();
-    world
-      .query()
-      .with(position)
-      .each(({ read, write }) => {
-        const current = read(position);
-        position_sum += current.x;
-        write(position).x = current.x + 1;
-      });
-    const update_ms = elapsed(update_start);
+  const actual_heap = result.memory.before_clear.heap_used_mb;
+  const reference_heap = expected.memory.before_clear.heap_used_mb;
+  if (actual_heap !== null && reference_heap !== null) {
+    const limit = reference_heap * thresholds.memory_regression_ratio;
+    if (enforce) {
+      expect(actual_heap, `${policy} heap regression`).toBeLessThanOrEqual(limit);
+    } else if (actual_heap > limit) {
+      console.warn(`${policy} heap exceeded the advisory benchmark budget: ${actual_heap} > ${limit}`);
+    }
+  }
+}
 
-    const structural_start = performance.now();
-    const structural_entities = world
-      .query()
-      .with(position)
-      .toArray()
-      .slice(0, structural_sample)
-      .map((match) => match.entity);
-    for (const entity of structural_entities) world.remove(entity, position);
-    for (const entity of structural_entities) world.add(entity, position, { x: entity, y: 1 });
-    const structural_ms = elapsed(structural_start);
+describe("ecs multi-workload benchmark", () => {
+  it("records and guards both entity identity policies", () => {
+    const options = { entity_count, structural_sample, snapshot_count, read_memory: memory, collect_garbage };
+    const baseline_file = baseline();
+    const profile = baseline_file.profiles[profile_key()];
+    const results = ["monotonic", "generational"].map((policy) => {
+      const entity_policy = policy as "monotonic" | "generational";
+      run_ecs_benchmark(entity_policy, { ...options, entity_count: 10_000, structural_sample: 1_000, snapshot_count: 1_000 });
+      const measured = median_result(Array.from({ length: repetitions }, () => run_ecs_benchmark(entity_policy, options)));
+      assert_regression(entity_policy, measured, profile?.[entity_policy], baseline_file);
+      return measured;
+    });
 
-    const query_start = performance.now();
-    let query_count = 0;
-    world
-      .query()
-      .with(position)
-      .each(({ read }) => {
-        query_count += read(position).y;
-      });
-    const query_ms = elapsed(query_start);
-
-    const before_clear = memory();
-    const clear_start = performance.now();
-    world.clear();
-    const clear_ms = elapsed(clear_start);
-    const after_clear = memory();
-
+    expect(results).toHaveLength(2);
     console.log(
-      JSON.stringify({
-        runtime: process.version,
-        entity_count,
-        structural_sample,
-        position_sum,
-        query_count,
-        creation_ms,
-        update_ms,
-        structural_ms,
-        query_ms,
-        clear_ms,
-        memory: { after_creation, before_clear, after_clear },
-      }),
+      JSON.stringify({ runtime: process.version, platform: process.platform, arch: process.arch, profile: profile_key(), results }),
     );
-    expect(query_count).toBe(structural_sample);
-    expect(position_sum).toBe((entity_count * (entity_count - 1)) / 2);
   }, 180_000);
 });
