@@ -1,6 +1,6 @@
 {
   "name": "squander",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "private": false,
   "scripts": {
     "dev": "vite dev",
@@ -44,6 +44,10 @@
     "./core/runtime": {
       "types": "./dist/core/runtime/index.d.ts",
       "default": "./dist/core/runtime/index.js"
+    },
+    "./ecs": {
+      "types": "./dist/ecs/index.d.ts",
+      "default": "./dist/ecs/index.js"
     },
     "./svelte": {
       "types": "./dist/svelte/index.d.ts",

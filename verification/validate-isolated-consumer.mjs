@@ -42,7 +42,8 @@ execFileSync(
   const root = await import("squander");
   const core = await import("squander/core");
   const runtime = await import("squander/core/runtime");
-  if (typeof root.create_game !== "function" || typeof core.create_path !== "function" || typeof runtime.create_game !== "function") process.exit(1);
+  const ecs = await import("squander/ecs");
+  if (typeof root.create_game !== "function" || typeof core.create_path !== "function" || typeof runtime.create_game !== "function" || typeof ecs.create_world !== "function" || typeof ecs.define_component !== "function") process.exit(1);
   if ("GameHost" in root || "app" in root) process.exit(1);
 `,
   ],

@@ -46,7 +46,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - Keep deferred capabilities contract-driven: advanced projections, custom
   shaders, render targets, mipmaps, fixed-step scheduling, and action mapping
   require their own supported behavior and evidence before inclusion.
-- The initial ECS capability is available from \`squander/core\`: define local
+- The initial ECS capability is available from \`squander/ecs\`: define local
   object-shaped component tokens, create independent worlds, run typed fluent
   queries, and use world-level \`export()\`/\`import()\` snapshots. The ECS does
   not register or schedule systems; callers compose ordinary systems and
@@ -62,11 +62,12 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - GitHub: https://github.com/manacost/squander
 - npm: https://www.npmjs.com/package/squander
 - License: MIT
-- Current package version in this repository: 8.0.0
+- Current package version in this repository: 8.1.0
 
 ## Table of contents
 
 - [Getting started](#getting-started)
+- [Recommended project structure](#recommended-project-structure)
 - [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
@@ -94,7 +95,7 @@ Squander is ready in 60 seconds with the SvelteKit path. Squander requires
 Node.js 22.17 or newer for development. Install Squander, Svelte, and SvelteKit:
 
 \`\`\`sh
-npm install squander@^8 svelte@^5 @sveltejs/kit@^3
+npm install squander@latest svelte@latest @sveltejs/kit@latest
 \`\`\`
 
 Create a route such as \`src/routes/+page.svelte\` and mount the exported
@@ -172,6 +173,63 @@ surrounding experience. Use Svelte 5 runes in new application components, and
 keep gameplay state in the game unless it is UI state that the bridge
 intentionally publishes.
 
+## Recommended project structure
+
+Keep the SvelteKit route thin and put game-owned composition under
+\`src/lib/game\`. A practical starting structure is:
+
+\`\`\`text
+src/
+├── lib/
+│   └── game/
+│       ├── components/  # ECS tokens, local schema, and data shapes
+│       ├── scenes/      # lifecycle boundaries and scene composition
+│       ├── systems/     # ordinary caller-owned ECS or game systems
+│       ├── ui/          # Svelte HUDs, menus, and overlays
+│       └── game.ts      # world creation and the game entrypoint
+└── routes/
+    └── +page.svelte    # mounts squander/svelte and imports game.ts
+\`\`\`
+
+Keep \`+page.svelte\` at the application edge:
+
+\`\`\`svelte
+<script lang="ts">
+  import { Game } from "squander/svelte";
+  import { start_game } from "$lib/game/game";
+</script>
+
+<Game class="game-canvas" onReady={start_game} />
+\`\`\`
+
+Use \`game.ts\` as the composition root. It creates a world from the local
+schema, mounts the starting scene, and decides which systems run during each
+lifecycle phase. Systems remain ordinary functions, and scenes own ordering,
+assets, input, and lifecycle boundaries:
+
+\`\`\`ts
+import { create_world } from "squander/ecs";
+import type { GameReadyContext } from "squander/svelte";
+import { game_schema } from "./components";
+import { movement_system } from "./systems/movement";
+
+export const start_game = async ({ scenes }: GameReadyContext): Promise<void> => {
+  const world = create_world(game_schema);
+  await scenes.mount(({ renderer }) => ({
+    name: "play",
+    update: ({ delta_seconds }) => movement_system(world, delta_seconds),
+    draw: () => {
+      void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
+    },
+  }));
+};
+\`\`\`
+
+The ECS does not register or schedule systems. Keep component tokens and the
+local schema in \`components/\`, transformations in \`systems/\`, lifecycle
+composition in \`scenes/\`, and Svelte UI in \`ui/\`. Gameplay state remains in
+the runtime; Svelte reads only the state the game intentionally publishes.
+
 ## Core concepts
 
 The package root exports the core runtime. A game owns its renderer, frame
@@ -203,7 +261,7 @@ await game.ready;
 
 ## Entity-component system
 
-The optional ECS core is independent of Svelte, scenes, rendering, and the
+The optional ECS module is independent of Svelte, scenes, rendering, and the
 game loop. An entity-component system (ECS) separates identity, data, and
 behavior: an entity is a numeric ID, components are small pieces of data such
 as position or health, and systems query entities with the data they need and
@@ -214,7 +272,7 @@ needs:
 
 \`\`\`ts
 // Import the world factory and component definition helper.
-import { create_world, define_component } from "squander";
+import { create_world, define_component } from "squander/ecs";
 
 // Describe the data stored by each position component.
 type Position = { x: number; y: number };
@@ -538,7 +596,9 @@ Use the live page as the end-to-end reference for combining a pure game model,
 
 - Import public types from the package exports instead of reaching into source
   files.
-- Prefer the package root or \`squander/core\` for normal game code.
+- Prefer the package root for normal game code and \`squander/ecs\` for ECS
+  code.
+- Use \`squander/core\` only when you need the compatibility core barrel.
 - Use \`squander/core/runtime\` for lower-level runtime types and helpers.
 - Keep the core runtime Svelte-independent; use the Svelte adapter only at the
   application boundary.

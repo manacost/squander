@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { create_world, define_component } from "../../../../lib/core/index.js";
+  import { create_world, define_component } from "../../../../lib/ecs/index.js";
   import CodeBlock from "../../../../lib/docs/CodeBlock.svelte";
 
   type Position = { x: number; y: number };
@@ -112,7 +112,7 @@
   <CodeBlock
     language="typescript"
     code={`// Import the world factory and component definition helper.
-import { create_world, define_component } from "squander";
+import { create_world, define_component } from "squander/ecs";
 
 // Describe the data stored by each position component.
 type Position = { x: number; y: number };

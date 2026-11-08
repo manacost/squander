@@ -11,7 +11,7 @@
 
   <h2>Install the stack</h2>
   <p>From your SvelteKit project, install Squander alongside the Svelte runtime and SvelteKit:</p>
-  <pre class="shell"><code>npm install squander@^8 svelte@^5 @sveltejs/kit@^3</code></pre>
+  <pre class="shell"><code>npm install squander@latest svelte@latest @sveltejs/kit@latest</code></pre>
   <p>
     If you already have a SvelteKit project, its Svelte and SvelteKit packages are probably installed. The command above shows the complete
     stack that the example uses.
