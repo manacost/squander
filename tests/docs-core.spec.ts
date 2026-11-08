@@ -31,7 +31,23 @@ test("Getting Started explains installation and the first game loop", async ({ p
   await expect(page.getByRole("link", { name: "game lifecycle guide" })).toHaveAttribute("href", "/docs/core/game-lifecycle");
 
   await page.goto("/");
-  await expect(page.getByRole("link", { name: /Start with Getting started/ })).toHaveAttribute("href", "/docs/getting-started");
+  await expect(page.getByRole("link", { name: "Read Getting started →" })).toHaveAttribute("href", "/docs/getting-started");
+});
+
+test("the docs landing page leads with Squander's code-first value", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Build games with TypeScript — or worse, just squander your time" }),
+  ).toBeVisible();
+  await expect(page.getByText("code-first browser game toolkit")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Code-first, loop-owned" })).toBeVisible();
+  await expect(page.getByText("Love2D")).toBeVisible();
+  await expect(page.getByText("MonoGame")).toBeVisible();
+  await expect(page.getByText("agentically aligned development")).toBeVisible();
+  await expect(page.getByRole("link", { name: "llms.txt" })).toHaveAttribute("href", "/llms.txt");
+  await expect(page.getByRole("heading", { level: 2, name: "Start with a working game loop" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Read Getting started →" })).toHaveAttribute("href", "/docs/getting-started");
 });
 
 test("the removed examples landing page is no longer published", async ({ request }) => {
