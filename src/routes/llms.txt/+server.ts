@@ -67,6 +67,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 ## Table of contents
 
 - [Getting started](#getting-started)
+- [Recommended project structure](#recommended-project-structure)
 - [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
@@ -171,6 +172,63 @@ in client-side lifecycle code and use SvelteKit for routing, delivery, and the
 surrounding experience. Use Svelte 5 runes in new application components, and
 keep gameplay state in the game unless it is UI state that the bridge
 intentionally publishes.
+
+## Recommended project structure
+
+Keep the SvelteKit route thin and put game-owned composition under
+\`src/lib/game\`. A practical starting structure is:
+
+\`\`\`text
+src/
+├── lib/
+│   └── game/
+│       ├── components/  # ECS tokens, local schema, and data shapes
+│       ├── scenes/      # lifecycle boundaries and scene composition
+│       ├── systems/     # ordinary caller-owned ECS or game systems
+│       ├── ui/          # Svelte HUDs, menus, and overlays
+│       └── game.ts      # world creation and the game entrypoint
+└── routes/
+    └── +page.svelte    # mounts squander/svelte and imports game.ts
+\`\`\`
+
+Keep \`+page.svelte\` at the application edge:
+
+\`\`\`svelte
+<script lang="ts">
+  import { Game } from "squander/svelte";
+  import { start_game } from "$lib/game/game";
+</script>
+
+<Game class="game-canvas" onReady={start_game} />
+\`\`\`
+
+Use \`game.ts\` as the composition root. It creates a world from the local
+schema, mounts the starting scene, and decides which systems run during each
+lifecycle phase. Systems remain ordinary functions, and scenes own ordering,
+assets, input, and lifecycle boundaries:
+
+\`\`\`ts
+import { create_world } from "squander/ecs";
+import type { GameReadyContext } from "squander/svelte";
+import { game_schema } from "./components";
+import { movement_system } from "./systems/movement";
+
+export const start_game = async ({ scenes }: GameReadyContext): Promise<void> => {
+  const world = create_world(game_schema);
+  await scenes.mount(({ renderer }) => ({
+    name: "play",
+    update: ({ delta_seconds }) => movement_system(world, delta_seconds),
+    draw: () => {
+      void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
+    },
+  }));
+};
+\`\`\`
+
+The ECS does not register or schedule systems. Keep component tokens and the
+local schema in \`components/\`, transformations in \`systems/\`, lifecycle
+composition in \`scenes/\`, and Svelte UI in \`ui/\`. Gameplay state remains in
+the runtime; Svelte reads only the state the game intentionally publishes.
 
 ## Core concepts
 

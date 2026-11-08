@@ -11,6 +11,7 @@
   const links = [
     ["about", resolve("/(docs)")],
     ["getting started", resolve("docs/getting-started")],
+    ["project structure", resolve("docs/project-structure")],
   ] satisfies readonly (readonly [string, string])[];
 
   const documentation = [

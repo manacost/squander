@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("core documentation is present in the sidebar and links to focused guides", async ({ page }) => {
   await page.goto("/docs/core");
-  await expect(page.getByRole("link", { name: "v8.0.0" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "v8.1.0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "core" })).toHaveAttribute("href", "/docs/core");
   await expect(page.getByRole("link", { name: "demos" })).toHaveAttribute("href", "/docs/examples/playground");
   const text_link = page.locator('a.nested[href="/docs/examples/text"]');
@@ -33,6 +33,21 @@ test("Getting Started explains installation and the first game loop", async ({ p
 
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Read Getting started →" })).toHaveAttribute("href", "/docs/getting-started");
+});
+
+test("project structure guide recommends a route-edge and ECS-aware organization", async ({ page }) => {
+  await page.goto("/docs/project-structure");
+
+  await expect(page.getByRole("link", { name: "project structure" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Organize your game project" })).toBeVisible();
+  await expect(page.getByText("src/lib/game", { exact: false })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Keep the route at the edge" })).toBeVisible();
+  await expect(page.locator("pre code").filter({ hasText: 'import { Game } from "squander/svelte";' })).toContainText(
+    'import { start_game } from "$lib/game/game";',
+  );
+  await expect(page.getByRole("heading", { level: 2, name: "Define the ECS schema locally" })).toBeVisible();
+  expect(await page.locator("pre code").filter({ hasText: 'from "squander/ecs"' }).count()).toBeGreaterThan(0);
+  await expect(page.getByText("Write ordinary functions", { exact: false })).toBeVisible();
 });
 
 test("the docs landing page leads with Squander's code-first value", async ({ page }) => {
