@@ -43,11 +43,9 @@ Move the map from ambient global scope into a value passed to the world:
 const components = define_components({
   position: define_component<Position>({
     name: "position",
-    codec: position_codec,
   }),
   velocity: define_component<Velocity>({
     name: "velocity",
-    codec: velocity_codec,
   }),
 });
 
@@ -72,7 +70,8 @@ Strengths:
 - Best balance of familiar DX and local type inference.
 - Component definitions can be composed and exported from ordinary modules.
 - A query can infer required values from a tuple of schema tokens.
-- Codecs and storage hints have a natural home on the component descriptor.
+- Runtime type information and component identity have a natural home on the
+  component descriptor; export/import policy can remain at the world seam.
 - The implementation can compile tokens to numeric IDs and never use strings in
   the hot loop.
 
@@ -115,7 +114,7 @@ Strengths:
 - Object identity is a natural runtime lookup key and can be made world-local.
 - Query tuples preserve component inference without relying on literal string
   inference.
-- The token is a good seam for codecs, storage descriptors, and future query
+- The token is a good seam for diagnostics, storage planning, and future query
   compilation.
 
 Risks:
@@ -125,7 +124,7 @@ Risks:
 - Tokens can still be structurally too broad if their generic payload is
   covariant or erased. The type must preserve token identity and reject a token
   that is not registered with the world.
-- Persisted data cannot contain the token object directly; snapshots need a
+- Exported data cannot contain the token object directly; snapshots need a
   stable schema name or component ID mapping.
 
 ## Option 3: world-scoped component factory
@@ -159,7 +158,7 @@ Risks:
 - A module cannot conveniently export a reusable gameplay schema without also
   exporting a factory that receives the world.
 - The interface encourages mutable registration and makes it easier to use a
-  component before all codecs or system contracts are installed.
+  component before all system or export/import contracts are installed.
 - It does not solve the storage problem; dynamic registration can make query
   compilation and archetype planning more difficult.
 
@@ -213,6 +212,60 @@ The second option gives the best leverage for this project. It keeps component
 definitions composable while making the runtime token explicit. It also permits
 an ergonomic name-keyed helper for inspection or migration without making
 strings the hot-path query representation.
+
+## Object-first component values
+
+The leading DX should treat every component as an object-shaped value:
+
+```ts
+type Damage = { value: number };
+
+const damage = define_component<Damage>({ name: "damage" });
+
+damage_query.each(({ read, write }) => {
+  const { value: damage_value } = read(damage);
+  write(damage).value = Math.max(0, damage_value);
+});
+```
+
+This works for nested objects and arrays without changing the query interface:
+
+```ts
+type Inventory = {
+  item_ids: string[];
+  quantities: number[];
+};
+```
+
+There is no major type-system trade-off. The component token still carries the
+complete `Inventory` type, and `read()` or `write()` can return that value with
+its nested arrays intact. The costs are runtime and ownership concerns:
+
+- A separately allocated object and array per entity can create substantial
+  memory pressure and garbage-collection work at million-entity scale.
+- Variable-length arrays have weaker locality than flat numeric columns and
+  can cause many small allocations or repeated resizing.
+- If the ECS stores object references directly, callers can mutate a component
+  through an old reference or retain it after removal. If it clones values,
+  add/import operations become more expensive. The ownership policy must be
+  explicit.
+- A read-only type must account for nested arrays. A shallow `Readonly<T>` does
+  not prevent `read(component).item_ids.push(...)`; a deep readonly view or a
+  clearly documented read convention may be needed.
+- A world snapshot must define whether nested arrays are copied, transferred,
+  or merely referenced. External serializers can choose their own wire format,
+  but `world.export()` should not accidentally expose mutable internal storage.
+
+These are not reasons to reject object-shaped components. They are reasons to
+keep large repeated data behind handles or shared buffers when profiling shows
+that nested allocations dominate. Fixed-size numeric arrays can later use
+typed-array or columnar internals without changing the component-facing API.
+
+The initial public design should therefore omit a `storage` option. Let the ECS
+store object values in the simplest correct representation first, then compare
+sparse sets, archetypes, pooling, and typed-array layouts with the same object
+shapes and workloads. A later optimization should be additive rather than a
+requirement in every component declaration.
 
 ## Performance alternatives
 
@@ -279,8 +332,9 @@ particular storage implementation:
   world-local numeric IDs.
 - System queries expose only requested values; direct broad records are not a
   supported hot-loop seam.
-- Component descriptors may carry codecs and diagnostics metadata, while
-  storage strategy remains internal until the benchmark slice.
+- Component descriptors should carry runtime identity and type information;
+  storage strategy and persistence format remain internal or world-level until
+  benchmark evidence justifies another seam.
 
 Runtime world ownership checks are mandatory. An optional nominal world key can
 be added for applications that need compile-time separation between worlds with

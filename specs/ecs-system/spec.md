@@ -42,7 +42,7 @@ contract. No new ECS implementation or public package export is promised yet.
   Strong typing must not depend on `declare global` or on one application-wide
   `ComponentMap`; two worlds may use the same component name with different
   data types. The chosen registration model must retain useful inference for
-  component values, queries, and serialization codecs.
+  component values, queries, and world export/import.
 - **Enforce query membership in TypeScript.** A query that requests position
   and velocity should expose both values as present, while a query that does
   not request a component must not expose it as present. Invalid component
@@ -61,13 +61,13 @@ contract. No new ECS implementation or public package export is promised yet.
   base class or framework-owned global scheduler. Integration with the existing
   game update/draw lifecycle should be an explicit adapter or composition
   point, not an implicit dependency on scenes, rendering, input, or Svelte.
-- **Support persistence through explicit codecs.** A world must be
-  serializable and deserializable through a versioned snapshot format. Each
-  persisted component type must provide a defined representation and
-  reconstruction path; functions, GPU resources, DOM objects, and other
-  runtime-only values must not be serialized implicitly. The contract must
-  define entity identity preservation or remapping, absent components,
-  malformed data, schema versions, and migration errors.
+- **Support world-level export and import.** A world must be able to export a
+  storage-independent snapshot and import one atomically. The core ECS should
+  not require persistence metadata or codecs on every component. JSON, binary
+  storage, version migration, compression, and application-specific handling
+  of runtime-only values belong in a separate world-level serializer or
+  adapter. The ECS contract must still define entity identity preservation or
+  remapping, absent components, malformed snapshots, and import failure.
 - **Offer a strong developer experience.** The common path—create a world,
   create an entity, add data, query, run systems, save, and load—should be
   discoverable and concise. Error messages should identify the world,
@@ -104,14 +104,14 @@ reports creation, structural changes, query iteration, update throughput, peak
 memory, and teardown. It compares the result with the agreed budget instead of
 claiming that JavaScript performance is sufficient by intuition.
 
-### Save and restore a world
+### Export and restore a world
 
-An application registers codecs for persistent components, saves a world, and
-loads it into a new world with the same schema. Entity relationships and
-component values round-trip according to the documented identity policy.
-Runtime-only components are omitted or rejected according to their explicit
-configuration. Invalid versions and malformed component payloads produce
-diagnostic errors without partially installing a world.
+An application exports a world, then imports the snapshot into a new world with
+the same schema. Entity relationships and component values round-trip
+according to the documented identity policy. A separate application-owned
+serializer may convert that snapshot to JSON, binary data, IndexedDB, or a
+network payload. Invalid snapshots produce diagnostic errors without partially
+installing a world.
 
 ### Compose systems with lifecycle control
 
@@ -148,9 +148,10 @@ accepted.
   the browser or runtime version, workload shape, storage strategy, timings,
   allocation or memory observations where available, and agreed pass/fail
   budgets for the supported environment.
-- Serialization tests prove versioned snapshots, codec-driven component data,
-  entity relationship handling, runtime-only component behavior, malformed
-  input rejection, and all-or-nothing load failure.
+- Export/import tests prove storage-independent snapshots, entity relationship
+  handling, malformed input rejection, and all-or-nothing import failure. A
+  separate serializer test may prove JSON, binary, migration, or runtime-only
+  value policies without making those policies part of the ECS core.
 - The public documentation shows the standalone world path, system lifecycle,
   query typing, persistence limits, and the relationship to game and scene
   lifecycles. It does not present an illustrative API as supported until the
@@ -181,12 +182,26 @@ world.add(entity, velocity, { x: 1, y: 0 });
 for (const match of world.query().with(position, velocity)) {
   match.position.x += match.velocity.x;
 }
+
+type Damage = { value: number };
+const damage = define_component<Damage>({ name: "damage" });
+
+world
+  .query()
+  .with(damage)
+  .each(({ read, write }) => {
+    const { value: damage_value } = read(damage);
+    write(damage).value = Math.max(0, damage_value);
+  });
+
+const snapshot = world.export();
+world.import(snapshot);
 ```
 
 The final interface may instead use a typed schema factory, component tokens
 created by the world, or a query callback that passes component values directly.
-Those choices are part of the design work below, not promises made by this
-example.
+The exact query builder and snapshot shape are part of the design work below,
+not promises made by this example.
 
 ## Test references
 
@@ -233,8 +248,8 @@ The next planning slices are:
    workloads.
 3. Specify entity identity, structural mutation, query iteration, system
    ordering, and world disposal as one lifecycle contract.
-4. Specify snapshot shape, codecs, migrations, identity handling, and failure
-   atomicity independently from the storage representation.
+4. Specify snapshot shape, external serializers, migrations, identity handling,
+   and failure atomicity independently from the storage representation.
 5. Add the implementation, game/scene adapter if justified, focused docs, and
    evidence fixtures only after the preceding contracts are accepted.
 
@@ -254,8 +269,8 @@ The next planning slices are:
   and world seam that the existing game loop schedules?
 - Does persistence preserve numeric entity IDs, remap them through a snapshot
   table, or support both modes?
-- How should schema migrations and custom codecs be registered without
-  reintroducing ambient global state?
+- What should the world snapshot contain, and where should external serializers
+  and schema migrations attach without reintroducing ambient global state?
 - Is an optional nominal `WorldKey` worth requiring for applications that need
   compile-time separation between worlds with identical schemas, or are
   runtime ownership checks sufficient for the common path?
