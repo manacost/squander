@@ -17,6 +17,7 @@
       children: [
         { label: "text", href: resolve("/(docs)/docs/examples/text") },
         { label: "input routing", href: resolve("/(docs)/docs/examples/input") },
+        { label: "entity-component system", href: resolve("/(docs)/docs/core/ecs") },
         ...core_guides.map((guide) => ({ label: guide.label, href: resolve("/(docs)/docs/core/[guide]", { guide: guide.slug }) })),
       ],
     },
