@@ -1,7 +1,8 @@
 # ECS interface and storage options
 
 This note compares alternatives for the Draft
-[`ecs-system`](spec.md) capability. It is a design record, not a supported API.
+[`ecs-system`](spec.md) capability. It records the selected initial API and
+the performance alternatives that remain behind it.
 
 ## What the existing global map buys us
 
@@ -49,15 +50,18 @@ const components = define_components({
   }),
 });
 
-const world = create_world({ components });
+const world = create_world(components);
 const entity = world.create();
 
 world.add(entity, components.position, { x: 0, y: 0 });
 world.add(entity, components.velocity, { x: 1, y: 0 });
 
-for (const match of world.query(components.position, components.velocity)) {
-  match.position.x += match.velocity.x;
-}
+world
+  .query()
+  .with(components.position, components.velocity)
+  .each(({ read, write }) => {
+    write(components.position).x += read(components.velocity).x;
+  });
 ```
 
 The schema object is the replacement for `ComponentMap`, but it is explicit,
@@ -93,14 +97,17 @@ Make the component token the primary seam:
 const position = define_component<Position>({ name: "position" });
 const velocity = define_component<Velocity>({ name: "velocity" });
 
-const world = create_world({ components: { position, velocity } });
+const world = create_world({ position, velocity });
 const entity = world.create();
 
 world.add(entity, position, { x: 0, y: 0 });
 
-for (const match of world.query(position, velocity)) {
-  match.position.x += match.velocity.x;
-}
+world
+  .query()
+  .with(position, velocity)
+  .each(({ read, write }) => {
+    write(position).x += read(velocity).x;
+  });
 ```
 
 The token carries the TypeScript payload type and an opaque runtime identity.
@@ -121,9 +128,9 @@ Risks:
 
 - More ceremony than `query("position", "velocity")`, especially for small
   games.
-- Tokens can still be structurally too broad if their generic payload is
-  covariant or erased. The type must preserve token identity and reject a token
-  that is not registered with the world.
+- Runtime identity must still reject a token that is not registered with the
+  world. TypeScript rejects tokens outside the local schema in the normal
+  different-name case; structurally identical tokens remain a runtime concern.
 - Exported data cannot contain the token object directly; snapshots need a
   stable schema name or component ID mapping.
 
@@ -132,7 +139,9 @@ Risks:
 Create components through the world itself:
 
 ```ts
-const world = create_world();
+const world = create_world({
+  position: define_component<Position>({ name: "position" }),
+});
 const position = world.define_component<Position>({ name: "position" });
 const velocity = world.define_component<Velocity>({ name: "velocity" });
 
@@ -382,8 +391,8 @@ particular storage implementation:
 
 - `define_components({...})` replaces ambient `declare global` boilerplate.
 - `schema.position` provides the typed token used by `add` and `query`.
-- `create_world(schema)` creates an isolated registry and compiles tokens to
-  world-local numeric IDs.
+- `create_world(schema)` creates an isolated registry backed by dense
+  per-component sparse-set columns.
 - System queries expose only requested values; direct broad records are not a
   supported hot-loop seam.
 - Systems remain caller-owned factories or records with optional hooks; the ECS
@@ -392,10 +401,10 @@ particular storage implementation:
   storage strategy and persistence format remain internal or world-level until
   benchmark evidence justifies another seam.
 
-Runtime world ownership checks are mandatory. An optional nominal world key can
-be added for applications that need compile-time separation between worlds with
-identical schemas, but requiring every caller to create a `Symbol` would add
-ceremony to the common path before the need is demonstrated.
+Runtime world ownership checks are mandatory. The initial contract does not add
+a nominal world key: numeric entity IDs are cheap and can be shared between
+worlds intentionally with `adopt()`. A future opt-in key could support code
+bases that want compile-time separation for identical schemas.
 
 Keep these alternatives open until the storage benchmark:
 

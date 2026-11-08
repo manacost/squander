@@ -46,10 +46,12 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - Keep deferred capabilities contract-driven: advanced projections, custom
   shaders, render targets, mipmaps, fixed-step scheduling, and action mapping
   require their own supported behavior and evidence before inclusion.
-- ECS integration is currently a Phase 3 Draft capability. Its design goals
-  include isolated worlds, local component typing without an ambient global
-  registry, indexed queries, explicit system lifecycle, and versioned
-  serialization. It is not a supported public API yet.
+- The initial ECS capability is available from \`squander/core\`: define local
+  object-shaped component tokens, create independent worlds, run typed fluent
+  queries, and use world-level \`export()\`/\`import()\` snapshots. The ECS does
+  not register or schedule systems; callers compose ordinary systems and
+  lifecycle hooks. Million-entity benchmark evidence and future archetype or
+  typed-column optimizations remain Phase 3 work.
 
 ## Author and project
 
@@ -65,6 +67,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
+- [Entity-component system](#entity-component-system)
 - [Game lifecycle and timing](#game-lifecycle-and-timing)
 - [WebGPU renderer](#webgpu-renderer)
 - [Assets and resources](#assets-and-resources)
@@ -168,6 +171,36 @@ const game = create_game({
 
 await game.ready;
 \`\`\`
+
+## Entity-component system
+
+The optional ECS core is independent of Svelte, scenes, rendering, and the
+game loop. Define object-shaped component tokens in a local schema and create
+as many worlds as the application needs:
+
+\`\`\`ts
+import { create_world, define_component } from "squander/core";
+
+type Position = { x: number; y: number };
+const position = define_component<Position>({ name: "position" });
+const world = create_world({ position });
+const entity = world.create();
+world.add(entity, position, { x: 0, y: 0 });
+
+world.query().with(position).each(({ read, write }) => {
+  write(position).x += read(position).y;
+});
+\`\`\`
+
+Queries expose only requested component tokens at compile time. Use
+\`toArray()\` for live match views or \`toSnapshots()\` for detached copies.
+Structural match operations are deferred until the current query finishes.
+World-level \`export()\` and \`import()\` preserve numeric entity IDs and
+component values without requiring persistence codecs on each component.
+JSON, binary formats, migrations, and runtime-only value policies belong in an
+application-owned serializer. The ECS provides no scheduler or system registry;
+callers decide whether an ordinary system exposes \`enter\`, \`update\`,
+\`draw\`, or \`exit\`, and where to invoke those hooks.
 
 ## Game lifecycle and timing
 

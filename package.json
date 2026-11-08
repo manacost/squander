@@ -16,6 +16,7 @@
     "test:integration": "playwright test",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
+    "test:benchmark:ecs": "vitest --config verification/vitest.ecs.config.ts run --reporter=verbose",
     "lint:format": "prettier --check .",
     "lint:code": "eslint . --max-warnings 0",
     "test:type": "tsc --noEmit -p tsconfig.type-tests.json",

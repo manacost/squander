@@ -16,8 +16,9 @@ world must not be a process-wide singleton.
 
 Draft. Target phase: Phase 3.
 
-This document records goals and design constraints, not an accepted runtime
-contract. No new ECS implementation or public package export is promised yet.
+This document records the initial runtime contract. The implementation is
+available from the public core module, while million-entity benchmark evidence
+and later storage strategies remain Phase 3 acceptance work.
 
 ## Requirements
 
@@ -32,11 +33,12 @@ contract. No new ECS implementation or public package export is promised yet.
   must establish workloads, memory observations, and performance budgets for
   large populations, including a million-entity scenario where the host can
   run it reliably.
-- **Create isolated worlds.** `create_world()`-style construction should give
-  each world its own entity allocator, component registry, storage, systems,
-  and lifecycle. Multiple worlds must be usable at the same time without
-  shared mutable singleton state. Components and entities from one world must
-  not be accepted by another world accidentally.
+- **Create independent worlds.** `create_world()` gives each world its own
+  component storage, membership set, and lifecycle. Multiple worlds must be
+  usable at the same time without shared mutable singleton state. Numeric
+  entities are intentionally world-neutral: a caller can explicitly coordinate
+  the same ID with `adopt()`, while component tokens and membership are checked
+  at runtime.
 - **Define components locally and type-safely.** Applications should be able
   to define a component schema in a module or factory and pass it to a world.
   Strong typing must not depend on `declare global` or on one application-wide
@@ -62,7 +64,7 @@ contract. No new ECS implementation or public package export is promised yet.
   hooks such as `enter`, `update`, `draw`, and `exit`. The caller decides
   whether the system is global, scene-owned, nested inside another system, or
   used only as a state/query API.
-- **Support world-level export and import.** A world must be able to export a
+- **Support world-level export and import.** A world can export a
   storage-independent snapshot and import one atomically. The core ECS should
   not require persistence metadata or codecs on every component. JSON, binary
   storage, version migration, compression, and application-specific handling
@@ -86,8 +88,8 @@ contract. No new ECS implementation or public package export is promised yet.
 
 An application creates a gameplay world and a tooling world. Each world has a
 component named `position`, but the component payloads and storage policies may
-differ. An entity created in one world cannot be queried, mutated, or deleted
-through the other world.
+differ. An entity is not a member of the other world until the caller
+explicitly adopts it. Component tokens are still world-checked at runtime.
 
 ### Build a typed movement query
 
@@ -142,8 +144,8 @@ accepted.
   access to components outside a query. The tests do not rely on production
   type assertions to make invalid code compile.
 - Runtime tests prove entity creation and deletion, stale-handle behavior,
-  world isolation, component add/remove, query membership, structural mutation
-  policy, disposal idempotence, and useful error diagnostics.
+  world membership, component add/remove, query membership, structural
+  mutation policy, and useful error diagnostics.
 - Composition tests and examples prove that a caller-owned system can use a
   world without registration, can expose any subset of lifecycle hooks, and can
   be nested, scene-owned, global, or hook-free. System ordering and hook
@@ -153,9 +155,9 @@ accepted.
   the browser or runtime version, workload shape, storage strategy, timings,
   allocation or memory observations where available, and agreed pass/fail
   budgets for the supported environment.
-- Export/import tests prove storage-independent snapshots, entity relationship
-  handling, malformed input rejection, and all-or-nothing import failure. A
-  separate serializer test may prove JSON, binary, migration, or runtime-only
+- Export/import tests prove storage-independent snapshots, identity
+  preservation, malformed input rejection, and all-or-nothing import failure.
+  A separate serializer test may prove JSON, binary, migration, or runtime-only
   value policies without making those policies part of the ECS core.
 - The public documentation shows the standalone world path, system lifecycle,
   query typing, persistence limits, and the relationship to game and scene
@@ -167,9 +169,9 @@ accepted.
 
 ## Usage description
 
-The following is illustrative, not an accepted API. It shows the intended
-shape: component definitions belong to a world schema rather than to ambient
-global declaration merging, and queries carry the type information they need.
+The following is the supported initial API shape: component definitions belong
+to a local world schema rather than ambient global declaration merging, and
+queries carry the type information they need.
 
 ```ts
 type Position = { x: number; y: number };
@@ -178,15 +180,20 @@ type Velocity = { x: number; y: number };
 const position = define_component<Position>({ name: "position" });
 const velocity = define_component<Velocity>({ name: "velocity" });
 
-const world = create_world({ components: { position, velocity } });
+const world = create_world({ position, velocity });
 const entity = world.create();
 
 world.add(entity, position, { x: 0, y: 0 });
 world.add(entity, velocity, { x: 1, y: 0 });
 
-for (const match of world.query().with(position, velocity)) {
-  match.position.x += match.velocity.x;
-}
+world
+  .query()
+  .with(position, velocity)
+  .each(({ read, write }) => {
+    const current = read(position);
+    write(position).x += read(velocity).x;
+    write(position).y = current.y + read(velocity).y;
+  });
 
 type Damage = { value: number };
 const damage = define_component<Damage>({ name: "damage" });
@@ -202,6 +209,9 @@ world
 const snapshot = world.export();
 world.import(snapshot);
 
+const live_matches = world.query().with(position).toArray();
+const copied_matches = world.query().with(position).toSnapshots();
+
 const encounters = create_encounter_system({ world, tile_system });
 
 // The scene chooses which hooks to expose. There is no ECS registration step.
@@ -214,20 +224,23 @@ const scene = {
 const seeds = create_seed_system(); // no enter, update, or draw
 ```
 
-The final interface may instead use a typed schema factory, component tokens
-created by the world, or a query callback that passes component values directly.
-The exact query builder and snapshot shape are part of the design work below,
-not promises made by this example. The system factories are ordinary
+`toArray()` returns live match views. `toSnapshots()` returns detached copies
+that can be read without mutating the world. Structural calls made through a
+match view (`add`, `remove`, and `destroy`) are deferred until the current
+query finishes.
+
+The system factories are ordinary
 application code; they are shown to illustrate composition, not a required ECS
 protocol.
 
 ## Test references
 
-No automated ECS tests exist for this draft capability. The existing
-[`src/lib/core/ecs.test.ts`](../../src/lib/core/ecs.test.ts) exercises a legacy
-singleton experiment and is not evidence for this capability. Planned tests
-should use the `[ecs-system]` capability tag and cover the acceptance criteria
-above.
+The focused runtime contract lives in
+[`src/lib/core/ecs.test.ts`](../../src/lib/core/ecs.test.ts), with public
+inference and misuse checks in [`type-tests/ecs.ts`](../../type-tests/ecs.ts).
+These tests cover the initial world, query, mutation, and snapshot behavior;
+large-population evidence remains a separate benchmark gate. The capability
+tag for this evidence is [ecs-system].
 
 ## Notes
 
@@ -266,13 +279,15 @@ The next planning slices are:
 
 1. Compare local schema maps, component tokens, and world-scoped component
    factories with type tests before choosing the public seam. See the
-   [typing and storage options](design-options.md) for the current comparison
-   and provisional direction.
+   [typing and storage options](design-options.md) for the completed comparison
+   and selected direction.
 2. Prototype and benchmark at least two storage/query strategies, such as
    sparse-set columns and archetype tables, using the same million-entity
    workloads.
-3. Specify entity identity, structural mutation, query iteration, system
-   ordering, and world disposal as one lifecycle contract.
+3. Specify entity identity, structural mutation, query iteration, and world
+   disposal as one lifecycle contract. The initial implementation uses
+   monotonic numeric IDs, world membership checks, dense sparse-set columns,
+   and deferred structural changes.
 4. Specify snapshot shape, external serializers, migrations, identity handling,
    and failure atomicity independently from the storage representation.
 5. Add the implementation, game/scene adapter if justified, focused docs, and
@@ -280,16 +295,15 @@ The next planning slices are:
 
 ### Open design questions
 
-- Can the leading local schema plus component-token seam deliver the desired
-  ergonomics, and should an optional name-keyed helper exist for the common
-  case?
+- Does the local schema plus component-token seam need a name-keyed helper for
+  the common case, or is the current object-token path sufficient?
 - Should component storage default to sparse-set columns, archetypes, or a
   hybrid selected per component/query workload? Which data shapes deserve a
   typed-array path, and how can object-valued components remain ergonomic?
-- Should entity IDs be recyclable with generations, globally unique within a
-  session, or stable only within one serialized snapshot?
-- Are structural changes deferred during query iteration, or are query views
-  stable enough to support immediate changes with documented costs?
+- Should entity IDs eventually be recyclable with generations, or should the
+  current monotonic session IDs remain the default?
+- Should the current deferred structural changes gain an opt-in immediate mode
+  after profiling?
 - Should Squander document a small optional-hook convention for caller-owned
   systems, or leave even that shape entirely application-defined? The ECS must
   remain scheduler-blind either way.
@@ -297,10 +311,10 @@ The next planning slices are:
   table, or support both modes?
 - What should the world snapshot contain, and where should external serializers
   and schema migrations attach without reintroducing ambient global state?
-- Is an optional nominal `WorldKey` worth requiring for applications that need
-  compile-time separation between worlds with identical schemas, or are
-  runtime ownership checks sufficient for the common path?
+- Should an advanced compile-time world key be added later, or are explicit
+  `adopt()` calls and runtime ownership checks sufficient?
 - Is a built-in ECS the supported Phase 3 capability, or should Squander ship
   only a deep integration seam for application-owned ECS implementations?
 
-These questions are intentionally unresolved while the capability is Draft.
+These questions remain open while the capability is Draft, but they do not
+block the initial object-first implementation.
