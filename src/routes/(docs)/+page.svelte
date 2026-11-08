@@ -20,6 +20,15 @@
     </p>
   </section>
 
+  <section aria-labelledby="svelte-heading">
+    <h2 id="svelte-heading">Svelte for UI, atop your game</h2>
+    <p>
+      The web has made user interfaces powerful and flexible. Use Svelte for menus, HUDs, overlays, and settings instead of rebuilding
+      entire layout systems and rendering flows—or settling for rudimentary substitutes.
+    </p>
+    <p>Squander keeps the game state and loop in your hands while Svelte handles the interface around it.</p>
+  </section>
+
   <section aria-labelledby="agentic-heading">
     <h2 id="agentic-heading">Built for agentically aligned development</h2>
     <p>

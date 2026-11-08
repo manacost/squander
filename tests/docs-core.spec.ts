@@ -45,6 +45,8 @@ test("the docs landing page leads with Squander's code-first value", async ({ pa
   await expect(page.getByRole("heading", { level: 2, name: "Code-first, loop-owned" })).toBeVisible();
   await expect(page.getByText("Love2D")).toBeVisible();
   await expect(page.getByText("MonoGame")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Svelte for UI, atop your game" })).toBeVisible();
+  await expect(page.getByText("The web has made user interfaces powerful and flexible.")).toBeVisible();
   await expect(page.getByText("agentically aligned development")).toBeVisible();
   await expect(page.getByRole("link", { name: "llms.txt" })).toHaveAttribute("href", "/llms.txt");
   await expect(page.getByRole("heading", { level: 2, name: "Start with a working game loop" })).toBeVisible();
