@@ -10,6 +10,12 @@ const damage = define_component<Damage>({ name: "damage" });
 const schema = define_components({ position, velocity });
 const world = create_world(schema);
 const entity = world.create();
+const generational_world = create_world(schema, { entity_policy: "generational" });
+const generational_entity = generational_world.create();
+generational_world.add(generational_entity, position, { x: 0, y: 0 });
+
+const policy: "monotonic" | "generational" = generational_world.entity_policy;
+void policy;
 
 world.add(entity, position, { x: 0, y: 0 });
 world.add(entity, velocity, { x: 1, y: 0 });
@@ -36,3 +42,6 @@ world.query().with(foreign);
 
 // @ts-expect-error Component values are object-shaped by design.
 define_component<number>({ name: "number" });
+
+// @ts-expect-error Entity policies are intentionally closed to the supported runtime modes.
+create_world(schema, { entity_policy: "recycled" });

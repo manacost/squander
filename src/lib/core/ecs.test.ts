@@ -95,6 +95,7 @@ describe("ecs worlds", () => {
     expect(world.read(entity, damage)).toEqual({ value: 7, history: [1, 2, 4] });
 
     const malformed = {
+      ...snapshot,
       entities: [entity],
       components: {
         position: [{ entity: entity + 1, value: { x: 0, y: 0 } }],
@@ -114,5 +115,133 @@ describe("ecs worlds", () => {
     expect(() => {
       world.add(entity, foreign_position, { x: 0, y: 0 });
     }).toThrow(/does not belong to this world/);
+
+    expect(() => world.query().with(foreign_position).toArray()).toThrow(/does not belong to this world/);
+  });
+
+  it("preserves every chained exclusion term", () => {
+    const world = create_world(schema);
+    const entity = world.create();
+    world.add(entity, position, { x: 0, y: 0 });
+
+    expect(world.query().without(velocity).without(damage).toArray()).toHaveLength(1);
+  });
+
+  it("flushes deferred structural changes when a query callback throws", () => {
+    const world = create_world(schema);
+    const entity = world.create();
+    world.add(entity, position, { x: 0, y: 0 });
+
+    expect(() => {
+      world
+        .query()
+        .with(position)
+        .each(({ add }) => {
+          add(velocity, { x: 1, y: 0 });
+          throw new Error("stop iteration");
+        });
+    }).toThrow("stop iteration");
+
+    expect(world.query().with(position, velocity).toArray()).toHaveLength(1);
+  });
+
+  it("rejects import while a query is active", () => {
+    const world = create_world({ position });
+    const entity = world.create();
+    world.add(entity, position, { x: 1, y: 2 });
+    const snapshot = world.export();
+
+    expect(() => {
+      world
+        .query()
+        .with(position)
+        .each(() => {
+          world.import(snapshot);
+        });
+    }).toThrow(/cannot import during query iteration/);
+  });
+
+  it("rejects duplicate snapshot entity IDs before changing the world", () => {
+    const world = create_world({ position });
+    const entity = world.create();
+    world.add(entity, position, { x: 1, y: 2 });
+    const snapshot = world.export();
+    const malformed = { ...snapshot, entities: [entity, entity] };
+
+    expect(() => {
+      world.import(malformed);
+    }).toThrow(/contains entity .* more than once/);
+    expect(world.read(entity, position)).toEqual({ x: 1, y: 2 });
+  });
+
+  it("does not retain caller-owned values imported from a snapshot", () => {
+    const source = create_world({ position });
+    const entity = source.create();
+    source.add(entity, position, { x: 1, y: 2 });
+    const snapshot = source.export();
+    const destination = create_world({ position });
+
+    destination.import(snapshot);
+    const imported_entry = snapshot.components.position[0];
+    Object.assign(imported_entry.value, { x: 99 });
+
+    expect(destination.read(entity, position)).toEqual({ x: 1, y: 2 });
+  });
+
+  it("advances the monotonic allocator after importing a high entity ID", () => {
+    const world = create_world({ position });
+    const imported_entity = 10_000_000;
+    world.import({
+      format_version: 1,
+      entity_policy: "monotonic",
+      entities: [imported_entity],
+      components: { position: [{ entity: imported_entity, value: { x: 1, y: 2 } }] },
+    });
+
+    expect(world.create()).toBeGreaterThan(imported_entity);
+  });
+
+  it("reuses generational slots while rejecting stale handles", () => {
+    const world = create_world({ position }, { entity_policy: "generational" });
+    const first = world.create();
+    world.add(first, position, { x: 1, y: 2 });
+    world.destroy(first);
+    const second = world.create();
+
+    expect(second).not.toBe(first);
+    expect(world.has(first)).toBe(false);
+    expect(() => world.read(first, position)).toThrow(/does not belong to this world/);
+
+    world.clear();
+    const third = world.create();
+    expect(third).not.toBe(second);
+    expect(world.has(second)).toBe(false);
+  });
+
+  it("round-trips generational snapshots and rejects policy mismatches atomically", () => {
+    const source = create_world({ position }, { entity_policy: "generational" });
+    const entity = source.create();
+    source.add(entity, position, { x: 4, y: 5 });
+    const snapshot = source.export();
+    const destination = create_world({ position }, { entity_policy: "generational" });
+    destination.import(snapshot);
+
+    expect(destination.read(entity, position)).toEqual({ x: 4, y: 5 });
+    expect(() => {
+      create_world({ position }).import(snapshot);
+    }).toThrow(/identity policy/);
+    expect(destination.read(entity, position)).toEqual({ x: 4, y: 5 });
+  });
+
+  it("adopts generational handles without allowing stale generations", () => {
+    const source = create_world({ position }, { entity_policy: "generational" });
+    const entity = source.create();
+    source.destroy(entity);
+    const replacement = source.create();
+    const destination = create_world({ position }, { entity_policy: "generational" });
+
+    destination.adopt(replacement);
+    expect(destination.has(replacement)).toBe(true);
+    expect(() => destination.adopt(entity)).toThrow(/stale generation/);
   });
 });
