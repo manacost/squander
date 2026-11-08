@@ -68,7 +68,9 @@
     <p>{status}</p>
     <div class="controls">
       <button type="button" onclick={create_entity}>Create entity</button>
-      <button type="button" onclick={advance_positions} disabled={entity_rows.length === 0}>Advance positions (<code></code>x + 1)</button>
+      <button type="button" onclick={advance_positions} disabled={entity_rows.length === 0}
+        >Advance positions (<code>entity.x += 1</code>)</button
+      >
     </div>
     <ul>
       {#each entity_rows as row (row.entity)}
