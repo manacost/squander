@@ -49,18 +49,28 @@
 <svelte:head><title>Entity-component system · Squander ECS</title></svelte:head>
 
 <article class="guide">
-  <p class="eyebrow">ECS guide</p>
-  <h1>Entity-component system</h1>
-  <p class="summary">Create local schemas, query object-shaped components, and keep system composition in the caller.</p>
-  <p class="definition">
-    An <strong>entity-component system (ECS)</strong> organizes game state by separating identity, data, and behavior. An entity is a numeric
-    ID, components are small pieces of data such as position or health, and systems are ordinary functions that query entities with the data they
-    need and update them. This makes it easy to process many similar things—such as every projectile or enemy—without putting every behavior in
-    one large game-object class.
-  </p>
-  <p class="proof-link">
-    <a href={resolve("/(game)/scenes/ecs-arena")}>Play ECS Arena</a> — a small WebGPU game that makes the ECS lifecycle visible.
-  </p>
+  <header class="guide-intro">
+    <p class="eyebrow">ECS guide</p>
+    <h1>Entity-component system</h1>
+    <p class="summary">Create local schemas, query object-shaped components, and keep system composition in the caller.</p>
+  </header>
+
+  <section class="intro-section" aria-labelledby="what-is-ecs-title">
+    <h2 id="what-is-ecs-title">What is an ECS?</h2>
+    <p>
+      An <strong>entity-component system (ECS)</strong> organizes game state by separating identity, data, and behavior. An entity is a numeric
+      ID, components are small pieces of data such as position or health, and systems are ordinary functions that query entities with the data
+      they need and update them. This makes it easy to process many similar things—such as every projectile or enemy—without putting every behavior
+      in one large game-object class.
+    </p>
+  </section>
+
+  <section class="intro-section" aria-labelledby="play-ecs-arena-title">
+    <h2 id="play-ecs-arena-title">Play ECS Arena</h2>
+    <p class="proof-link">
+      <a href={resolve("/(game)/scenes/ecs-arena")}>Play ECS Arena</a> — a small WebGPU game that makes the ECS lifecycle visible.
+    </p>
+  </section>
 
   <section class="live-example" aria-labelledby="ecs-example-title">
     <p class="eyebrow">Live example</p>
@@ -168,6 +178,29 @@ const scene = {
     width: 100%;
     max-width: 900px;
     min-width: 0;
+  }
+  .guide-intro {
+    display: grid;
+    gap: 1.25rem;
+  }
+  .guide-intro h1 {
+    margin: 0;
+    line-height: 0.95;
+  }
+  .guide-intro .eyebrow,
+  .guide-intro .summary {
+    margin: 0;
+  }
+  .intro-section {
+    margin-top: 2.5rem;
+  }
+  .intro-section h2 {
+    margin: 0 0 0.75rem;
+    line-height: 1.1;
+  }
+  .intro-section p {
+    max-width: 48rem;
+    margin: 0;
   }
   .eyebrow {
     margin: 0 0 0.5rem;
