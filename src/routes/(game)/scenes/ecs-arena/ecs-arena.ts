@@ -76,6 +76,14 @@ const normalized_random = (random: () => number): number => {
   return Math.min(0.999999999, Math.max(0, value));
 };
 
+const resolve_spawn_interval = (interval: number | undefined): number => {
+  const resolved = interval ?? default_spawn_interval_seconds;
+  if (!Number.isFinite(resolved) || resolved <= 0) {
+    throw new Error("enemy_spawn_interval_seconds must be a finite number greater than zero");
+  }
+  return resolved;
+};
+
 const distance_squared = (first: ArenaPoint, second: ArenaPoint): number => {
   const delta_x = first.x - second.x;
   const delta_y = first.y - second.y;
@@ -83,14 +91,16 @@ const distance_squared = (first: ArenaPoint, second: ArenaPoint): number => {
 };
 
 const normalize_move = (move: ArenaMove): ArenaMove => {
-  const length = Math.hypot(move.x, move.y);
+  const x = Number.isFinite(move.x) ? move.x : 0;
+  const y = Number.isFinite(move.y) ? move.y : 0;
+  const length = Math.hypot(x, y);
   if (length === 0) return { x: 0, y: 0 };
-  return { x: move.x / length, y: move.y / length };
+  return { x: x / length, y: y / length };
 };
 
 export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsArenaGame => {
   const random = options.random ?? Math.random;
-  const spawn_interval_seconds = options.enemy_spawn_interval_seconds ?? default_spawn_interval_seconds;
+  const spawn_interval_seconds = resolve_spawn_interval(options.enemy_spawn_interval_seconds);
   const world = create_world({ position, velocity, collider, health, lifetime, player_marker, drone_marker, projectile_marker });
   let player_entity: Entity | undefined;
   let status: ArenaStatus = "playing";
@@ -181,8 +191,8 @@ export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsAre
     }
   };
 
-  const fire_system = (): void => {
-    fire_cooldown_seconds = Math.max(0, fire_cooldown_seconds - 1 / 60);
+  const fire_system = (delta_seconds: number): void => {
+    fire_cooldown_seconds = Math.max(0, fire_cooldown_seconds - delta_seconds);
     if (!fire_requested || fire_cooldown_seconds > 0) return;
     create_projectile();
     fire_cooldown_seconds = 0.18;
@@ -324,7 +334,7 @@ export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsAre
     time_seconds += safe_delta;
     input_system();
     spawn_system(safe_delta);
-    fire_system();
+    fire_system(safe_delta);
     steering_system();
     movement_system(safe_delta);
     combat_system();

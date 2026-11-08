@@ -32,6 +32,36 @@ describe("ecs arena model", () => {
     expect(game.get_render_state().player?.y).toBe(15);
   });
 
+  it("keeps firing cooldown timing consistent across frame rates", () => {
+    const run_for_half_a_second = (frame_delta: number, frame_count: number): number => {
+      const game = create_ecs_arena_game({ initial_enemies: [], enemy_spawn_interval_seconds: 100 });
+      for (let frame = 0; frame < frame_count; frame += 1) {
+        game.fire();
+        game.update(frame_delta);
+      }
+      return game.get_state().projectile_count;
+    };
+
+    expect(run_for_half_a_second(1 / 60, 30)).toBe(run_for_half_a_second(1 / 30, 15));
+  });
+
+  it("rejects invalid enemy spawn intervals", () => {
+    for (const interval of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => create_ecs_arena_game({ enemy_spawn_interval_seconds: interval })).toThrow(
+        "enemy_spawn_interval_seconds must be a finite number greater than zero",
+      );
+    }
+  });
+
+  it("sanitizes non-finite movement input before it reaches the world", () => {
+    const game = create_ecs_arena_game({ initial_enemies: [], enemy_spawn_interval_seconds: 100 });
+
+    game.set_move({ x: Number.NaN, y: 1 });
+    game.update(0.05);
+
+    expect(game.get_render_state().player).toEqual({ x: arena_width / 2, y: arena_height / 2 + 11.5 });
+  });
+
   it("spawns drones as structural ECS entities", () => {
     const game = create_ecs_arena_game({ random: () => 0, initial_enemies: [], enemy_spawn_interval_seconds: 0.2 });
 
