@@ -179,8 +179,13 @@ await game.ready;
 ## Entity-component system
 
 The optional ECS core is independent of Svelte, scenes, rendering, and the
-game loop. Define object-shaped component tokens in a local schema and create
-as many worlds as the application needs:
+game loop. An entity-component system (ECS) separates identity, data, and
+behavior: an entity is a numeric ID, components are small pieces of data such
+as position or health, and systems query entities with the data they need and
+update them. This makes it easier to process many similar game objects without
+putting every behavior in one large class. In Squander, define object-shaped
+component tokens in a local schema and create as many worlds as the application
+needs:
 
 \`\`\`ts
 // Import the world factory and component definition helper.

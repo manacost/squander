@@ -51,6 +51,12 @@
   <p class="eyebrow">ECS guide</p>
   <h1>Entity-component system</h1>
   <p class="summary">Create local schemas, query object-shaped components, and keep system composition in the caller.</p>
+  <p class="definition">
+    An <strong>entity-component system (ECS)</strong> organizes game state by separating identity, data, and behavior. An entity is a numeric
+    ID, components are small pieces of data such as position or health, and systems are ordinary functions that query entities with the data they
+    need and update them. This makes it easy to process many similar things—such as every projectile or enemy—without putting every behavior in
+    one large game-object class.
+  </p>
   <p class="proof-link">
     <a href={resolve("/(game)/scenes/ecs-arena")}>Play ECS Arena</a> — a small WebGPU game that makes the ECS lifecycle visible.
   </p>
