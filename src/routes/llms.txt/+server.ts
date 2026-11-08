@@ -46,6 +46,15 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - Keep deferred capabilities contract-driven: advanced projections, custom
   shaders, render targets, mipmaps, fixed-step scheduling, and action mapping
   require their own supported behavior and evidence before inclusion.
+- The initial ECS capability is available from \`squander/core\`: define local
+  object-shaped component tokens, create independent worlds, run typed fluent
+  queries, and use world-level \`export()\`/\`import()\` snapshots. The ECS does
+  not register or schedule systems; callers compose ordinary systems and
+  lifecycle hooks. Node and trusted-local-origin browser benchmark profiles
+  guard the supported workloads. Monotonic numeric IDs are the default;
+  create_world(schema, { entity_policy: "generational" }) opts into packed
+  generational handles and stale-handle checks. Archetype and typed-column
+  optimizations remain deferred.
 
 ## Author and project
 
@@ -61,6 +70,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
+- [Entity-component system](#entity-component-system)
 - [Game lifecycle and timing](#game-lifecycle-and-timing)
 - [WebGPU renderer](#webgpu-renderer)
 - [Assets and resources](#assets-and-resources)
@@ -72,6 +82,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Scenes](#scenes)
 - [Text and fonts](#text-and-fonts)
 - [Svelte 5 game UI bridge](#svelte-5-game-ui-bridge)
+- [ECS Arena proof game](#ecs-arena-proof-game)
 - [Snake example](#snake-example)
 - [TypeScript and ownership rules](#typescript-and-ownership-rules)
 - [Verification](#verification)
@@ -164,6 +175,69 @@ const game = create_game({
 
 await game.ready;
 \`\`\`
+
+## Entity-component system
+
+The optional ECS core is independent of Svelte, scenes, rendering, and the
+game loop. An entity-component system (ECS) separates identity, data, and
+behavior: an entity is a numeric ID, components are small pieces of data such
+as position or health, and systems query entities with the data they need and
+update them. This makes it easier to process many similar game objects without
+putting every behavior in one large class. In Squander, define object-shaped
+component tokens in a local schema and create as many worlds as the application
+needs:
+
+\`\`\`ts
+// Import the world factory and component definition helper.
+import { create_world, define_component } from "squander";
+
+// Describe the data stored by each position component.
+type Position = { x: number; y: number };
+// Create a typed token that identifies the position component.
+const position = define_component<Position>({ name: "position" });
+// Create a world whose local schema contains the position token.
+const world = create_world({ position });
+// Allocate a cheap numeric entity ID.
+const entity = world.create();
+// Attach the initial position data to the entity.
+world.add(entity, position, { x: 0, y: 0 });
+
+// Require position before iterating matching entities.
+world.query().with(position).each(({ read, write }) => {
+  // Read the current value, then write the updated x coordinate.
+  const { y } = read(position);
+  write(position).x += y;
+});
+\`\`\`
+
+Queries expose only requested component tokens at compile time. Use
+\`toArray()\` for live match views or \`toSnapshots()\` for detached copies.
+Structural match operations are deferred until the current query finishes.
+Monotonic IDs are the default and are never reused. Generational worlds pack a
+slot and generation into numeric handles, reuse slots, and reject stale
+handles. Version 1 snapshots preserve numeric IDs and require a matching
+identity policy.
+World-level \`export()\` and \`import()\` preserve numeric entity IDs and
+component values without requiring persistence codecs on each component.
+JSON, binary formats, migrations, and runtime-only value policies belong in an
+application-owned serializer. The ECS provides no scheduler or system registry;
+callers decide whether an ordinary system exposes \`enter\`, \`update\`,
+\`draw\`, or \`exit\`, and where to invoke those hooks.
+
+## ECS Arena proof game
+
+The live \`/scenes/ecs-arena\` route is a small top-down WebGPU game built on
+the ECS API. The caller owns the system order: input, spawn, fire, steering,
+movement, combat, and cleanup. The world creates drones and projectiles,
+updates position and velocity components through queries, and destroys
+colliding entities through deferred structural operations. The HUD reports
+score, wave, entity count, and the system order so the ECS behavior is visible
+while playing.
+
+Use WASD or arrow keys to move, Space to fire, P or Escape to pause, and R to
+restart. The proof game is an example application, not a scheduler or a new
+ECS package API. It intentionally omits assets, audio, progression, and
+multiplayer.
 
 ## Game lifecycle and timing
 
@@ -468,6 +542,7 @@ verification environment, not a passing skip.
 - \`src/lib/svelte/\` — optional Svelte 5 adapter and \`GameHost\`.
 - \`src/routes/(docs)/docs/core/\` — focused runtime guides.
 - \`src/routes/(docs)/docs/examples/\` — runnable feature and composition demos.
+- \`src/routes/(game)/scenes/ecs-arena/\` — the ECS Arena proof game and its deterministic model tests.
 - \`src/routes/(docs)/docs/examples/snake/\` — the complete Snake arcade example and its simulation tests.
 - \`tests/\` — Playwright integration and real WebGPU fixtures.
 - \`specifications/\` — capability contracts, decisions, and evidence.

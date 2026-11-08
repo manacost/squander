@@ -71,6 +71,19 @@ test("Svelte bridge samples render source syntax instead of HTML entities", asyn
   await expect(host_sample).not.toContainText("=&gt;");
 });
 
+test("ECS guide refreshes its reactive component view after a query update", async ({ page }) => {
+  await page.goto("/docs/ecs");
+
+  const entity_rows = page.locator(".live-example li");
+  await page.getByRole("button", { name: "Create entity" }).click();
+  await expect(entity_rows).toHaveCount(1);
+  await expect(entity_rows.first()).toContainText("(0, 0)");
+
+  await page.getByRole("button", { name: "Advance positions" }).click();
+  await expect(entity_rows.first()).toContainText("(1, 0)");
+  await expect(page.getByText("Advanced 1 position snapshots")).toBeVisible();
+});
+
 test("scene UI documentation explains stacked use cases with copyable samples", async ({ page }) => {
   await page.goto("/docs/examples/scene-ui");
   await expect(page.getByRole("heading", { level: 1, name: "Scene-owned UI" })).toBeVisible();

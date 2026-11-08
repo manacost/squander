@@ -6,6 +6,7 @@
   import type { LayoutData } from "./$types.js";
 
   let page_path = $derived(page.url.pathname);
+  let expanded_sections = $state<Record<string, boolean>>({});
 
   const links = [["about", resolve("/(docs)")]] satisfies readonly (readonly [string, string])[];
 
@@ -21,6 +22,12 @@
       ],
     },
     {
+      label: "ecs",
+      href: resolve("/(docs)/docs/ecs"),
+      target: "/(docs)/docs/ecs",
+      children: [{ label: "worlds and queries", href: resolve("/(docs)/docs/ecs") }],
+    },
+    {
       label: "demos",
       href: resolve("/(docs)/docs/examples/playground"),
       target: "/(docs)/docs/examples/playground",
@@ -29,10 +36,20 @@
         { label: "scenes", href: resolve("/(docs)/docs/examples/scenes"), target: "/(docs)/docs/examples/scenes" },
         { label: "scene UI", href: resolve("/(docs)/docs/examples/scene-ui"), target: "/(docs)/docs/examples/scene-ui" },
         { label: "snake", href: resolve("/(docs)/docs/examples/snake"), target: "/(docs)/docs/examples/snake" },
+        { label: "ecs arena", href: resolve("/(game)/scenes/ecs-arena"), target: "/(game)/scenes/ecs-arena" },
         { label: "svelte", href: resolve("/(docs)/docs/examples/svelte"), target: "/(docs)/docs/examples/svelte" },
       ],
     },
   ] as const;
+
+  function section_id(label: string): string {
+    return `docs-section-${label.replaceAll(" ", "-")}`;
+  }
+
+  function toggle_section(label: string): void {
+    expanded_sections[label] = !expanded_sections[label];
+  }
+
   type Props = {
     data: LayoutData;
     children?: import("svelte").Snippet;
@@ -66,11 +83,29 @@
 
       <h5 class="sep subtitle">Docs</h5>
       {#each documentation as doc (doc.href)}
-        <a class="link" class:active={doc.href === page_path} href={resolve(doc.target)}>{doc.label}</a>
-        {#if doc.children}
-          {#each doc.children as child (child.href)}
-            <a class="link nested" class:active={child.href === page_path} href={child.href}>{child.label}</a>
-          {/each}
+        <div class="section-row">
+          <a class="link" class:active={doc.href === page_path} href={resolve(doc.target)}>{doc.label}</a>
+          {#if doc.children}
+            <button
+              class="section-toggle"
+              type="button"
+              aria-label={`Toggle ${doc.label} section`}
+              aria-expanded={expanded_sections[doc.label] ?? false}
+              aria-controls={section_id(doc.label)}
+              onclick={() => {
+                toggle_section(doc.label);
+              }}
+            >
+              <span aria-hidden="true"></span>
+            </button>
+          {/if}
+        </div>
+        {#if expanded_sections[doc.label]}
+          <div id={section_id(doc.label)} class="section-children">
+            {#each doc.children as child (child.href)}
+              <a class="link nested" class:active={child.href === page_path} href={child.href}>{child.label}</a>
+            {/each}
+          </div>
         {/if}
       {/each}
     </nav>
@@ -154,6 +189,10 @@
     height: auto;
   }
 
+  :global(.page :where(h1, h2, h3, h4, h5)) {
+    line-height: 1.1;
+  }
+
   :global(.page :where(a, code, output)) {
     overflow-wrap: anywhere;
   }
@@ -212,6 +251,47 @@
     background-color: hsla(0, 0, 100, 0);
     gap: 0.5rem;
   }
+
+  .section-row {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .section-row .link {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .section-toggle {
+    display: grid;
+    width: 2rem;
+    min-height: 2rem;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--gray-5);
+    cursor: pointer;
+  }
+
+  .section-toggle:hover {
+    background-color: hsla(0deg, 0%, 0%, 0.1);
+    color: #fff;
+  }
+
+  .section-toggle span {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-inline-end: 1px solid currentColor;
+    border-block-end: 1px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 120ms ease-out;
+  }
+
+  .section-toggle[aria-expanded="true"] span {
+    transform: rotate(45deg);
+  }
   .link:hover {
     background-color: hsla(0deg, 0%, 0%, 0.1);
   }
@@ -233,7 +313,7 @@
   }
 
   .active:before {
-    content: "⋊";
+    content: "■\00a0";
     color: #444;
 
     text-decoration: none;

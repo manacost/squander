@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "time_regression_ratio": 1.2,
+  "memory_regression_ratio": 1.15,
+  "profiles": {
+    "darwin-chromium-156.0.8078.4": {
+      "monotonic": {
+        "policy": "monotonic",
+        "entity_count": 100000,
+        "structural_sample": 10000,
+        "snapshot_count": 10000,
+        "position_sum": 2499950000,
+        "dense_query_count": 50000,
+        "sparse_query_count": 10000,
+        "creation_ms": 21.2,
+        "dense_update_ms": 19.1,
+        "sparse_query_ms": 2.9,
+        "structural_ms": 4.1,
+        "snapshot_ms": 19.5,
+        "clear_ms": 12.8,
+        "memory": {
+          "after_creation": { "heap_used_mb": null, "rss_mb": null },
+          "before_clear": { "heap_used_mb": null, "rss_mb": null },
+          "after_clear": { "heap_used_mb": null, "rss_mb": null }
+        }
+      },
+      "generational": {
+        "policy": "generational",
+        "entity_count": 100000,
+        "structural_sample": 10000,
+        "snapshot_count": 10000,
+        "position_sum": 2499950000,
+        "dense_query_count": 50000,
+        "sparse_query_count": 10000,
+        "creation_ms": 36.9,
+        "dense_update_ms": 23.7,
+        "sparse_query_ms": 3,
+        "structural_ms": 3.5,
+        "snapshot_ms": 21.2,
+        "clear_ms": 19,
+        "memory": {
+          "after_creation": { "heap_used_mb": null, "rss_mb": null },
+          "before_clear": { "heap_used_mb": null, "rss_mb": null },
+          "after_clear": { "heap_used_mb": null, "rss_mb": null }
+        }
+      }
+    }
+  }
+}

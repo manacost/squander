@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "time_regression_ratio": 1.2,
+  "memory_regression_ratio": 1.15,
+  "profiles": {
+    "darwin-arm64-v24.18.0": {
+      "monotonic": {
+        "policy": "monotonic",
+        "entity_count": 1000000,
+        "structural_sample": 100000,
+        "snapshot_count": 100000,
+        "position_sum": 249999500000,
+        "dense_query_count": 500000,
+        "sparse_query_count": 100000,
+        "creation_ms": 506.5,
+        "dense_update_ms": 408.7,
+        "sparse_query_ms": 64.01,
+        "structural_ms": 99,
+        "snapshot_ms": 173.29,
+        "clear_ms": 229.88,
+        "memory": {
+          "after_creation": { "heap_used_mb": 248.6, "rss_mb": 401.6 },
+          "before_clear": { "heap_used_mb": 298.2, "rss_mb": 438.8 },
+          "after_clear": { "heap_used_mb": 371.6, "rss_mb": 529.1 }
+        }
+      },
+      "generational": {
+        "policy": "generational",
+        "entity_count": 1000000,
+        "structural_sample": 100000,
+        "snapshot_count": 100000,
+        "position_sum": 249999500000,
+        "dense_query_count": 500000,
+        "sparse_query_count": 100000,
+        "creation_ms": 1114.15,
+        "dense_update_ms": 564.92,
+        "sparse_query_ms": 88.6,
+        "structural_ms": 177.27,
+        "snapshot_ms": 220.49,
+        "clear_ms": 526.76,
+        "memory": {
+          "after_creation": { "heap_used_mb": 546.7, "rss_mb": 752.8 },
+          "before_clear": { "heap_used_mb": 437.1, "rss_mb": 650.7 },
+          "after_clear": { "heap_used_mb": 285.3, "rss_mb": 594 }
+        }
+      }
+    }
+  }
+}
