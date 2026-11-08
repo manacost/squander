@@ -51,6 +51,22 @@ test("the docs landing page leads with Squander's code-first value", async ({ pa
   await expect(page.getByRole("link", { name: "llms.txt" })).toHaveAttribute("href", "/llms.txt");
   await expect(page.getByRole("heading", { level: 2, name: "Start with a working game loop" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Read Getting started →" })).toHaveAttribute("href", "/docs/getting-started");
+
+  const heading_colors = await page.locator("main.page").evaluate((page_content) => {
+    const h1 = page_content.querySelector("h1");
+    const h2 = page_content.querySelector("h2");
+    if (h1 === null || h2 === null) throw new Error("landing page headings are missing");
+    const probe = document.createElement("span");
+    document.body.append(probe);
+    probe.style.color = "var(--red-5)";
+    const red_5 = getComputedStyle(probe).color;
+    probe.style.color = "var(--red-2)";
+    const red_2 = getComputedStyle(probe).color;
+    probe.remove();
+    return { h1: getComputedStyle(h1).color, h2: getComputedStyle(h2).color, red_5, red_2 };
+  });
+  expect(heading_colors.h1).toBe(heading_colors.red_5);
+  expect(heading_colors.h2).toBe(heading_colors.red_2);
 });
 
 test("docs pages keep bottom breathing room across layouts", async ({ page }) => {

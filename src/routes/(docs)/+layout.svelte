@@ -196,6 +196,14 @@
     line-height: 1.1;
   }
 
+  :global(.page h1) {
+    color: var(--red-5);
+  }
+
+  :global(.page :where(h2, h3, h4, h5)) {
+    color: var(--red-2);
+  }
+
   :global(.page :where(a, code, output)) {
     overflow-wrap: anywhere;
   }
