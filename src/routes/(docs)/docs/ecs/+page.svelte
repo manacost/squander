@@ -1,5 +1,6 @@
 <script lang="ts">
   import { create_world, define_component } from "../../../../lib/core/index.js";
+  import CodeBlock from "../../../../lib/docs/CodeBlock.svelte";
 
   type Position = { x: number; y: number };
 
@@ -7,6 +8,11 @@
   const world = create_world({ position });
   let entities = $state<readonly number[]>([]);
   let status = $state("Create an entity to start the world");
+  let snapshot_json = $state("");
+
+  function export_snapshot(): string {
+    return JSON.stringify(world.export(), null, 2);
+  }
 
   function refresh(): void {
     entities = world
@@ -14,7 +20,10 @@
       .with(position)
       .toArray()
       .map((match) => match.entity);
+    snapshot_json = export_snapshot();
   }
+
+  refresh();
 
   function create_entity(): void {
     const entity = world.create();
@@ -55,6 +64,8 @@
         <li>entity {String(entity)}: ({world.read(entity, position).x}, {world.read(entity, position).y})</li>
       {/each}
     </ul>
+    <h3>World snapshot</h3>
+    <pre class="snapshot" aria-label="Current ECS world snapshot"><code>{snapshot_json}</code></pre>
   </section>
 
   <h2>What this demonstrates</h2>
@@ -74,18 +85,23 @@
   </ul>
 
   <h2>Minimum viable example</h2>
-  <pre><code
-      >{`type Position = { x: number; y: number };
+  <CodeBlock
+    language="typescript"
+    code={`import { create_world, define_component } from "squander";
+
+type Position = { x: number; y: number };
 const position = define_component<Position>({ name: "position" });
 const world = create_world({ position });
+const entity = world.create();
+world.add(entity, position, { x: 0, y: 0 });
 
 world.query().with(position).each(({ read, write }) => {
   write(position).x += read(position).y;
 });
 
 const snapshot = world.export();
-world.import(snapshot);`}</code
-    ></pre>
+world.import(snapshot);`}
+  />
 
   <h2>Scope and limitations</h2>
   <p>
@@ -133,7 +149,7 @@ world.import(snapshot);`}</code
     cursor: not-allowed;
     opacity: 0.5;
   }
-  pre {
+  .snapshot {
     overflow-x: auto;
     padding: 1rem;
     background: #202638;

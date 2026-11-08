@@ -174,6 +174,8 @@ to a local world schema rather than ambient global declaration merging, and
 queries carry the type information they need.
 
 ```ts
+import { create_world, define_component } from "squander";
+
 type Position = { x: number; y: number };
 type Velocity = { x: number; y: number };
 

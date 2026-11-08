@@ -179,7 +179,7 @@ game loop. Define object-shaped component tokens in a local schema and create
 as many worlds as the application needs:
 
 \`\`\`ts
-import { create_world, define_component } from "squander/core";
+import { create_world, define_component } from "squander";
 
 type Position = { x: number; y: number };
 const position = define_component<Position>({ name: "position" });
