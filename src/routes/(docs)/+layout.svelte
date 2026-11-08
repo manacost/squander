@@ -219,7 +219,7 @@
 
     .page {
       margin-left: calc(14rem + 2.5vw);
-      padding: 0;
+      padding: 0 0 2rem;
     }
   }
 

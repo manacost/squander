@@ -50,6 +50,15 @@ test("the docs landing page leads with Squander's code-first value", async ({ pa
   await expect(page.getByRole("link", { name: "Read Getting started →" })).toHaveAttribute("href", "/docs/getting-started");
 });
 
+test("docs pages keep bottom breathing room across layouts", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("main.page")).toHaveCSS("padding-bottom", "32px");
+
+  await page.setViewportSize({ width: 480, height: 800 });
+  await page.reload();
+  await expect(page.locator("main.page")).toHaveCSS("padding-bottom", "32px");
+});
+
 test("the removed examples landing page is no longer published", async ({ request }) => {
   const response = await request.get("/docs/examples");
   expect(response.status()).toBe(404);
