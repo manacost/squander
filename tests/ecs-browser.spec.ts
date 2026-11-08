@@ -14,6 +14,8 @@ type BrowserBenchmarkResult = {
   };
 };
 
+type BrowserTimingMetric = Exclude<keyof BrowserBenchmarkResult, "policy" | "memory">;
+
 type BrowserWorkloadOptions = {
   readonly entity_count: number;
   readonly structural_sample: number;
@@ -33,7 +35,7 @@ type BrowserBaseline = {
 };
 
 const repetitions = 5;
-const time_metrics: readonly (keyof BrowserBenchmarkResult)[] = [
+const time_metrics: readonly BrowserTimingMetric[] = [
   "creation_ms",
   "dense_update_ms",
   "sparse_query_ms",
@@ -59,7 +61,8 @@ test("ECS browser CPU workloads run on the trusted local origin", async ({ page 
 
   const results = await page.evaluate(
     async ({ repetitions: count }) => {
-      const workload = (await import("/verification/ecs-benchmark-workload.ts")) as BrowserWorkloadModule;
+      const benchmark_module_path = "/verification/ecs-benchmark-workload.ts";
+      const workload = (await import(/* @vite-ignore */ benchmark_module_path)) as BrowserWorkloadModule;
       const options: BrowserWorkloadOptions = {
         entity_count: 100_000,
         structural_sample: 10_000,

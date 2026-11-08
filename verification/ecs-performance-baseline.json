@@ -12,16 +12,16 @@
         "position_sum": 249999500000,
         "dense_query_count": 500000,
         "sparse_query_count": 100000,
-        "creation_ms": 572.83,
-        "dense_update_ms": 401.25,
-        "sparse_query_ms": 63.2,
-        "structural_ms": 101.21,
-        "snapshot_ms": 173.91,
-        "clear_ms": 252.92,
+        "creation_ms": 506.5,
+        "dense_update_ms": 408.7,
+        "sparse_query_ms": 64.01,
+        "structural_ms": 99,
+        "snapshot_ms": 173.29,
+        "clear_ms": 229.88,
         "memory": {
           "after_creation": { "heap_used_mb": 248.6, "rss_mb": 401.6 },
           "before_clear": { "heap_used_mb": 298.2, "rss_mb": 438.8 },
-          "after_clear": { "heap_used_mb": 356, "rss_mb": 519.9 }
+          "after_clear": { "heap_used_mb": 371.6, "rss_mb": 529.1 }
         }
       },
       "generational": {
@@ -32,16 +32,16 @@
         "position_sum": 249999500000,
         "dense_query_count": 500000,
         "sparse_query_count": 100000,
-        "creation_ms": 1095.39,
-        "dense_update_ms": 587.7,
-        "sparse_query_ms": 91.11,
-        "structural_ms": 178.73,
-        "snapshot_ms": 220.52,
-        "clear_ms": 493.93,
+        "creation_ms": 1114.15,
+        "dense_update_ms": 564.92,
+        "sparse_query_ms": 88.6,
+        "structural_ms": 177.27,
+        "snapshot_ms": 220.49,
+        "clear_ms": 526.76,
         "memory": {
           "after_creation": { "heap_used_mb": 546.7, "rss_mb": 752.8 },
           "before_clear": { "heap_used_mb": 437.1, "rss_mb": 650.7 },
-          "after_clear": { "heap_used_mb": 496.9, "rss_mb": 738.8 }
+          "after_clear": { "heap_used_mb": 285.3, "rss_mb": 594 }
         }
       }
     }

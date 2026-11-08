@@ -116,6 +116,8 @@ export function run_ecs_benchmark(policy: EntityPolicy, options: EcsBenchmarkOpt
   const clear_start = globalThis.performance.now();
   world.clear();
   const clear_ms = elapsed(clear_start);
+  snapshot_source.clear();
+  snapshot_destination.clear();
   options.collect_garbage?.();
   const after_clear = options.read_memory();
 

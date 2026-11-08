@@ -6,7 +6,15 @@ const executable = mode === "browser" ? (process.platform === "win32" ? "npx.cmd
 const command =
   mode === "browser"
     ? ["--no-install", "playwright", "test", "--config=playwright.ecs.config.ts"]
-    : ["--expose-gc", "node_modules/vitest/vitest.mjs", "--config", "verification/vitest.ecs.config.ts", "run", "--reporter=verbose"];
+    : [
+        "--expose-gc",
+        "node_modules/vitest/vitest.mjs",
+        "--config",
+        "verification/vitest.ecs.config.ts",
+        "run",
+        "--reporter=verbose",
+        "verification/ecs-benchmark.test.ts",
+      ];
 
 const child = spawn(executable, command, {
   env: { ...process.env, ...(enforce ? { ECS_BENCHMARK_ENFORCE: "1" } : {}) },

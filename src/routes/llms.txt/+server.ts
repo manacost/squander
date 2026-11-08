@@ -50,8 +50,11 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
   object-shaped component tokens, create independent worlds, run typed fluent
   queries, and use world-level \`export()\`/\`import()\` snapshots. The ECS does
   not register or schedule systems; callers compose ordinary systems and
-  lifecycle hooks. Million-entity benchmark evidence and future archetype or
-  typed-column optimizations remain Phase 3 work.
+  lifecycle hooks. Node and trusted-local-origin browser benchmark profiles
+  guard the supported workloads. Monotonic numeric IDs are the default;
+  create_world(schema, { entity_policy: "generational" }) opts into packed
+  generational handles and stale-handle checks. Archetype and typed-column
+  optimizations remain deferred.
 
 ## Author and project
 
@@ -204,6 +207,10 @@ world.query().with(position).each(({ read, write }) => {
 Queries expose only requested component tokens at compile time. Use
 \`toArray()\` for live match views or \`toSnapshots()\` for detached copies.
 Structural match operations are deferred until the current query finishes.
+Monotonic IDs are the default and are never reused. Generational worlds pack a
+slot and generation into numeric handles, reuse slots, and reject stale
+handles. Version 1 snapshots preserve numeric IDs and require a matching
+identity policy.
 World-level \`export()\` and \`import()\` preserve numeric entity IDs and
 component values without requiring persistence codecs on each component.
 JSON, binary formats, migrations, and runtime-only value policies belong in an

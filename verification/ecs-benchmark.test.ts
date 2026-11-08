@@ -82,8 +82,8 @@ function assert_regression(
     }
   }
 
-  const actual_heap = result.memory.before_clear.heap_used_mb;
-  const reference_heap = expected.memory.before_clear.heap_used_mb;
+  const actual_heap = result.memory.after_clear.heap_used_mb;
+  const reference_heap = expected.memory.after_clear.heap_used_mb;
   if (actual_heap !== null && reference_heap !== null) {
     const limit = reference_heap * thresholds.memory_regression_ratio;
     if (enforce) {

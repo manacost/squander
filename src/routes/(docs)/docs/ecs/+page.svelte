@@ -77,7 +77,8 @@
   <h2>Public types</h2>
   <ul>
     <li><code>define_component&lt;Value&gt;()</code></li>
-    <li><code>create_world(schema)</code></li>
+    <li><code>create_world(schema, options?)</code></li>
+    <li><code>EntityPolicy</code> and <code>WorldOptions</code></li>
     <li><code>World&lt;Schema&gt;</code></li>
     <li><code>Query&lt;Schema, Included&gt;</code></li>
     <li><code>QueryMatch&lt;Schema, Included&gt;</code></li>
@@ -114,11 +115,38 @@ const snapshot = world.export();
 world.import(snapshot);`}
   />
 
+  <h2>Caller-owned systems</h2>
+  <p>
+    Systems are ordinary application modules. The ECS supplies data and queries, while a scene or game loop chooses which lifecycle hooks to
+    call and in what order.
+  </p>
+  <CodeBlock
+    language="typescript"
+    code={`const movement = {
+  enter: () => {},
+  update: () => {
+    world.query().with(position).each(({ read, write }) => {
+      write(position).x += read(position).y;
+    });
+  },
+  draw: () => {},
+};
+
+// The caller owns scheduling and may expose only the hooks it needs.
+const scene = {
+  enter: movement.enter,
+  update: movement.update,
+  draw: movement.draw,
+};`}
+  />
+
   <h2>Scope and limitations</h2>
   <p>
     The ECS uses object-shaped components and dense sparse-set columns today. Structural changes from a query match are deferred until
-    iteration finishes. The ECS does not provide a scheduler or system registry. JSON and binary serialization, migrations, typed columns,
-    and archetype storage remain application or later optimization seams.
+    iteration finishes. Monotonic IDs are the default; generational IDs are available through <code
+      >{`{ entity_policy: "generational" }`}</code
+    >. Snapshot values must be structured-cloneable. The ECS does not provide a scheduler or system registry. JSON and binary serialization,
+    migrations, typed columns, and archetype storage remain application or later optimization seams.
   </p>
 </article>
 

@@ -12,11 +12,10 @@ acceptance evidence, and the relevant documentation.
 
 ## Future capability gates
 
-- **ECS integration:** The Draft [ecs-system capability](../specs/ecs-system/spec.md)
-  records the current goals and alternatives. Before implementation, decide
-  whether Squander ships a minimal ECS or exposes composition seams for an
-  application-owned ECS, then define ownership, update ordering, and disposal
-  boundaries.
+- **ECS advanced integration:** The implemented [ecs-system capability](../specs/ecs-system/spec.md)
+  provides standalone worlds and caller-owned system composition. Future
+  adapters, immediate mutation modes, and alternate storage backends need their
+  own contracts and workload evidence.
 - **Action mapping:** Define action names, rebinding, device precedence, and
   how mapped actions coexist with the raw input router.
 - **Text input and IME:** Define composition events, editable-control policy,

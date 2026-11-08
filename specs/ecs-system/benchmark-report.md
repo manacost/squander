@@ -1,68 +1,94 @@
-# ECS million-entity benchmark
+# ECS performance evidence
 
 ## Result
 
-The initial object-first sparse-set implementation completed a one-million
-entity workload on the repository host. This is evidence that the current
-layout can run the workload in Node; it is not a performance budget or a
-browser/WebGPU result.
+The object-first sparse-set implementation completes the shared workload for
+one million entities in Node and 100,000 entities in Chromium. The benchmark
+measures both supported identity policies, dense and sparse queries, structural
+churn, snapshot import/export, and teardown.
 
-Command:
+Commands:
 
     npm run test:benchmark:ecs
+    npm run test:benchmark:ecs:guard
+    npm run test:benchmark:ecs:browser:guard
 
-Host runtime:
+The regular benchmark records advisory regressions. The `:guard` commands set
+`ECS_BENCHMARK_ENFORCE=1` and fail when a matching environment profile exceeds
+20% timing or 15% retained-heap regression. Unmatched environments record new
+evidence without comparing it to unrelated hardware.
+
+## Node profile
+
+Environment:
 
 - Node.js v24.18.0
 - Vitest v5.0.5
-- One component: { x: number; y: number }
+- macOS arm64
 - One million entities
-- One hundred thousand remove/add structural changes
-- One full update query and one full read query
+- 100,000 structural remove/add operations
+- 100,000 snapshot entities
+- Three measured repetitions after a small warm-up
+- Explicit garbage collection at memory observation boundaries
 
-Recorded output:
+The recorded profile is `darwin-arm64-v24.18.0`.
 
-| Workload                          |      Time |
-| --------------------------------- | --------: |
-| Create entities and add positions | 439.77 ms |
-| Update query                      | 528.95 ms |
-| Remove/add 100,000 positions      | 556.74 ms |
-| Read query                        | 494.64 ms |
-| Clear world                       | 137.58 ms |
+| Policy       |     Create | Dense update | Sparse query | Structural |  Snapshot |     Clear |
+| ------------ | ---------: | -----------: | -----------: | ---------: | --------: | --------: |
+| Monotonic    |  506.50 ms |    408.70 ms |     64.01 ms |   99.00 ms | 173.29 ms | 229.88 ms |
+| Generational | 1114.15 ms |    564.92 ms |     88.60 ms |  177.27 ms | 220.49 ms | 526.76 ms |
 
-Memory observations from process.memoryUsage():
+Generational handles cost more in this workload because slot and generation
+state is maintained in addition to component storage. The policy is opt-in so
+applications can choose stale-handle protection and slot reuse only when they
+need it.
 
-| Point          | Heap used |      RSS |
-| -------------- | --------: | -------: |
-| After creation |  158.6 MB | 249.0 MB |
-| Before clear   |  638.7 MB | 802.0 MB |
-| After clear    |  676.5 MB | 864.3 MB |
+| Policy       | Heap after creation | Peak heap before clear | Retained heap after clear |
+| ------------ | ------------------: | ---------------------: | ------------------------: |
+| Monotonic    |            248.7 MB |               297.8 MB |                  371.6 MB |
+| Generational |            705.5 MB |               861.2 MB |                  285.3 MB |
 
-The benchmark does not force garbage collection. The post-clear increase is
-therefore an observation of the host runtime and benchmark allocation history,
-not evidence that clear() retains component data. A future performance slice
-should add explicit GC runs where available, compare archetypes and typed
-columns, and measure browser runtimes separately.
+Heap and RSS values are observations from the host allocator. The guard uses
+retained heap after all benchmark worlds are cleared, while peak and RSS remain
+reported for investigation.
 
-Fixture: [verification/ecs-benchmark.test.ts](../../verification/ecs-benchmark.test.ts)
+## Browser profile
 
-## Storage comparison
+Environment:
 
-The comparison fixture uses the same object-shaped set/update/remove/add/read/
-clear workload through a small storage interface. It compares the selected
-sparse-set column with an object-map column. These numbers are storage-only;
-they do not include the ECS query match allocation measured above.
+- Chromium 156.0.8078.4
+- Trusted local origin: `http://127.0.0.1:4174`
+- Secure context: true
+- DPR: 1
+- Viewport: 1280 × 720
+- 100,000 entities
+- 10,000 structural remove/add operations
+- 10,000 snapshot entities
+- Five measured repetitions after a small warm-up
 
-| Strategy   |    Create |   Update | Structural |    Query |   Clear |
-| ---------- | --------: | -------: | ---------: | -------: | ------: |
-| Sparse set | 232.16 ms | 36.35 ms |   79.19 ms | 15.67 ms | 0.05 ms |
-| Object map | 128.44 ms | 49.33 ms |   57.27 ms | 13.69 ms | 0.05 ms |
+The recorded profile is `darwin-chromium-156.0.8078.4`.
 
-The object map was faster to populate and structurally replace in this single
-Node run, while the sparse set updated existing values faster. The sparse set
-also keeps packed entity/value arrays and remains the selected implementation
-because it provides a denser path for component membership and a clear seam for
-future archetype or typed-column work. No final performance budget is claimed
-until browser and workload-specific measurements exist.
+| Policy       |   Create | Dense update | Sparse query | Structural | Snapshot |    Clear |
+| ------------ | -------: | -----------: | -----------: | ---------: | -------: | -------: |
+| Monotonic    | 21.20 ms |     19.10 ms |      2.90 ms |    4.10 ms | 19.50 ms | 12.80 ms |
+| Generational | 36.90 ms |     23.70 ms |      3.00 ms |    3.50 ms | 21.20 ms | 19.00 ms |
 
-Comparison fixture: [verification/ecs-storage-comparison.test.ts](../../verification/ecs-storage-comparison.test.ts)
+Browser memory is reported as unavailable because the benchmark does not use a
+non-standard heap API. The fixture asserts `window.isSecureContext` and records
+browser, OS, DPR, viewport, and workload details. It does not require WebGPU;
+the ECS benchmark exercises CPU behavior only.
+
+## Storage decision
+
+The selected backend remains dense sparse-set storage behind the object-first
+component API. The storage comparison fixture remains useful as historical
+context, but its one-component map comparison is not a promotion budget. No
+archetype or typed-column backend is added until a representative workload
+demonstrates a need.
+
+Fixtures:
+
+- [verification/ecs-benchmark.test.ts](../../verification/ecs-benchmark.test.ts)
+- [verification/ecs-benchmark-workload.ts](../../verification/ecs-benchmark-workload.ts)
+- [tests/ecs-browser.spec.ts](../../tests/ecs-browser.spec.ts)
+- [verification/ecs-storage-comparison.test.ts](../../verification/ecs-storage-comparison.test.ts)

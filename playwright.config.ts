@@ -7,7 +7,7 @@ const config: PlaywrightTestConfig = {
   },
   testDir: "tests",
   testMatch: /(.+\.)?(test|spec)\.[jt]s/,
-  testIgnore: /webgpu.*\.spec\.[jt]s/,
+  testIgnore: /(webgpu|ecs-browser).*\.spec\.[jt]s/,
 };
 
 export default config;

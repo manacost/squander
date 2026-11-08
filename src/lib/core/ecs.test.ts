@@ -29,6 +29,8 @@ describe("ecs worlds", () => {
     expect(world.read(entity, position)).toEqual({ x: 4, y: 6 });
     expect(world.query().with(position, velocity).toArray()).toHaveLength(1);
     expect(world.query().with(position).without(velocity).toArray()).toHaveLength(0);
+    world.remove(entity, velocity);
+    expect(world.query().with(position, velocity).toArray()).toHaveLength(0);
   });
 
   it("supports nested arrays without changing the object-first storage path", () => {
@@ -117,6 +119,18 @@ describe("ecs worlds", () => {
     }).toThrow(/does not belong to this world/);
 
     expect(() => world.query().with(foreign_position).toArray()).toThrow(/does not belong to this world/);
+  });
+
+  it("replaces an existing component value and rejects duplicate component names", () => {
+    const world = create_world({ position });
+    const entity = world.create();
+    world.add(entity, position, { x: 1, y: 2 });
+    world.add(entity, position, { x: 3, y: 4 });
+
+    expect(world.read(entity, position)).toEqual({ x: 3, y: 4 });
+
+    const duplicate_position = define_component<Position>({ name: "position" });
+    expect(() => create_world({ position, duplicate_position })).toThrow(/registered more than once/);
   });
 
   it("preserves every chained exclusion term", () => {
@@ -243,5 +257,138 @@ describe("ecs worlds", () => {
     destination.adopt(replacement);
     expect(destination.has(replacement)).toBe(true);
     expect(() => destination.adopt(entity)).toThrow(/stale generation/);
+  });
+
+  it("supports caller-owned systems without ECS registration", () => {
+    const world = create_world({ position });
+    const entity = world.create();
+    world.add(entity, position, { x: 0, y: 0 });
+    const calls: string[] = [];
+    const create_movement_system = (owned_world: typeof world) => ({
+      enter: () => calls.push("enter"),
+      update: () => {
+        owned_world
+          .query()
+          .with(position)
+          .each(({ write }) => {
+            write(position).x += 1;
+          });
+        calls.push("update");
+      },
+      draw: () => calls.push("draw"),
+      inspect: () => owned_world.read(entity, position).x,
+    });
+    const movement = create_movement_system(world);
+    const scene = {
+      enter: () => movement.enter(),
+      update: () => {
+        movement.update();
+      },
+      draw: () => movement.draw(),
+    };
+
+    scene.enter();
+    scene.update();
+    scene.draw();
+
+    expect(movement.inspect()).toBe(1);
+    expect(calls).toEqual(["enter", "update", "draw"]);
+  });
+
+  it("handles queued removal after a queued destruction", () => {
+    const world = create_world({ position, velocity });
+    const entity = world.create();
+    world.add(entity, position, { x: 0, y: 0 });
+
+    world
+      .query()
+      .with(position)
+      .each(({ remove, destroy }) => {
+        destroy();
+        remove(position);
+        world.add(entity, velocity, { x: 1, y: 0 });
+      });
+
+    expect(world.has(entity)).toBe(false);
+  });
+
+  it("rejects invalid generational snapshot handles before changing the world", () => {
+    const world = create_world({ position }, { entity_policy: "generational" });
+    const entity = world.create();
+    world.add(entity, position, { x: 1, y: 2 });
+    const snapshot = world.export();
+    const malformed = { ...snapshot, entities: [1], components: {} };
+
+    expect(() => {
+      world.import(malformed);
+    }).toThrow(/invalid generational entity/);
+    expect(world.read(entity, position)).toEqual({ x: 1, y: 2 });
+  });
+
+  it("rejects invalid adopted entity handles", () => {
+    const world = create_world({ position });
+
+    expect(() => world.adopt(0)).toThrow(/not valid/);
+  });
+
+  it("rejects duplicate component entries and unknown snapshot components", () => {
+    const world = create_world({ position });
+    const entity = world.create();
+    world.add(entity, position, { x: 1, y: 2 });
+    const snapshot = world.export();
+    const duplicate = {
+      ...snapshot,
+      components: {
+        position: [
+          { entity, value: { x: 1, y: 2 } },
+          { entity, value: { x: 3, y: 4 } },
+        ],
+      },
+    };
+    const unknown = { ...snapshot, components: { unknown: [] } };
+
+    expect(() => {
+      world.import(duplicate);
+    }).toThrow(/contains entity .* more than once/);
+    expect(() => {
+      world.import(unknown);
+    }).toThrow(/unknown component/);
+    expect(world.read(entity, position)).toEqual({ x: 1, y: 2 });
+  });
+
+  it("rejects non-structured-cloneable component values at the snapshot boundary", () => {
+    type RuntimeValue = { callback: () => void };
+    const runtime_value = define_component<RuntimeValue>({ name: "runtime_value" });
+    const world = create_world({ runtime_value });
+    const entity = world.create();
+    world.add(entity, runtime_value, { callback: () => undefined });
+
+    expect(() => world.export()).toThrow(/non-structured-cloneable/);
+  });
+
+  it("retires maximum-generation slots instead of reusing them", () => {
+    const world = create_world({ position }, { entity_policy: "generational" });
+    const maximum_generation_handle = 134_217_727;
+    world.adopt(maximum_generation_handle);
+    world.destroy(maximum_generation_handle);
+
+    expect(world.has(maximum_generation_handle)).toBe(false);
+    expect(world.create()).not.toBe(maximum_generation_handle);
+  });
+
+  it("advances previous free generations during generational import", () => {
+    const source = create_world({ position }, { entity_policy: "generational" });
+    const first_source_entity = source.create();
+    const second_source_entity = source.create();
+    source.destroy(first_source_entity);
+    source.add(second_source_entity, position, { x: 2, y: 0 });
+    const snapshot = source.export();
+
+    const destination = create_world({ position }, { entity_policy: "generational" });
+    const first_destination_entity = destination.create();
+    destination.destroy(first_destination_entity);
+    destination.import(snapshot);
+
+    expect(destination.read(second_source_entity, position)).toEqual({ x: 2, y: 0 });
   });
 });
