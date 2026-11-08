@@ -4,10 +4,11 @@
   import CodeBlock from "../../../../lib/docs/CodeBlock.svelte";
 
   type Position = { x: number; y: number };
+  type EntityRow = Readonly<{ entity: number; position: Position }>;
 
   const position = define_component<Position>({ name: "position" });
   const world = create_world({ position });
-  let entities = $state<readonly number[]>([]);
+  let entity_rows = $state<readonly EntityRow[]>([]);
   let status = $state("Create an entity to start the world");
   let snapshot_json = $state("");
 
@@ -16,11 +17,11 @@
   }
 
   function refresh(): void {
-    entities = world
+    entity_rows = world
       .query()
       .with(position)
-      .toArray()
-      .map((match) => match.entity);
+      .toSnapshots()
+      .map((match) => ({ entity: match.entity, position: { ...match.read(position) } }));
     snapshot_json = export_snapshot();
   }
 
@@ -28,7 +29,7 @@
 
   function create_entity(): void {
     const entity = world.create();
-    world.add(entity, position, { x: entities.length, y: 0 });
+    world.add(entity, position, { x: entity_rows.length, y: 0 });
     refresh();
     status = `Entity ${String(entity)} now has a position component`;
   }
@@ -41,7 +42,7 @@
         write(position).x = read(position).x + 1;
       });
     refresh();
-    status = `Advanced ${String(entities.length)} live match views`;
+    status = `Advanced ${String(entity_rows.length)} position snapshots`;
   }
 </script>
 
@@ -67,11 +68,11 @@
     <p>{status}</p>
     <div class="controls">
       <button type="button" onclick={create_entity}>Create entity</button>
-      <button type="button" onclick={advance_positions} disabled={entities.length === 0}>Advance positions</button>
+      <button type="button" onclick={advance_positions} disabled={entity_rows.length === 0}>Advance positions (<code></code>x + 1)</button>
     </div>
     <ul>
-      {#each entities as entity (entity)}
-        <li>entity {String(entity)}: ({world.read(entity, position).x}, {world.read(entity, position).y})</li>
+      {#each entity_rows as row (row.entity)}
+        <li>entity {String(row.entity)}: ({row.position.x}, {row.position.y})</li>
       {/each}
     </ul>
     <h3>World snapshot</h3>
@@ -81,7 +82,7 @@
   <h2>What this demonstrates</h2>
   <p>
     Component tokens belong to a local schema, and each world owns its membership and component storage. Queries expose only the tokens they
-    request. The example uses live match views for the list and a caller-controlled update function for movement.
+    request. The example uses detached query snapshots for the reactive list and a caller-controlled update function for movement.
   </p>
 
   <h2>Public types</h2>
