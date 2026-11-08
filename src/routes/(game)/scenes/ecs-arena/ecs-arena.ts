@@ -1,4 +1,4 @@
-import { create_world, define_component, type Entity } from "../../../../lib/core/index.js";
+import { create_world, define_component, type Entity, type World } from "../../../../lib/core/index.js";
 
 export const arena_width = 800;
 export const arena_height = 500;
@@ -57,6 +57,30 @@ const lifetime = define_component<Lifetime>({ name: "lifetime" });
 const player_marker = define_component<Marker>({ name: "player" });
 const drone_marker = define_component<Marker>({ name: "drone" });
 const projectile_marker = define_component<Marker>({ name: "projectile" });
+const arena_schema = { position, velocity, collider, health, lifetime, player_marker, drone_marker, projectile_marker };
+
+type ArenaWorld = World<typeof arena_schema>;
+type ArenaRuntimeState = {
+  player_entity: Entity | undefined;
+  status: ArenaStatus;
+  score: number;
+  time_seconds: number;
+  spawn_elapsed_seconds: number;
+  fire_cooldown_seconds: number;
+  fire_requested: boolean;
+  move_input: ArenaMove;
+  facing: ArenaMove;
+  last_event: string;
+};
+type ArenaSystemContext = Readonly<{
+  world: ArenaWorld;
+  state: ArenaRuntimeState;
+  spawn_interval_seconds: number;
+  create_random_drone: () => void;
+  create_projectile: () => void;
+}>;
+type ArenaUpdateSystem = Readonly<{ update: (delta_seconds: number) => void }>;
+type ArenaSystemFactory = (context: ArenaSystemContext) => ArenaUpdateSystem;
 
 const system_order = Object.freeze(["input", "spawn", "fire", "steering", "movement", "combat", "cleanup"]);
 const player_speed = 230;
@@ -98,24 +122,182 @@ const normalize_move = (move: ArenaMove): ArenaMove => {
   return { x: x / length, y: y / length };
 };
 
+const create_input_system = (context: ArenaSystemContext) => ({
+  update: (_delta_seconds: number): void => {
+    const { state, world } = context;
+    if (state.player_entity === undefined || !world.has(state.player_entity)) return;
+    const normalized = normalize_move(state.move_input);
+    if (normalized.x !== 0 || normalized.y !== 0) state.facing = normalized;
+    const player_velocity = world.write(state.player_entity, velocity);
+    player_velocity.x = normalized.x * player_speed;
+    player_velocity.y = normalized.y * player_speed;
+  },
+});
+
+const create_spawn_system = (context: ArenaSystemContext) => ({
+  update: (delta_seconds: number): void => {
+    const { state } = context;
+    state.spawn_elapsed_seconds += delta_seconds;
+    while (state.spawn_elapsed_seconds >= context.spawn_interval_seconds) {
+      state.spawn_elapsed_seconds -= context.spawn_interval_seconds;
+      context.create_random_drone();
+      state.last_event = "A drone entered the arena";
+    }
+  },
+});
+
+const create_fire_system = (context: ArenaSystemContext) => ({
+  update: (delta_seconds: number): void => {
+    const { state } = context;
+    state.fire_cooldown_seconds = Math.max(0, state.fire_cooldown_seconds - delta_seconds);
+    if (!state.fire_requested || state.fire_cooldown_seconds > 0) return;
+    context.create_projectile();
+    state.fire_cooldown_seconds = 0.18;
+    state.fire_requested = false;
+    state.last_event = "Projectile spawned";
+  },
+});
+
+const create_steering_system = (context: ArenaSystemContext) => ({
+  update: (_delta_seconds: number): void => {
+    const { state, world } = context;
+    if (state.player_entity === undefined || !world.has(state.player_entity)) return;
+    const player_position = world.read(state.player_entity, position);
+    world
+      .query()
+      .with(position, velocity, drone_marker)
+      .each(({ read, write }) => {
+        const drone_position = read(position);
+        const delta_x = player_position.x - drone_position.x;
+        const delta_y = player_position.y - drone_position.y;
+        const length = Math.hypot(delta_x, delta_y) || 1;
+        const drone_velocity = write(velocity);
+        drone_velocity.x = (delta_x / length) * drone_speed;
+        drone_velocity.y = (delta_y / length) * drone_speed;
+      });
+  },
+});
+
+const create_movement_system = (context: ArenaSystemContext) => ({
+  update: (delta_seconds: number): void => {
+    const { state, world } = context;
+    world
+      .query()
+      .with(position, velocity)
+      .each(({ read, write }) => {
+        const current_position = write(position);
+        const current_velocity = read(velocity);
+        current_position.x += current_velocity.x * delta_seconds;
+        current_position.y += current_velocity.y * delta_seconds;
+      });
+
+    if (state.player_entity !== undefined && world.has(state.player_entity)) {
+      const player_position = world.write(state.player_entity, position);
+      player_position.x = clamp(player_position.x, player_radius, arena_width - player_radius);
+      player_position.y = clamp(player_position.y, player_radius, arena_height - player_radius);
+    }
+  },
+});
+
+const create_combat_system = (context: ArenaSystemContext) => ({
+  update: (_delta_seconds: number): void => {
+    const { state, world } = context;
+    if (state.player_entity === undefined || !world.has(state.player_entity)) return;
+    const player_position = world.read(state.player_entity, position);
+    const player_health = world.write(state.player_entity, health);
+    const bullets = world.query().with(position, collider, projectile_marker).toSnapshots();
+    const drones = world.query().with(position, collider, drone_marker).toSnapshots();
+    const destroyed_bullets = new Set<Entity>();
+    const destroyed_drones = new Set<Entity>();
+
+    for (const bullet of bullets) {
+      const bullet_position = bullet.read(position);
+      const bullet_collider = bullet.read(collider);
+      for (const drone of drones) {
+        if (destroyed_drones.has(drone.entity)) continue;
+        const drone_position = drone.read(position);
+        const drone_collider = drone.read(collider);
+        if (distance_squared(bullet_position, drone_position) > (bullet_collider.radius + drone_collider.radius) ** 2) continue;
+        destroyed_bullets.add(bullet.entity);
+        destroyed_drones.add(drone.entity);
+        state.score += 1;
+        state.last_event = "Drone destroyed";
+        break;
+      }
+    }
+
+    for (const drone of drones) {
+      if (destroyed_drones.has(drone.entity)) continue;
+      const drone_position = drone.read(position);
+      const drone_collider = drone.read(collider);
+      if (distance_squared(player_position, drone_position) > (player_radius + drone_collider.radius) ** 2) continue;
+      destroyed_drones.add(drone.entity);
+      player_health.value -= 1;
+      if (player_health.value <= 0) {
+        state.status = "game-over";
+        state.move_input = { x: 0, y: 0 };
+        state.last_event = "The core was breached";
+      }
+    }
+
+    for (const entity of destroyed_bullets) world.destroy(entity);
+    for (const entity of destroyed_drones) world.destroy(entity);
+  },
+});
+
+const create_cleanup_system = (context: ArenaSystemContext) => ({
+  update: (delta_seconds: number): void => {
+    const { world } = context;
+    world
+      .query()
+      .with(position, lifetime, projectile_marker)
+      .each(({ read, write, destroy }) => {
+        const current_position = read(position);
+        const remaining = write(lifetime);
+        remaining.remaining_seconds -= delta_seconds;
+        if (
+          remaining.remaining_seconds <= 0 ||
+          current_position.x < -projectile_radius ||
+          current_position.x > arena_width + projectile_radius ||
+          current_position.y < -projectile_radius ||
+          current_position.y > arena_height + projectile_radius
+        ) {
+          destroy();
+        }
+      });
+  },
+});
+
+const system_factories = {
+  input: create_input_system,
+  spawn: create_spawn_system,
+  fire: create_fire_system,
+  steering: create_steering_system,
+  movement: create_movement_system,
+  combat: create_combat_system,
+  cleanup: create_cleanup_system,
+} satisfies Record<string, ArenaSystemFactory>;
+
 export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsArenaGame => {
   const random = options.random ?? Math.random;
   const spawn_interval_seconds = resolve_spawn_interval(options.enemy_spawn_interval_seconds);
-  const world = create_world({ position, velocity, collider, health, lifetime, player_marker, drone_marker, projectile_marker });
-  let player_entity: Entity | undefined;
-  let status: ArenaStatus = "playing";
-  let score = 0;
-  let time_seconds = 0;
-  let spawn_elapsed_seconds = 0;
-  let fire_cooldown_seconds = 0;
-  let fire_requested = false;
-  let move_input: ArenaMove = { x: 0, y: 0 };
-  let facing: ArenaMove = { x: 1, y: 0 };
-  let last_event = "World ready";
+  const world = create_world(arena_schema);
+  const state: ArenaRuntimeState = {
+    player_entity: undefined,
+    status: "playing",
+    score: 0,
+    time_seconds: 0,
+    spawn_elapsed_seconds: 0,
+    fire_cooldown_seconds: 0,
+    fire_requested: false,
+    move_input: { x: 0, y: 0 },
+    facing: { x: 1, y: 0 },
+    last_event: "World ready",
+  };
 
   const create_player = (): void => {
     const entity = world.create();
-    player_entity = entity;
+    state.player_entity = entity;
     world.add(entity, position, { x: arena_width / 2, y: arena_height / 2 });
     world.add(entity, velocity, { x: 0, y: 0 });
     world.add(entity, collider, { radius: player_radius });
@@ -144,14 +326,14 @@ export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsAre
   };
 
   const create_projectile = (): void => {
-    if (player_entity === undefined || !world.has(player_entity)) return;
-    const player_position = world.read(player_entity, position);
+    if (state.player_entity === undefined || !world.has(state.player_entity)) return;
+    const player_position = world.read(state.player_entity, position);
     const entity = world.create();
     world.add(entity, position, {
-      x: player_position.x + facing.x * (player_radius + projectile_radius + 2),
-      y: player_position.y + facing.y * (player_radius + projectile_radius + 2),
+      x: player_position.x + state.facing.x * (player_radius + projectile_radius + 2),
+      y: player_position.y + state.facing.y * (player_radius + projectile_radius + 2),
     });
-    world.add(entity, velocity, { x: facing.x * projectile_speed, y: facing.y * projectile_speed });
+    world.add(entity, velocity, { x: state.facing.x * projectile_speed, y: state.facing.y * projectile_speed });
     world.add(entity, collider, { radius: projectile_radius });
     world.add(entity, lifetime, { remaining_seconds: projectile_lifetime_seconds });
     world.add(entity, projectile_marker, { active: true });
@@ -159,160 +341,35 @@ export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsAre
 
   const reset = (): void => {
     world.clear();
-    player_entity = undefined;
-    status = "playing";
-    score = 0;
-    time_seconds = 0;
-    spawn_elapsed_seconds = 0;
-    fire_cooldown_seconds = 0;
-    fire_requested = false;
-    move_input = { x: 0, y: 0 };
-    facing = { x: 1, y: 0 };
-    last_event = "New run";
+    state.player_entity = undefined;
+    state.status = "playing";
+    state.score = 0;
+    state.time_seconds = 0;
+    state.spawn_elapsed_seconds = 0;
+    state.fire_cooldown_seconds = 0;
+    state.fire_requested = false;
+    state.move_input = { x: 0, y: 0 };
+    state.facing = { x: 1, y: 0 };
+    state.last_event = "New run";
     create_player();
     for (const enemy of options.initial_enemies ?? []) create_drone(enemy);
-  };
-
-  const input_system = (): void => {
-    if (player_entity === undefined || !world.has(player_entity)) return;
-    const normalized = normalize_move(move_input);
-    if (normalized.x !== 0 || normalized.y !== 0) facing = normalized;
-    const player_velocity = world.write(player_entity, velocity);
-    player_velocity.x = normalized.x * player_speed;
-    player_velocity.y = normalized.y * player_speed;
-  };
-
-  const spawn_system = (delta_seconds: number): void => {
-    spawn_elapsed_seconds += delta_seconds;
-    while (spawn_elapsed_seconds >= spawn_interval_seconds) {
-      spawn_elapsed_seconds -= spawn_interval_seconds;
-      create_random_drone();
-      last_event = "A drone entered the arena";
-    }
-  };
-
-  const fire_system = (delta_seconds: number): void => {
-    fire_cooldown_seconds = Math.max(0, fire_cooldown_seconds - delta_seconds);
-    if (!fire_requested || fire_cooldown_seconds > 0) return;
-    create_projectile();
-    fire_cooldown_seconds = 0.18;
-    fire_requested = false;
-    last_event = "Projectile spawned";
-  };
-
-  const steering_system = (): void => {
-    if (player_entity === undefined || !world.has(player_entity)) return;
-    const player_position = world.read(player_entity, position);
-    world
-      .query()
-      .with(position, velocity, drone_marker)
-      .each(({ read, write }) => {
-        const drone_position = read(position);
-        const delta_x = player_position.x - drone_position.x;
-        const delta_y = player_position.y - drone_position.y;
-        const length = Math.hypot(delta_x, delta_y) || 1;
-        const drone_velocity = write(velocity);
-        drone_velocity.x = (delta_x / length) * drone_speed;
-        drone_velocity.y = (delta_y / length) * drone_speed;
-      });
-  };
-
-  const movement_system = (delta_seconds: number): void => {
-    world
-      .query()
-      .with(position, velocity)
-      .each(({ read, write }) => {
-        const current_position = write(position);
-        const current_velocity = read(velocity);
-        current_position.x += current_velocity.x * delta_seconds;
-        current_position.y += current_velocity.y * delta_seconds;
-      });
-
-    if (player_entity !== undefined && world.has(player_entity)) {
-      const player_position = world.write(player_entity, position);
-      player_position.x = clamp(player_position.x, player_radius, arena_width - player_radius);
-      player_position.y = clamp(player_position.y, player_radius, arena_height - player_radius);
-    }
-  };
-
-  const combat_system = (): void => {
-    if (player_entity === undefined || !world.has(player_entity)) return;
-    const player_position = world.read(player_entity, position);
-    const player_health = world.write(player_entity, health);
-    const bullets = world.query().with(position, collider, projectile_marker).toSnapshots();
-    const drones = world.query().with(position, collider, drone_marker).toSnapshots();
-    const destroyed_bullets = new Set<Entity>();
-    const destroyed_drones = new Set<Entity>();
-
-    for (const bullet of bullets) {
-      const bullet_position = bullet.read(position);
-      const bullet_collider = bullet.read(collider);
-      for (const drone of drones) {
-        if (destroyed_drones.has(drone.entity)) continue;
-        const drone_position = drone.read(position);
-        const drone_collider = drone.read(collider);
-        if (distance_squared(bullet_position, drone_position) > (bullet_collider.radius + drone_collider.radius) ** 2) continue;
-        destroyed_bullets.add(bullet.entity);
-        destroyed_drones.add(drone.entity);
-        score += 1;
-        last_event = "Drone destroyed";
-        break;
-      }
-    }
-
-    for (const drone of drones) {
-      if (destroyed_drones.has(drone.entity)) continue;
-      const drone_position = drone.read(position);
-      const drone_collider = drone.read(collider);
-      if (distance_squared(player_position, drone_position) > (player_radius + drone_collider.radius) ** 2) continue;
-      destroyed_drones.add(drone.entity);
-      player_health.value -= 1;
-      if (player_health.value <= 0) {
-        status = "game-over";
-        move_input = { x: 0, y: 0 };
-        last_event = "The core was breached";
-      }
-    }
-
-    for (const entity of destroyed_bullets) world.destroy(entity);
-    for (const entity of destroyed_drones) world.destroy(entity);
-  };
-
-  const cleanup_system = (delta_seconds: number): void => {
-    world
-      .query()
-      .with(position, lifetime, projectile_marker)
-      .each(({ read, write, destroy }) => {
-        const current_position = read(position);
-        const remaining = write(lifetime);
-        remaining.remaining_seconds -= delta_seconds;
-        if (
-          remaining.remaining_seconds <= 0 ||
-          current_position.x < -projectile_radius ||
-          current_position.x > arena_width + projectile_radius ||
-          current_position.y < -projectile_radius ||
-          current_position.y > arena_height + projectile_radius
-        ) {
-          destroy();
-        }
-      });
   };
 
   const get_state = (): ArenaState => {
     const enemy_count = world.query().with(drone_marker).toArray().length;
     const projectile_count = world.query().with(projectile_marker).toArray().length;
     const entity_count = world.query().with(position).toArray().length;
-    const lives = player_entity === undefined || !world.has(player_entity) ? 0 : world.read(player_entity, health).value;
+    const lives = state.player_entity === undefined || !world.has(state.player_entity) ? 0 : world.read(state.player_entity, health).value;
     return {
-      status,
-      score,
-      wave: 1 + Math.floor(time_seconds / 10),
+      status: state.status,
+      score: state.score,
+      wave: 1 + Math.floor(state.time_seconds / 10),
       lives,
       enemy_count,
       projectile_count,
       entity_count,
-      time_seconds,
-      last_event,
+      time_seconds: state.time_seconds,
+      last_event: state.last_event,
       system_order,
     };
   };
@@ -328,17 +385,34 @@ export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsAre
     };
   };
 
+  const system_context: ArenaSystemContext = {
+    world,
+    state,
+    spawn_interval_seconds,
+    create_random_drone,
+    create_projectile,
+  };
+  const systems = {
+    input: system_factories.input(system_context),
+    spawn: system_factories.spawn(system_context),
+    fire: system_factories.fire(system_context),
+    steering: system_factories.steering(system_context),
+    movement: system_factories.movement(system_context),
+    combat: system_factories.combat(system_context),
+    cleanup: system_factories.cleanup(system_context),
+  };
+
   const update = (delta_seconds: number): void => {
-    if (status !== "playing") return;
+    if (state.status !== "playing") return;
     const safe_delta = clamp(delta_seconds, 0, 0.05);
-    time_seconds += safe_delta;
-    input_system();
-    spawn_system(safe_delta);
-    fire_system(safe_delta);
-    steering_system();
-    movement_system(safe_delta);
-    combat_system();
-    cleanup_system(safe_delta);
+    state.time_seconds += safe_delta;
+    systems.input.update(safe_delta);
+    systems.spawn.update(safe_delta);
+    systems.fire.update(safe_delta);
+    systems.steering.update(safe_delta);
+    systems.movement.update(safe_delta);
+    systems.combat.update(safe_delta);
+    systems.cleanup.update(safe_delta);
   };
 
   reset();
@@ -347,15 +421,15 @@ export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsAre
     get_state,
     get_render_state,
     set_move: (move) => {
-      move_input = normalize_move(move);
+      state.move_input = normalize_move(move);
     },
     fire: () => {
-      fire_requested = true;
+      state.fire_requested = true;
     },
     toggle_pause: () => {
-      if (status === "game-over") return false;
-      status = status === "paused" ? "playing" : "paused";
-      last_event = status === "paused" ? "Run paused" : "Run resumed";
+      if (state.status === "game-over") return false;
+      state.status = state.status === "paused" ? "playing" : "paused";
+      state.last_event = state.status === "paused" ? "Run paused" : "Run resumed";
       return true;
     },
     restart: reset,
