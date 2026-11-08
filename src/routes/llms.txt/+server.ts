@@ -66,7 +66,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 
 ## Table of contents
 
-- [Install](#install)
+- [Getting started](#getting-started)
 - [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
@@ -88,7 +88,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Verification](#verification)
 - [Repository map](#repository-map)
 
-## Install
+## Getting started
 
 Squander requires Node.js 22.17 or newer for development. Install the package
 and Svelte when using the optional adapter:
@@ -100,6 +100,49 @@ npm install squander@^8 svelte@^5
 The core package has no Svelte dependency. Import from the package root for the
 usual API, from \`squander/core\` for the core API, or from
 \`squander/core/runtime\` for lower-level runtime types.
+
+For a first browser game, render a canvas and create the game from client-only
+code after the canvas exists:
+
+\`\`\`html
+<canvas id="game" width="800" height="450"></canvas>
+\`\`\`
+
+\`\`\`ts
+import { create_game } from "squander";
+
+const canvas = document.querySelector<HTMLCanvasElement>("#game");
+if (canvas === null) throw new Error("Missing #game canvas");
+
+const scheduler = {
+  request_frame: (callback: () => void) => requestAnimationFrame(callback),
+  cancel_frame: (handle: unknown) => {
+    if (typeof handle === "number") cancelAnimationFrame(handle);
+  },
+  now_seconds: () => performance.now() / 1000,
+};
+
+const game = create_game({
+  renderer: { canvas, width: 800, height: 450 },
+  scheduler,
+  update: ({ delta_seconds }) => {
+    // Advance gameplay state here.
+    void delta_seconds;
+  },
+  draw: () => {
+    // Submit drawing commands here.
+  },
+});
+
+await game.ready;
+const dispose_game = (): Promise<void> => game.dispose();
+\`\`\`
+
+WebGPU requires a secure context, such as localhost during development or
+HTTPS in production. In SvelteKit, create the game in \`onMount\` and dispose it
+from the returned cleanup function; do not create a WebGPU game during
+server-side rendering. Continue with the [game lifecycle guide](/docs/core/game-lifecycle)
+and [playground](/docs/examples/playground) for rendered examples.
 
 ## Use Squander in a SvelteKit project
 

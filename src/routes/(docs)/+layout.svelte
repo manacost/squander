@@ -8,7 +8,10 @@
   let page_path = $derived(page.url.pathname);
   let expanded_sections = $state<Record<string, boolean>>({});
 
-  const links = [["about", resolve("/(docs)")]] satisfies readonly (readonly [string, string])[];
+  const links = [
+    ["about", resolve("/(docs)")],
+    ["getting started", resolve("docs/getting-started")],
+  ] satisfies readonly (readonly [string, string])[];
 
   const documentation = [
     {
