@@ -179,16 +179,25 @@ game loop. Define object-shaped component tokens in a local schema and create
 as many worlds as the application needs:
 
 \`\`\`ts
+// Import the world factory and component definition helper.
 import { create_world, define_component } from "squander";
 
+// Describe the data stored by each position component.
 type Position = { x: number; y: number };
+// Create a typed token that identifies the position component.
 const position = define_component<Position>({ name: "position" });
+// Create a world whose local schema contains the position token.
 const world = create_world({ position });
+// Allocate a cheap numeric entity ID.
 const entity = world.create();
+// Attach the initial position data to the entity.
 world.add(entity, position, { x: 0, y: 0 });
 
+// Require position before iterating matching entities.
 world.query().with(position).each(({ read, write }) => {
-  write(position).x += read(position).y;
+  // Read the current value, then write the updated x coordinate.
+  const { y } = read(position);
+  write(position).x += y;
 });
 \`\`\`
 

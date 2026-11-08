@@ -174,32 +174,40 @@ to a local world schema rather than ambient global declaration merging, and
 queries carry the type information they need.
 
 ```ts
+// Import the world factory and component definition helper.
 import { create_world, define_component } from "squander";
 
+// Describe the data stored by each position and velocity component.
 type Position = { x: number; y: number };
 type Velocity = { x: number; y: number };
 
+// Create typed tokens for the local world schema.
 const position = define_component<Position>({ name: "position" });
 const velocity = define_component<Velocity>({ name: "velocity" });
 
+// Create a world whose schema contains both tokens.
 const world = create_world({ position, velocity });
+// Allocate an entity, then attach its initial component values.
 const entity = world.create();
-
 world.add(entity, position, { x: 0, y: 0 });
 world.add(entity, velocity, { x: 1, y: 0 });
 
+// Require both components before iterating matching entities.
 world
   .query()
   .with(position, velocity)
   .each(({ read, write }) => {
+    // Read both values and write the updated position.
     const current = read(position);
     write(position).x += read(velocity).x;
     write(position).y = current.y + read(velocity).y;
   });
 
+// Add a second component to the same local schema.
 type Damage = { value: number };
 const damage = define_component<Damage>({ name: "damage" });
 
+// Query only entities that have damage, then clamp its value through write().
 world
   .query()
   .with(damage)
@@ -208,9 +216,11 @@ world
     write(damage).value = Math.max(0, damage_value);
   });
 
+// Export and import the complete world at the world boundary.
 const snapshot = world.export();
 world.import(snapshot);
 
+// Choose live match views or detached copies for inspection.
 const live_matches = world.query().with(position).toArray();
 const copied_matches = world.query().with(position).toSnapshots();
 
