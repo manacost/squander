@@ -21,6 +21,7 @@
       target: "/(docs)/docs/core",
       children: [
         { label: "text", href: resolve("/(docs)/docs/examples/text") },
+        { label: "textures", href: resolve("/(docs)/docs/examples/textures") },
         { label: "input routing", href: resolve("/(docs)/docs/examples/input") },
         ...core_guides.map((guide) => ({ label: guide.label, href: resolve("/(docs)/docs/core/[guide]", { guide: guide.slug }) })),
       ],
