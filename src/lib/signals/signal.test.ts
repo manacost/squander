@@ -9,6 +9,7 @@ describe("create_signal", () => {
 
     signal.emit(1);
     unsubscribe();
+    signal.unsubscribe();
     signal.emit(2);
 
     expect(listener).toHaveBeenCalledOnce();

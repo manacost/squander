@@ -25,6 +25,7 @@ describe("create_event_dispatcher", () => {
     const once = vi.fn();
     const score = vi.fn();
     const reset = vi.fn();
+    dispatcher.off("reset", vi.fn());
     dispatcher.once("score", once);
     dispatcher.on("score", score);
     dispatcher.on("reset", reset);
