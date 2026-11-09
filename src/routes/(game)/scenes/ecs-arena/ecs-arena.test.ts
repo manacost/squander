@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { create_random } from "../../../../lib/core/index.js";
 import { arena_height, arena_width, create_ecs_arena_game } from "./ecs-arena.js";
 
 const advance = (game: ReturnType<typeof create_ecs_arena_game>, seconds: number): void => {
@@ -68,6 +69,18 @@ describe("ecs arena model", () => {
     advance(game, 0.25);
 
     expect(game.get_state()).toMatchObject({ enemy_count: 1, entity_count: 2, last_event: "A drone entered the arena" });
+  });
+
+  it("reproduces seeded drone placement", () => {
+    const create_seeded_game = () =>
+      create_ecs_arena_game({ random: create_random({ seed: "arena-replay" }), initial_enemies: [], enemy_spawn_interval_seconds: 0.2 });
+
+    const first = create_seeded_game();
+    const second = create_seeded_game();
+    advance(first, 0.25);
+    advance(second, 0.25);
+
+    expect(second.get_render_state()).toEqual(first.get_render_state());
   });
 
   it("destroys a drone with a projectile and increments the score", () => {

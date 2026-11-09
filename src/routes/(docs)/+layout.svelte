@@ -40,7 +40,10 @@
       label: "utilities",
       href: resolve("/(docs)/docs/utilities"),
       target: "/(docs)/docs/utilities",
-      children: [{ label: "signals and events", href: resolve("/(docs)/docs/utilities") }],
+      children: [
+        { label: "signals and events", href: resolve("/(docs)/docs/utilities") },
+        { label: "random", href: resolve("/(docs)/docs/utilities/random") },
+      ],
     },
     {
       label: "demos",

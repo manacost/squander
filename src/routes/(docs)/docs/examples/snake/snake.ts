@@ -1,4 +1,4 @@
-import { hsl, type Color } from "../../../../../lib/core/index.js";
+import { create_random, hsl, type Color, type RandomSource } from "../../../../../lib/core/index.js";
 
 export const grid_size = 50;
 export const initial_move_interval_ms = 120;
@@ -24,7 +24,7 @@ export type SnakeState = Readonly<{
 }>;
 
 export type SnakeGameOptions = Readonly<{
-  random?: () => number;
+  random?: RandomSource | (() => number);
   initial_snake?: readonly GridPoint[];
   initial_direction?: Direction;
   initial_fruit?: GridPoint;
@@ -51,6 +51,9 @@ type MutableState = {
   move_interval_ms: number;
   game_over_reason: GameOverReason | undefined;
 };
+
+type RandomInput = RandomSource | (() => number);
+type RandomAccess = Pick<RandomSource, "next_float" | "next_int">;
 
 const default_snake: readonly GridPoint[] = [
   { x: 25, y: 25 },
@@ -82,13 +85,21 @@ const is_opposite = (first: Direction, second: Direction): boolean => {
   );
 };
 
-const normalized_random = (random: () => number): number => {
-  const value = random();
+const normalized_random = (random: RandomInput): number => {
+  const value = typeof random === "function" ? random() : random.next_float();
   if (!Number.isFinite(value)) return 0;
   return Math.min(0.999999999, Math.max(0, value));
 };
 
-const find_free_cell = (snake: readonly GridPoint[], random: () => number): GridPoint | undefined => {
+const random_access = (random: RandomInput): RandomAccess => {
+  if (typeof random !== "function") return random;
+  return {
+    next_float: () => normalized_random(random),
+    next_int: (min_inclusive, max_exclusive) => min_inclusive + Math.floor(normalized_random(random) * (max_exclusive - min_inclusive)),
+  };
+};
+
+const find_free_cell = (snake: readonly GridPoint[], random: RandomAccess): GridPoint | undefined => {
   const free_cells: GridPoint[] = [];
   for (let y = 0; y < grid_size; y += 1) {
     for (let x = 0; x < grid_size; x += 1) {
@@ -96,16 +107,16 @@ const find_free_cell = (snake: readonly GridPoint[], random: () => number): Grid
     }
   }
   if (free_cells.length === 0) return undefined;
-  return free_cells[Math.floor(normalized_random(random) * free_cells.length)];
+  return free_cells[random.next_int(0, free_cells.length)];
 };
 
 export const color_luminance = (color: Color): number => 0.2126 * color.red + 0.7152 * color.green + 0.0722 * color.blue;
 
 export const is_readable_fruit_color = (color: Color): boolean => color_luminance(color) >= min_fruit_luminance;
 
-const create_fruit_color = (random: () => number): Color => {
+const create_fruit_color = (random: RandomAccess): Color => {
   for (let attempt = 0; attempt < 8; attempt += 1) {
-    const color = hsl(normalized_random(random) * 360, 0.78, 0.66);
+    const color = hsl(random.next_float() * 360, 0.78, 0.66);
     if (is_readable_fruit_color(color)) return color;
   }
   return hsl(48, 0.8, 0.68);
@@ -128,7 +139,7 @@ const copy_state = (state: MutableState): SnakeState =>
   });
 
 export const create_snake_game = (options: SnakeGameOptions = {}): SnakeGame => {
-  const random = options.random ?? Math.random;
+  const random = random_access(options.random ?? create_random());
   const initial_snake = options.initial_snake === undefined || options.initial_snake.length === 0 ? default_snake : options.initial_snake;
   const initial_direction = options.initial_direction ?? "right";
   let elapsed_since_move_seconds = 0;
