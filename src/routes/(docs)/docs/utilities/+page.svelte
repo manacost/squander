@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import { create_event_dispatcher, create_signal } from "../../../../lib/signals/index.js";
   import CodeBlock from "../../../../lib/docs/CodeBlock.svelte";
 
@@ -85,6 +86,12 @@
       A signal represents one stream of values. An event dispatcher maps event names to their payload types. Both let callers subscribe with
       a callback and receive an unsubscriber, without depending on the DOM or a game runtime.
     </p>
+  </section>
+
+  <section class="related-guide" aria-labelledby="random-guide-title">
+    <h2 id="random-guide-title">Random</h2>
+    <p>Use seeded streams for rolls, choices, shuffles, procedural content, and replayable game runs.</p>
+    <a href={resolve("/(docs)/docs/utilities/random")}>Open the random examples</a>
   </section>
 
   <section class="live-example" aria-labelledby="utilities-example-title">
@@ -222,6 +229,23 @@ game_events.emit("game_reset");`}
     margin: 2rem 0;
     padding: 1.25rem 0;
     border-block: 1px solid #39435b;
+  }
+  .related-guide {
+    margin: 2rem 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid #39435b;
+  }
+  .related-guide h2 {
+    margin: 0 0 0.5rem;
+  }
+  .related-guide p {
+    margin: 0;
+  }
+  .related-guide a {
+    display: inline-block;
+    margin-top: 0.75rem;
+    color: #85e8ff;
+    text-underline-offset: 0.2em;
   }
   .utility-grid {
     display: grid;

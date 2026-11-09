@@ -71,7 +71,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
-- [Randomization and seeds](#randomization-and-seeds)
+- [Random](#random)
 - [Signals and event dispatch](#signals-and-event-dispatch)
 - [Entity-component system](#entity-component-system)
 - [Game lifecycle and timing](#game-lifecycle-and-timing)
@@ -501,7 +501,7 @@ Drawing inside a camera scope uses world space; drawing outside it uses screen
 space. Camera scope restoration is synchronous, including when a callback
 throws. Automatic culling and cursor-anchored zoom are deferred.
 
-## Randomization and seeds
+## Random
 
 Use the random module to separate fresh browser entropy from deterministic
 gameplay randomness. \`create_random()\` uses \`crypto.getRandomValues()\` to
@@ -525,7 +525,7 @@ new array without mutating its input. \`fork(label)\` creates a stable stream
 for a subsystem, and \`snapshot()\` preserves the full stream state and
 algorithm identity.
 
-The module is for gameplay, procedural generation, tests, and replay support.
+The focused examples live at \`/docs/utilities/random\`. The module is for gameplay, procedural generation, tests, and replay support.
 It is not a cryptographic API, anti-cheat mechanism, or secure token generator.
 The current source is CPU-side; WGSL shaders need explicit seed or state
 buffers for GPU randomness.

@@ -27,7 +27,6 @@
         { label: "text", href: resolve("/(docs)/docs/examples/text") },
         { label: "textures", href: resolve("/(docs)/docs/examples/textures") },
         { label: "input routing", href: resolve("/(docs)/docs/examples/input") },
-        { label: "randomization", href: resolve("/(docs)/docs/core/randomization") },
         ...core_guides.map((guide) => ({ label: guide.label, href: resolve("/(docs)/docs/core/[guide]", { guide: guide.slug }) })),
       ],
     },
@@ -41,7 +40,10 @@
       label: "utilities",
       href: resolve("/(docs)/docs/utilities"),
       target: "/(docs)/docs/utilities",
-      children: [{ label: "signals and events", href: resolve("/(docs)/docs/utilities") }],
+      children: [
+        { label: "signals and events", href: resolve("/(docs)/docs/utilities") },
+        { label: "random", href: resolve("/(docs)/docs/utilities/random") },
+      ],
     },
     {
       label: "demos",
