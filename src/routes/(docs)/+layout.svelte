@@ -2,11 +2,15 @@
   import { afterNavigate } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { page } from "$app/state";
+  import { onMount } from "svelte";
+  import { fade, slide } from "svelte/transition";
   import { core_guides } from "../../lib/docs/core-guides.js";
   import type { LayoutData } from "./$types.js";
 
   let page_path = $derived(page.url.pathname);
   let expanded_sections = $state<Record<string, boolean>>({});
+  let reduce_motion = $state(false);
+  const page_transition_durations = $derived({ enter: reduce_motion ? 0 : 180, exit: reduce_motion ? 0 : 90 });
 
   const links = [
     ["about", resolve("/(docs)")],
@@ -68,6 +72,18 @@
 
   let { data, children }: Props = $props();
 
+  onMount(() => {
+    const media_query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync_motion_preference = (): void => {
+      reduce_motion = media_query.matches;
+    };
+    sync_motion_preference();
+    media_query.addEventListener("change", sync_motion_preference);
+    return () => {
+      media_query.removeEventListener("change", sync_motion_preference);
+    };
+  });
+
   afterNavigate(() => {
     document.querySelector("#top")?.scrollIntoView({
       behavior: "smooth",
@@ -126,8 +142,16 @@
     </div>
   </header>
   <main class="page">
-    <a class="invisible" id="top">top</a>
-    {@render children?.()}
+    {#key page_path}
+      <div
+        class="page-transition"
+        in:fade={{ duration: page_transition_durations.enter }}
+        out:fade={{ duration: page_transition_durations.exit }}
+      >
+        <a class="invisible" id="top">top</a>
+        {@render children?.()}
+      </div>
+    {/key}
   </main>
 </div>
 
