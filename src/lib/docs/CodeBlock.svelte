@@ -98,6 +98,7 @@
   }
 
   .copied .copy-button {
+    animation: copy-confirmed 260ms cubic-bezier(0.16, 1, 0.3, 1);
     background: #2b4b31;
     color: #d8f39b;
   }
@@ -112,9 +113,29 @@
     background: transparent;
   }
 
+  @keyframes copy-confirmed {
+    0% {
+      transform: translateY(1px);
+      background: #39435b;
+      color: #fff;
+    }
+    60% {
+      transform: translateY(0);
+      background: #2b4b31;
+      color: #d8f39b;
+    }
+    100% {
+      transform: translateY(0);
+      background: #2b4b31;
+      color: #d8f39b;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .copy-button {
+    .copy-button,
+    .copied .copy-button {
       transition: none;
+      animation: none;
     }
   }
 </style>
