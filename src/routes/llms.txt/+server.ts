@@ -399,7 +399,7 @@ explicit handles: release them when the owner no longer needs them. Accepted
 draws retain a safe lease until the renderer can release the underlying resource.
 
 \`\`\`ts
-const response = await fetch(asset("textures/player-ship.png"), { signal });
+const response = await fetch(asset("textures/player.png"), { signal });
 if (!response.ok) throw new Error(\`texture request failed: \${response.status}\`);
 const hero = await assets.load_texture(await response.blob(), { filter: "nearest", signal });
 renderer.draw_texture(hero.read(), { x: 400, y: 225, width: 64, height: 64 });
