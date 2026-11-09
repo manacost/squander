@@ -147,7 +147,7 @@
     publish_state = publish;
     canvas.tabIndex = 0;
     canvas.setAttribute("aria-label", "Snake game board");
-    const snake = create_snake_game({ random: Math.random });
+    const snake = create_snake_game();
     active_snake = snake;
     const game = create_game({
       renderer: { canvas, width: board_size, height: board_size },

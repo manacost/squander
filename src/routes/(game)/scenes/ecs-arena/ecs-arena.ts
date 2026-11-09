@@ -1,4 +1,4 @@
-import { create_world, define_component, type Entity, type World } from "../../../../lib/core/index.js";
+import { create_random, create_world, define_component, type Entity, type RandomSource, type World } from "../../../../lib/core/index.js";
 
 export const arena_width = 800;
 export const arena_height = 500;
@@ -27,7 +27,7 @@ export type ArenaRenderState = Readonly<{
 }>;
 
 export type EcsArenaGameOptions = Readonly<{
-  random?: () => number;
+  random?: RandomSource | (() => number);
   initial_enemies?: readonly ArenaPoint[];
   enemy_spawn_interval_seconds?: number;
 }>;
@@ -91,13 +91,23 @@ const drone_radius = 14;
 const projectile_radius = 5;
 const projectile_lifetime_seconds = 1.8;
 const default_spawn_interval_seconds = 1.25;
+type RandomInput = RandomSource | (() => number);
+type RandomAccess = Pick<RandomSource, "next_float" | "next_int">;
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.min(maximum, Math.max(minimum, value));
 
-const normalized_random = (random: () => number): number => {
-  const value = random();
+const normalized_random = (random: RandomInput | RandomAccess): number => {
+  const value = typeof random === "function" ? random() : random.next_float();
   if (!Number.isFinite(value)) return 0;
   return Math.min(0.999999999, Math.max(0, value));
+};
+
+const random_access = (random: RandomInput): RandomAccess => {
+  if (typeof random !== "function") return random;
+  return {
+    next_float: () => normalized_random(random),
+    next_int: (min_inclusive, max_exclusive) => min_inclusive + Math.floor(normalized_random(random) * (max_exclusive - min_inclusive)),
+  };
 };
 
 const resolve_spawn_interval = (interval: number | undefined): number => {
@@ -279,7 +289,7 @@ const system_factories = {
 } satisfies Record<string, ArenaSystemFactory>;
 
 export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsArenaGame => {
-  const random = options.random ?? Math.random;
+  const random = random_access(options.random ?? create_random());
   const spawn_interval_seconds = resolve_spawn_interval(options.enemy_spawn_interval_seconds);
   const world = create_world(arena_schema);
   const state: ArenaRuntimeState = {
@@ -317,7 +327,7 @@ export const create_ecs_arena_game = (options: EcsArenaGameOptions = {}): EcsAre
   };
 
   const create_random_drone = (): void => {
-    const edge = Math.floor(normalized_random(random) * 4);
+    const edge = random.next_int(0, 4);
     const along = normalized_random(random);
     if (edge === 0) create_drone({ x: along * arena_width, y: drone_radius });
     else if (edge === 1) create_drone({ x: arena_width - drone_radius, y: along * arena_height });

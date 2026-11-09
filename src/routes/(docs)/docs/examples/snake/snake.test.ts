@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { create_random } from "../../../../../lib/core/index.js";
 import {
   grid_size,
   initial_move_interval_ms,
@@ -38,6 +39,12 @@ describe("snake simulation", () => {
     expect(state.fruit).not.toBeNull();
     expect(state.snake).not.toContainEqual(state.fruit);
     expect(state.move_interval_ms).toBe(initial_move_interval_ms);
+  });
+
+  it("reproduces the initial fruit and color from a seed", () => {
+    const create_seeded_game = () => create_snake_game({ random: create_random({ seed: "snake-replay" }) });
+
+    expect(create_seeded_game().get_state()).toEqual(create_seeded_game().get_state());
   });
 
   it("starts and moves on fixed simulation ticks", () => {
