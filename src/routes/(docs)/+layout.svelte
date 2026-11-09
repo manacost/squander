@@ -32,6 +32,12 @@
       children: [{ label: "worlds and queries", href: resolve("/(docs)/docs/ecs") }],
     },
     {
+      label: "utilities",
+      href: resolve("/(docs)/docs/utilities"),
+      target: "/(docs)/docs/utilities",
+      children: [{ label: "signals and events", href: resolve("/(docs)/docs/utilities") }],
+    },
+    {
       label: "demos",
       href: resolve("/(docs)/docs/examples/playground"),
       target: "/(docs)/docs/examples/playground",
