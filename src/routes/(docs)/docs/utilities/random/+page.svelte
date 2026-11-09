@@ -5,7 +5,7 @@
   const loot_table: readonly string[] = ["potion", "map", "key", "scroll", "gem"];
   const party: readonly string[] = ["scout", "mage", "tank", "healer"];
 
-  let seed = $state("level-42");
+  let seed = $state("gregg rulz ok");
   let dice_rolls = $state<readonly number[]>([]);
   let loot = $state("—");
   let shuffled_party = $state<readonly string[]>([]);
@@ -154,7 +154,7 @@ const restored = create_random({ state: checkpoint });`}
   }
   .seed-controls {
     display: flex;
-    align-items: end;
+    align-items: center;
     gap: 0.75rem;
     margin-top: 1.25rem;
   }
