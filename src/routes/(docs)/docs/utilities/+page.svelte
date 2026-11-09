@@ -3,47 +3,68 @@
   import CodeBlock from "../../../../lib/docs/CodeBlock.svelte";
 
   type GameEvents = {
-    score: { points: number };
-    reset: undefined;
+    player_scored: { points: number };
+    level_started: { level: number };
+    game_reset: undefined;
   };
 
-  const score_signal = create_signal<number>();
+  const score_changed = create_signal<number>();
   const game_events = create_event_dispatcher<GameEvents>();
-  let signal_values = $state<readonly number[]>([]);
+  let score = $state(0);
+  let score_history = $state<readonly number[]>([]);
   let event_log = $state<readonly string[]>([]);
-  let signal_listener_active = $state(true);
+  let score_listener_active = $state(true);
   let event_listeners_active = $state(true);
 
-  const stop_signal = score_signal.subscribe((score) => {
-    signal_values = [...signal_values, score];
+  const stop_score_listener = score_changed.subscribe((next_score) => {
+    score = next_score;
+    score_history = [...score_history, next_score];
   });
-  const stop_score_event = game_events.on("score", ({ points }) => {
-    event_log = [...event_log, `score +${String(points)}`];
+  score_changed.emit(0);
+  game_events.on("player_scored", ({ points }) => {
+    event_log = [...event_log, `player_scored: +${String(points)}`];
   });
-  game_events.once("reset", () => {
-    event_log = [...event_log, "reset (once)"];
+  game_events.once("level_started", ({ level }) => {
+    event_log = [...event_log, `level_started: ${String(level)} (once)`];
+  });
+  game_events.on("game_reset", () => {
+    event_log = [...event_log, "game_reset"];
   });
 
-  function emit_signal(): void {
-    const current_score = signal_values.length === 0 ? 0 : signal_values[signal_values.length - 1];
-    score_signal.emit(current_score + 10);
+  function change_score(delta: number): void {
+    score_changed.emit(score + delta);
   }
 
-  function stop_signal_listener(): void {
-    stop_signal();
-    signal_listener_active = false;
+  function add_score(): void {
+    change_score(10);
   }
 
-  function emit_score_event(): void {
-    game_events.emit("score", { points: 10 });
+  function subtract_score(): void {
+    change_score(-10);
   }
 
-  function emit_reset_event(): void {
-    game_events.emit("reset");
+  function reset_score(): void {
+    score_changed.emit(0);
+  }
+
+  function disconnect_score_listener(): void {
+    stop_score_listener();
+    score_listener_active = false;
+  }
+
+  function player_scores(): void {
+    game_events.emit("player_scored", { points: 10 });
+  }
+
+  function start_level(): void {
+    game_events.emit("level_started", { level: 1 });
+  }
+
+  function reset_game(): void {
+    game_events.emit("game_reset");
   }
 
   function clear_event_listeners(): void {
-    stop_score_event();
     game_events.clear();
     event_listeners_active = false;
   }
@@ -68,25 +89,36 @@
 
   <section class="live-example" aria-labelledby="utilities-example-title">
     <p class="eyebrow">Live example</p>
-    <h2 id="utilities-example-title">Publish values and named events</h2>
-    <p>Emit a score through a signal, route a typed score event, or fire a reset listener that runs once.</p>
+    <h2 id="utilities-example-title">Connect game state to game events</h2>
+    <p>Change a score through a signal, then route gameplay messages through a typed event dispatcher.</p>
 
     <div class="utility-grid">
       <section class="utility-track" aria-labelledby="signal-track-title">
-        <h3 id="signal-track-title">Signal</h3>
-        <p>Values: <output data-testid="signal-values">{signal_values.length === 0 ? "none yet" : signal_values.join(", ")}</output></p>
-        <div class="controls">
-          <button type="button" onclick={emit_signal} disabled={!signal_listener_active}>Emit signal</button>
-          <button type="button" onclick={stop_signal_listener} disabled={!signal_listener_active}>Stop listener</button>
+        <h3 id="signal-track-title"><code>score_changed</code></h3>
+        <p>One value stream drives the score display.</p>
+        <div class="score-readout">
+          <span>Current score</span>
+          <strong data-testid="score-value">{String(score)}</strong>
         </div>
+        <p>Received: <output data-testid="score-history">{score_history.join(" → ")}</output></p>
+        <div class="controls">
+          <button type="button" onclick={add_score} disabled={!score_listener_active}>Add 10</button>
+          <button type="button" onclick={subtract_score} disabled={!score_listener_active}>Subtract 10</button>
+          <button type="button" onclick={reset_score} disabled={!score_listener_active}>Reset score</button>
+        </div>
+        <button class="secondary-action" type="button" onclick={disconnect_score_listener} disabled={!score_listener_active}
+          >Disconnect UI listener</button
+        >
       </section>
 
       <section class="utility-track" aria-labelledby="event-track-title">
         <h3 id="event-track-title">Event dispatcher</h3>
+        <p>Named gameplay messages can carry different payloads.</p>
         <p>Events: <output data-testid="event-log">{event_log.length === 0 ? "none yet" : event_log.join(" · ")}</output></p>
         <div class="controls">
-          <button type="button" onclick={emit_score_event} disabled={!event_listeners_active}>Emit score</button>
-          <button type="button" onclick={emit_reset_event} disabled={!event_listeners_active}>Emit reset once</button>
+          <button type="button" onclick={player_scores} disabled={!event_listeners_active}>Player scores +10</button>
+          <button type="button" onclick={start_level} disabled={!event_listeners_active}>Start level 1</button>
+          <button type="button" onclick={reset_game} disabled={!event_listeners_active}>Reset game</button>
           <button type="button" onclick={clear_event_listeners} disabled={!event_listeners_active}>Clear listeners</button>
         </div>
       </section>
@@ -113,13 +145,13 @@
     language="typescript"
     code={`import { create_signal } from "squander/signals";
 
-const health_changed = create_signal<number>();
-const stop_health_listener = health_changed.subscribe((health) => {
-  console.log(health);
+const score_changed = create_signal<number>();
+const stop_score_listener = score_changed.subscribe((score) => {
+  update_score_display(score);
 });
 
-health_changed.emit(100);
-stop_health_listener();`}
+score_changed.emit(100);
+stop_score_listener();`}
   />
 
   <h2>Minimum viable event dispatcher</h2>
@@ -128,14 +160,14 @@ stop_health_listener();`}
     code={`import { create_event_dispatcher } from "squander/signals";
 
 type GameEvents = {
-  score: { points: number };
-  reset: undefined;
+  player_scored: { points: number };
+  game_reset: undefined;
 };
 
 const game_events = create_event_dispatcher<GameEvents>();
-game_events.on("score", ({ points }) => console.log(points));
-game_events.emit("score", { points: 10 });
-game_events.emit("reset");`}
+game_events.on("player_scored", ({ points }) => add_score(points));
+game_events.emit("player_scored", { points: 10 });
+game_events.emit("game_reset");`}
   />
 
   <h2>Scope and limitations</h2>
@@ -208,6 +240,18 @@ game_events.emit("reset");`}
   .utility-track p {
     margin: 0;
   }
+  .score-readout {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  .score-readout strong {
+    color: white;
+    font-family: "Fira Mono", monospace;
+    font-size: 1.5rem;
+    font-weight: 400;
+  }
   output {
     display: block;
     min-height: 1.5rem;
@@ -233,6 +277,14 @@ game_events.emit("reset");`}
   button:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+  }
+  .secondary-action {
+    margin-top: 0.75rem;
+    padding: 0;
+    background: transparent;
+    color: #85e8ff;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
   @media screen and (max-width: 44rem) {
     .utility-grid {
