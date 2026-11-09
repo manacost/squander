@@ -16,13 +16,8 @@ test("loads the bundled texture through the asset cache and renders its pixels",
   await expect(page.getByTestId("texture-background")).toHaveText("0,170,170,255");
   await expect(page.getByTestId("texture-sample")).toHaveText("217,87,99,255");
 
-  const reduced_motion = await page.evaluate(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const initial_rotation = await page.getByTestId("texture-rotation").textContent();
   await page.waitForTimeout(250);
   const later_rotation = await page.getByTestId("texture-rotation").textContent();
-  if (reduced_motion) {
-    expect(later_rotation).toBe(initial_rotation);
-  } else {
-    expect(later_rotation).not.toBe(initial_rotation);
-  }
+  expect(later_rotation).not.toBe(initial_rotation);
 });

@@ -25,7 +25,7 @@
     rotation_degrees: 0,
   };
   const background_color = rgba(0, 170 / 255, 170 / 255, 1);
-  const reduced_motion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sprite_size = 64;
   let texture_handle: ResourceHandle<WebGpuTexture> | undefined;
   let publish_state: ((state: TextureState) => void) | undefined;
   let rotation_seconds = 0;
@@ -75,7 +75,7 @@
         publish_texture_state("ready");
       },
       update: ({ delta_seconds }) => {
-        if (!reduced_motion) rotation_seconds += delta_seconds;
+        rotation_seconds += delta_seconds;
         state_elapsed += delta_seconds;
         if (state_elapsed >= 0.1) {
           state_elapsed = 0;
@@ -93,7 +93,14 @@
               kind: "texture",
               draw: {
                 texture,
-                options: { x: 400, y: 225, width: 32, height: 32, origin: { x: 0.5, y: 0.5 }, rotation: rotation_seconds },
+                options: {
+                  x: 400,
+                  y: 225,
+                  width: sprite_size,
+                  height: sprite_size,
+                  origin: { x: 0.5, y: 0.5 },
+                  rotation: rotation_seconds,
+                },
               },
             },
           ])
@@ -125,7 +132,7 @@
   <h1>Texture loading</h1>
   <p>
     This example fetches a bundled PNG with a base-aware URL, decodes it through <code>createImageBitmap</code>, and uploads its pixels to
-    WebGPU through the game-owned asset cache. The sprite rotates around its center; browsers configured for reduced motion keep it still.
+    WebGPU through the game-owned asset cache. The sprite rotates around its center as part of the game loop.
   </p>
 
   <GameHost class="texture-demo-canvas" {initial_state} commands={{}} create={create_texture_game}>
@@ -162,6 +169,8 @@ const texture = await assets.load_texture(await response.blob(), {
 renderer.draw_texture(texture.read(), {
   x: player.x,
   y: player.y,
+  width: 64,
+  height: 64,
   origin: { x: 0.5, y: 0.5 },
   rotation: elapsed_seconds,
 });`}</code
