@@ -2,11 +2,15 @@
   import { afterNavigate } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { page } from "$app/state";
+  import { onMount } from "svelte";
+  import { fade, slide } from "svelte/transition";
   import { core_guides } from "../../lib/docs/core-guides.js";
   import type { LayoutData } from "./$types.js";
 
   let page_path = $derived(page.url.pathname);
   let expanded_sections = $state<Record<string, boolean>>({});
+  let reduce_motion = $state(false);
+  const page_transition_durations = $derived({ enter: reduce_motion ? 0 : 180, exit: reduce_motion ? 0 : 90 });
 
   const links = [
     ["about", resolve("/(docs)")],
@@ -57,8 +61,23 @@
     return `docs-section-${label.replaceAll(" ", "-")}`;
   }
 
+  function normalized_path(path: string): string {
+    return path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+  }
+
+  function href_matches_path(href: string, path: string): boolean {
+    return normalized_path(new URL(href, page.url.href).pathname) === normalized_path(path);
+  }
+
   function toggle_section(label: string): void {
     expanded_sections[label] = !expanded_sections[label];
+  }
+
+  function expand_active_section(path: string): void {
+    const active_section = documentation.find(
+      (doc) => href_matches_path(doc.href, path) || doc.children.some((child) => href_matches_path(child.href, path)),
+    );
+    if (active_section !== undefined) expanded_sections[active_section.label] = true;
   }
 
   type Props = {
@@ -68,7 +87,22 @@
 
   let { data, children }: Props = $props();
 
+  expand_active_section(page.url.pathname);
+
+  onMount(() => {
+    const media_query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync_motion_preference = (): void => {
+      reduce_motion = media_query.matches;
+    };
+    sync_motion_preference();
+    media_query.addEventListener("change", sync_motion_preference);
+    return () => {
+      media_query.removeEventListener("change", sync_motion_preference);
+    };
+  });
+
   afterNavigate(() => {
+    expand_active_section(page_path);
     document.querySelector("#top")?.scrollIntoView({
       behavior: "smooth",
     });
@@ -89,13 +123,13 @@
 
     <nav class="list">
       {#each links as [label, link] (link)}
-        <a class="link" class:active={link === page_path} href={link}>{label}</a>
+        <a class="link" class:active={href_matches_path(link, page_path)} href={link}>{label}</a>
       {/each}
 
       <h5 class="sep subtitle">Docs</h5>
       {#each documentation as doc (doc.href)}
         <div class="section-row">
-          <a class="link" class:active={doc.href === page_path} href={resolve(doc.target)}>{doc.label}</a>
+          <a class="link" class:active={href_matches_path(doc.href, page_path)} href={resolve(doc.target)}>{doc.label}</a>
           {#if doc.children}
             <button
               class="section-toggle"
@@ -112,9 +146,9 @@
           {/if}
         </div>
         {#if expanded_sections[doc.label]}
-          <div id={section_id(doc.label)} class="section-children">
+          <div id={section_id(doc.label)} class="section-children" transition:slide>
             {#each doc.children as child (child.href)}
-              <a class="link nested" class:active={child.href === page_path} href={child.href}>{child.label}</a>
+              <a class="link nested" class:active={href_matches_path(child.href, page_path)} href={child.href}>{child.label}</a>
             {/each}
           </div>
         {/if}
@@ -126,8 +160,16 @@
     </div>
   </header>
   <main class="page">
-    <a class="invisible" id="top">top</a>
-    {@render children?.()}
+    {#key page_path}
+      <div
+        class="page-transition"
+        in:fade={{ duration: page_transition_durations.enter }}
+        out:fade={{ duration: page_transition_durations.exit }}
+      >
+        <a class="invisible" id="top">top</a>
+        {@render children?.()}
+      </div>
+    {/key}
   </main>
 </div>
 
