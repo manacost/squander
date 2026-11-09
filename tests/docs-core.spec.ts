@@ -5,6 +5,8 @@ test("core documentation is present in the sidebar and links to focused guides",
   await expect(page.getByRole("link", { name: "v8.1.0" })).toBeVisible();
   await expect(page.getByRole("link", { name: "core" })).toHaveAttribute("href", "/docs/core");
   await expect(page.getByRole("link", { name: "demos" })).toHaveAttribute("href", "/docs/examples/playground");
+  await page.getByRole("button", { name: "Toggle core section" }).click();
+  await page.getByRole("button", { name: "Toggle demos section" }).click();
   const text_link = page.locator('a.nested[href="/docs/examples/text"]');
   await expect(text_link).toHaveAttribute("href", "/docs/examples/text");
   const input_link = page.locator('a.nested[href="/docs/examples/input"]');
@@ -103,6 +105,7 @@ test("the removed examples landing page is no longer published", async ({ reques
 
 test("Core exposes a focused guide for every remaining runtime area", async ({ page }) => {
   await page.goto("/docs/core");
+  await page.getByRole("button", { name: "Toggle core section" }).click();
   const slugs = [
     "asset-loading",
     "dynamic-assets",
@@ -161,6 +164,27 @@ test("ECS guide refreshes its reactive component view after a query update", asy
   await page.getByRole("button", { name: "Advance positions" }).click();
   await expect(entity_rows.first()).toContainText("(1, 0)");
   await expect(page.getByText("Advanced 1 position snapshots")).toBeVisible();
+});
+
+test("utilities guide explains typed signals and event dispatch", async ({ page }) => {
+  await page.goto("/docs/utilities");
+
+  await expect(page.getByRole("link", { name: "utilities" })).toHaveAttribute("href", "/docs/utilities");
+  await page.getByRole("button", { name: "Toggle utilities section" }).click();
+  await expect(page.locator('a.nested[href="/docs/utilities"]')).toHaveText("signals and events");
+  await expect(page.getByRole("heading", { level: 1, name: "Signals and event dispatch" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Add 10" }).click();
+  await expect(page.getByTestId("score-value")).toHaveText("10");
+  await page.getByRole("button", { name: "Subtract 10" }).click();
+  await expect(page.getByTestId("score-history")).toHaveText("0 → 10 → 0");
+  await page.getByRole("button", { name: "Player scores +10" }).click();
+  await expect(page.getByTestId("event-log")).toHaveText("player_scored: +10");
+  await page.getByRole("button", { name: "Start level 1" }).click();
+  await expect(page.getByTestId("event-log")).toHaveText("player_scored: +10 · level_started: 1 (once)");
+
+  await expect(page.locator("pre code").filter({ hasText: 'from "squander/signals"' })).toHaveCount(2);
+  await expect(page.locator("pre code span.token").first()).toBeVisible();
 });
 
 test("scene UI documentation explains stacked use cases with copyable samples", async ({ page }) => {

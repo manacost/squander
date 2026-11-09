@@ -71,6 +71,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
+- [Signals and event dispatch](#signals-and-event-dispatch)
 - [Entity-component system](#entity-component-system)
 - [Game lifecycle and timing](#game-lifecycle-and-timing)
 - [WebGPU renderer](#webgpu-renderer)
@@ -258,6 +259,35 @@ const game = create_game({
 
 await game.ready;
 \`\`\`
+
+## Signals and event dispatch
+
+Import the standalone reactive utilities from \`squander/signals\`. Signals
+carry one value type; event dispatchers map event names to payload types. Both
+return unsubscriber functions, support \`once\`, and use a stable listener
+snapshot so subscription changes take effect on the next emission.
+
+\`\`\`ts
+import { create_event_dispatcher, create_signal } from "squander/signals";
+
+const score_changed = create_signal<number>();
+const stop_score = score_changed.subscribe((score) => console.log(score));
+score_changed.emit(10);
+stop_score();
+
+type Events = {
+  score: { points: number };
+  reset: undefined;
+};
+
+const events = create_event_dispatcher<Events>();
+events.on("score", ({ points }) => console.log(points));
+events.emit("score", { points: 10 });
+events.emit("reset");
+\`\`\`
+
+These utilities are standalone and reusable. Game-scoped scene events add
+ownership, disposal, and runtime error routing through \`game.scenes.events\`.
 
 ## Entity-component system
 
