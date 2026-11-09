@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-29T00:00:00-07:00",
+  "generatedAt": "2026-11-08T17:04:08-08:00",
   "title": "Design System: Squander",
   "extensions": {
     "colorMeta": {
@@ -82,7 +82,7 @@
     ],
     "breakpoints": [
       { "name": "documentation-desktop", "value": "64rem" },
-      { "name": "proof-stack", "value": "40rem" }
+      { "name": "proof-stack", "value": "44rem" }
     ]
   },
   "components": [
@@ -164,13 +164,13 @@
       "Do let Geo headings, compact spacing, and dark instrument surfaces carry the identity.",
       "Do use the signal-red accent sparingly for navigation and meaningful emphasis.",
       "Do keep proof panels, code examples, and controls close to the content they explain.",
-      "Do preserve flat depth, thin structural borders, and quietly tactile radii.",
+      "Do preserve flat depth, thin structural rules, and square controls.",
       "Do keep technical surfaces readable at mobile widths through wrapping or scrolling."
     ],
     "donts": [
       "Don't use hacker clichés, terminal-wall decoration, or novelty code rain as visual identity.",
       "Don't add glows, neon halos, gradient backgrounds, or gradient text.",
-      "Don't turn every surface into a floating card with a shadow.",
+      "Don't turn every surface into a floating card, shadowed panel, or rounded well.",
       "Don't over-round controls into pills or make the documentation feel like a marketing landing page.",
       "Don't spend the accent color everywhere; its rarity is part of the system."
     ]
