@@ -55,7 +55,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.5rem 1rem;
+    padding: 0.35rem 1rem;
     border-bottom: 1px solid #39435b;
     background: #151923;
     color: #b9b5b8;
@@ -70,11 +70,14 @@
   }
 
   .copy-button {
-    padding: 0.3rem 0.5rem;
+    padding: 0.25rem 0.55rem;
     border: 1px solid #6076a8;
-    background: transparent;
-    color: #eef2fb;
+    border-radius: 0;
+    background: #39435b;
+    box-shadow: none;
+    color: #fff;
     font: inherit;
+    line-height: 1.1;
     letter-spacing: inherit;
     text-transform: inherit;
     cursor: pointer;
@@ -86,7 +89,7 @@
 
   .copy-button:hover {
     border-color: #eef2fb;
-    background: #39435b;
+    background: #4a5a7b;
   }
 
   .copy-button:active {
