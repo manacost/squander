@@ -146,7 +146,7 @@
           {/if}
         </div>
         {#if expanded_sections[doc.label]}
-          <div id={section_id(doc.label)} class="section-children">
+          <div id={section_id(doc.label)} class="section-children" transition:slide>
             {#each doc.children as child (child.href)}
               <a class="link nested" class:active={href_matches_path(child.href, page_path)} href={child.href}>{child.label}</a>
             {/each}
