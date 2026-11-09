@@ -71,6 +71,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Current goals](#current-goals)
 - [Use Squander in a SvelteKit project](#use-squander-in-a-sveltekit-project)
 - [Core concepts](#core-concepts)
+- [Randomization and seeds](#randomization-and-seeds)
 - [Signals and event dispatch](#signals-and-event-dispatch)
 - [Entity-component system](#entity-component-system)
 - [Game lifecycle and timing](#game-lifecycle-and-timing)
@@ -499,6 +500,35 @@ camera.draw(() => {
 Drawing inside a camera scope uses world space; drawing outside it uses screen
 space. Camera scope restoration is synchronous, including when a callback
 throws. Automatic culling and cursor-anchored zoom are deferred.
+
+## Randomization and seeds
+
+Use the random module to separate fresh browser entropy from deterministic
+gameplay randomness. \`create_random()\` uses \`crypto.getRandomValues()\` to
+create a fresh source when no seed is supplied. Passing a numeric or string
+seed creates the same sequence for procedural generation, tests, and replay.
+
+\`\`\`ts
+import { create_random } from "squander/core";
+
+const random = create_random({ seed: "level-42" });
+const spawn_x = random.next_int(0, 800);
+const loot = random.pick(["potion", "map", "key"]);
+const loot_random = random.fork("loot");
+const replay_state = loot_random.snapshot();
+\`\`\`
+
+\`next_float()\` returns \`[0, 1)\`. \`next_int(min_inclusive,
+max_exclusive)\` uses an exclusive upper bound and rejection sampling to avoid
+modulo bias. \`pick()\` rejects empty collections, and \`shuffle()\` returns a
+new array without mutating its input. \`fork(label)\` creates a stable stream
+for a subsystem, and \`snapshot()\` preserves the full stream state and
+algorithm identity.
+
+The module is for gameplay, procedural generation, tests, and replay support.
+It is not a cryptographic API, anti-cheat mechanism, or secure token generator.
+The current source is CPU-side; WGSL shaders need explicit seed or state
+buffers for GPU randomness.
 
 ## Input
 
