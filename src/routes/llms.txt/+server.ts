@@ -1,3 +1,5 @@
+import pkg from "../../../package.json" with { type: "json" };
+
 const llms_text = `# Squander
 
 Squander is a TypeScript-first browser-game toolkit. It provides a WebGPU
@@ -62,7 +64,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - GitHub: https://github.com/manacost/squander
 - npm: https://www.npmjs.com/package/squander
 - License: MIT
-- Current package version in this repository: 8.1.0
+- Current package version in this repository: ${pkg.version}
 
 ## Table of contents
 
