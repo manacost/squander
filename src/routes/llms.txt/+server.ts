@@ -391,13 +391,17 @@ public features.
 ## Assets and resources
 
 Load textures and fonts through the game-owned asset cache, or create dynamic
-textures from \`Blob\` and \`File\` values. Asset loading honors cancellation.
-Resources returned by asset and geometry APIs are explicit handles: release
-them when the owner no longer needs them. Accepted draws retain a safe lease
-until the renderer can release the underlying resource.
+textures from \`Blob\` and \`File\` values. For a bundled site asset, resolve its
+URL with SvelteKit's base-aware \`asset\` helper before fetching it; do not use a
+root-relative URL when the site can be deployed below the domain root. Asset
+loading honors cancellation. Resources returned by asset and geometry APIs are
+explicit handles: release them when the owner no longer needs them. Accepted
+draws retain a safe lease until the renderer can release the underlying resource.
 
 \`\`\`ts
-const hero = await assets.load_texture(hero_blob, { magnification: "nearest" });
+const response = await fetch(asset("textures/player-ship.png"), { signal });
+if (!response.ok) throw new Error(\`texture request failed: \${response.status}\`);
+const hero = await assets.load_texture(await response.blob(), { filter: "nearest", signal });
 renderer.draw_texture(hero.read(), { x: 400, y: 225, width: 64, height: 64 });
 hero.release();
 \`\`\`
