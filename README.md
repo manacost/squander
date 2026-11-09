@@ -59,6 +59,29 @@ returned by the game-owned asset and geometry APIs are explicit handles and
 must be released by their owner. Draw calls and pure value helpers do not need
 release.
 
+## Use signals and event dispatch
+
+Use `squander/signals` for standalone typed signals and event dispatchers:
+
+```ts
+import { create_event_dispatcher, create_signal } from "squander/signals";
+
+const score_changed = create_signal<number>();
+const stop_score = score_changed.subscribe((score) => console.log(score));
+score_changed.emit(10);
+stop_score();
+
+type Events = { score: { points: number }; reset: undefined };
+const events = create_event_dispatcher<Events>();
+events.on("score", ({ points }) => console.log(points));
+events.emit("score", { points: 10 });
+events.emit("reset");
+```
+
+Both utilities return unsubscriber functions, support one-time listeners, and
+use stable listener snapshots. Game-scoped scene events remain available from
+`game.scenes.events` with game ownership, disposal, and runtime error routing.
+
 ## Use the Svelte adapter
 
 The Svelte integration is opt-in:
@@ -102,6 +125,7 @@ screenshots are supplemental visual evidence.
 | Location                           | Purpose                                                                    |
 | ---------------------------------- | -------------------------------------------------------------------------- |
 | `src/lib/core/runtime/`            | Replacement lifecycle, assets, geometry, camera, text, and WebGPU runtime. |
+| `src/lib/signals/`                 | Standalone typed signals and event dispatchers.                            |
 | `src/lib/svelte/`                  | Optional Svelte 5 adapter and `GameHost` component.                        |
 | `src/routes/(docs)/docs/core/`     | Focused runtime guides and usage examples.                                 |
 | `src/routes/(docs)/docs/examples/` | Runnable composition and feature examples.                                 |

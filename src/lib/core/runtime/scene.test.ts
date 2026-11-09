@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { create_game, GameRuntimeError } from "./game.js";
 import { create_resource_owner } from "./resource_ownership.js";
 import { calculate_responsive_viewport } from "./viewport_sizing.js";
-import { create_signal } from "../signal.js";
+import { create_signal } from "../../signals/signal.js";
 import { create_scene_event_bus, type SceneEventBus } from "./scene.js";
 import type { InputEvent } from "./input.js";
 import type { WebGpuRenderer } from "./webgpu_renderer.js";

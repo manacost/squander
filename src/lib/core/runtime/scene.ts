@@ -2,7 +2,7 @@ import type { AssetCache, AssetManifest, AssetResource } from "./asset_loading.j
 import type { ResourceHandle } from "./resource_ownership.js";
 import type { UpdateTime } from "./timing.js";
 import type { WebGpuRenderer } from "./webgpu_renderer.js";
-import type { Signal } from "../signal.js";
+import type { Signal } from "../../signals/signal.js";
 import type { InputHandler, InputRouter, InputSceneHandle } from "./input.js";
 
 export type SceneEventMap = Record<string, unknown>;

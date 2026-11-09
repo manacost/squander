@@ -14,7 +14,8 @@ mutable singleton or a Svelte dependency.
 ## Requirements
 
 - Keep the bus owned by one game composition.
-- Preserve the existing `Signal<T>` and `EventDispatcher<EventMap>` APIs.
+- Provide standalone `Signal<T>` and `EventDispatcher<EventMap>` utilities from
+  the `squander/signals` package entrypoint.
 - Make listener errors observable through the parent game's error path.
 
 ## Scenarios
@@ -53,8 +54,9 @@ Disposing the game clears the bus and prevents later delivery.
 - Listener failures are reported through the game runtime error path and do not
   prevent later listeners from running.
 - `clear()` disposes the bus. Later emissions and subscriptions have no effect.
-- The existing `Signal<T>` and `EventDispatcher<EventMap>` utilities remain
-  available as independent lower-level primitives.
+- `Signal<T>` and `EventDispatcher<EventMap>` are available as independent
+  lower-level primitives from `squander/signals`. They are not game-scoped and
+  do not perform runtime error routing or disposal ownership.
 
 ## Traceability
 

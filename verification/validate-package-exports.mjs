@@ -9,6 +9,7 @@ const root = await import("squander");
 const core = await import("squander/core");
 const runtime = await import("squander/core/runtime");
 const ecs = await import("squander/ecs");
+const signals = await import("squander/signals");
 const svelte_adapter = await import("squander/svelte/adapter");
 
 assert.equal(typeof root.create_game, "function");
@@ -21,6 +22,8 @@ assert.equal(typeof runtime.create_path, "function");
 assert.equal(typeof runtime.create_geometry_owner, "function");
 assert.equal(typeof ecs.create_world, "function");
 assert.equal(typeof ecs.define_component, "function");
+assert.equal(typeof signals.create_signal, "function");
+assert.equal(typeof signals.create_event_dispatcher, "function");
 assert.equal(typeof svelte_adapter.create_game_adapter, "function");
 
-console.log("Validated package subpaths: squander/core, squander/core/runtime, squander/ecs, squander/svelte/adapter");
+console.log("Validated package subpaths: squander/core, squander/core/runtime, squander/ecs, squander/signals, squander/svelte/adapter");
