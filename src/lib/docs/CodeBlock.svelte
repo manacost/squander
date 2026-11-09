@@ -46,7 +46,6 @@
 <style>
   .code-block {
     margin: 0.5em 0;
-    border-block: 1px solid #39435b;
     background: #322931;
   }
 
@@ -56,7 +55,6 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.35rem 1rem;
-    border-bottom: 1px solid #39435b;
     background: #151923;
     color: #b9b5b8;
     font-family: "Fira Mono", Menlo, Monaco, "Lucida Console", "Courier New", Courier, monospace;
@@ -71,7 +69,7 @@
 
   .copy-button {
     padding: 0.25rem 0.55rem;
-    border: 1px solid #6076a8;
+    border: 0;
     border-radius: 0;
     background: #39435b;
     box-shadow: none;
@@ -83,12 +81,10 @@
     cursor: pointer;
     transition:
       background-color 120ms ease-out,
-      border-color 120ms ease-out,
       color 120ms ease-out;
   }
 
   .copy-button:hover {
-    border-color: #eef2fb;
     background: #4a5a7b;
   }
 
@@ -102,12 +98,12 @@
   }
 
   .copied .copy-button {
-    border-color: #8fc13e;
+    background: #2b4b31;
     color: #d8f39b;
   }
 
   .error .copy-button {
-    border-color: #dd464c;
+    background: #4d2128;
     color: #ffb4b6;
   }
 
