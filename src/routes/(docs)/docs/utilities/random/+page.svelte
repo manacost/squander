@@ -2,7 +2,7 @@
   import CodeBlock from "../../../../../lib/docs/CodeBlock.svelte";
   import { create_random } from "../../../../../lib/core/index.js";
 
-  const loot_table: readonly string[] = ["potion", "map", "key"];
+  const loot_table: readonly string[] = ["potion", "map", "key", "scroll", "gem"];
   const party: readonly string[] = ["scout", "mage", "tank", "healer"];
 
   let seed = $state("level-42");
@@ -48,7 +48,13 @@
       </div>
       <div>
         <span><code>pick()</code></span>
-        <output data-testid="random-loot">{loot}</output>
+        <ul class="choice-list" data-testid="random-loot-options" aria-label="Loot options">
+          {#each loot_table as option (option)}
+            <li class:chosen={option === loot} data-picked={option === loot ? "true" : "false"}>
+              <code>{option}</code>
+            </li>
+          {/each}
+        </ul>
       </div>
       <div>
         <span><code>shuffle()</code></span>
@@ -90,7 +96,7 @@ const target_index = random.next_int(0, targets.length);`}
   </p>
   <CodeBlock
     language="typescript"
-    code={`const item = random.pick(["potion", "map", "key"]);
+    code={`const item = random.pick(["potion", "map", "key", "scroll", "gem"]);
 const turn_order = random.shuffle(["scout", "mage", "tank"]);`}
   />
 
@@ -207,6 +213,29 @@ const restored = create_random({ state: checkpoint });`}
     color: white;
     font-family: "Fira Mono", monospace;
     overflow-wrap: anywhere;
+  }
+  .choice-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .choice-list li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #39435b;
+    color: #b9b5b8;
+    font-family: "Fira Mono", monospace;
+  }
+  .choice-list li.chosen {
+    border-color: var(--red-4);
+    background: #39435b;
+    color: white;
   }
   @media screen and (max-width: 44rem) {
     .seed-controls {
