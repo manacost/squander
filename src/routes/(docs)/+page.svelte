@@ -5,7 +5,7 @@
 <svelte:head><title>Squander · Build browser games with TypeScript</title></svelte:head>
 
 <article class="landing">
-  <h1>Build games with TypeScript — or worse, just squander your time</h1>
+  <h1>Squander your time building games</h1>
   <p class="lead">Squander is a code-first browser game toolkit for spending your time making games, not managing engine ceremony.</p>
 
   <section aria-labelledby="code-first-heading">
