@@ -10,12 +10,12 @@ Implemented. The typed font asset and WebGPU text path are
 implemented, with basic-Latin preparation, non-evicting atlas rebuilds capped
 at 4096×4096, and repeated prepared-glyph rendering verified in Chromium.
 
-The Phase 2 contract is implemented and verified below. Rich layout, shaping,
+The text-drawing contract is implemented and verified below. Rich layout, shaping,
 fallback, and arbitrary-script coverage remain deferred.
 
 ## Requirements
 
-- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are outside Phase 2 (AD-027).
+- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are not currently supported (AD-027).
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
@@ -79,14 +79,14 @@ and released-font behavior. The playground screenshot covers the bundled font's
 digits, common symbols, uppercase, and lowercase character sheet. Existing
 legacy tests are not claimed as coverage.
 
-The public type coverage is in [`type-tests/phase-2-runtime.ts`](../../type-tests/phase-2-runtime.ts).
+The public type coverage is in [`type-tests/runtime.ts`](../../type-tests/runtime.ts).
 
 Use `[text-drawing]` in relevant suite names and keep the bundled font license
 next to the fixture at [`static/fonts/OFL.txt`](../../static/fonts/OFL.txt).
 
 ## Notes
 
-AD-016 supersedes the initial supplied-bitmap-only plan. Phase 2 fixes a
+AD-016 supersedes the initial supplied-bitmap-only plan. The current contract fixes a
 non-evicting atlas with a 4096×4096 ceiling, configurable preparation, automatic
 addition of supported requested glyphs, and typed capacity failure. Rich layout,
 shaping, fallback, arbitrary-script coverage, and supplied-atlas import remain

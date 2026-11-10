@@ -40,7 +40,7 @@ test("[feature-documentation] composes runtime capabilities through GameHost", a
     clip: { x: canvas_box.x, y: canvas_box.y, width: canvas_box.width, height: canvas_box.height * 0.88 },
     animations: "disabled",
   });
-  expect(static_composition).toMatchSnapshot("phase-2-playground.png");
+  expect(static_composition).toMatchSnapshot("playground.png");
   await expect.poll(async () => Number(await page.getByTestId("playground-ticks").textContent())).toBeGreaterThan(0);
   await page.getByTestId("playground-pause").click();
   await expect(page.getByTestId("playground-status")).toHaveText("paused");

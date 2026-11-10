@@ -22,7 +22,7 @@ assets use the typed `resolve` and `asset` helpers. The migration follows the
 
 The original SvelteKit and tooling upgrade had separate packaging warnings,
 legacy lint debt, and sandbox server-bind failures. Those results are retained
-in the archived phase records and do not describe the current repository gate.
+in archived implementation records and do not describe the current repository gate.
 
 ## Current verification baseline
 

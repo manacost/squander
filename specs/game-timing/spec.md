@@ -23,7 +23,7 @@ Implemented.
 - Orchestrate fetching and explicit asset loading in setup/lifecycle hooks or commands/events, not update/draw. Automatic unseen-glyph preparation is a documented internal exception.
 - Explicit pause stops updating but continues drawing. Draw callbacks must not advance simulation state.
 - Hidden-document suspension stops updates and drawing. Reset the timing baseline on return and preserve explicit pause.
-- Fixed-step scheduling is a Phase 4 candidate; automatic draw skipping is not promised.
+- Fixed-step scheduling remains a future capability candidate; automatic draw skipping is not promised.
 
 ## Scenarios
 

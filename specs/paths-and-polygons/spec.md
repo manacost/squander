@@ -14,7 +14,7 @@ exports for path/polygon preparation are covered by type tests and a real GPU
 create/update/readback fixture. Persistent owned-geometry GPU buffer reuse and
 replacement are also verified.
 
-The Phase 2 contract is implemented and verified below. Filled curved paths,
+The path and polygon contract is implemented and verified below. Filled curved paths,
 holes, and fill rules remain deferred.
 
 ## Requirements
@@ -25,7 +25,7 @@ holes, and fill rules remain deferred.
 
 - Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
 
-- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are outside Phase 2 (AD-027).
+- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are not currently supported (AD-027).
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
@@ -33,14 +33,14 @@ holes, and fill rules remain deferred.
 - Validate polygon creation and updates: accept either winding, remove consecutive duplicate points and an optional repeated closing point from the snapshot, and reject nonfinite coordinates, self-intersections, fewer than three distinct vertices, or zero area (AD-036). Do not mutate caller input.
 - Construct polygons from ordered point arrays, connecting the last vertex to the first implicitly. No repeated endpoint or `close()` command is required (AD-035).
 - Snapshot polygon point values at creation and explicit updates. Return an opaque stable handle; invalid updates throw and preserve previous geometry, just as for paths. Polygon updates happen outside `draw`; the update verb remains open.
-- Center strokes on path centerlines and polygon boundaries, with half the width on each side (AD-029). Inside/outside alignment is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+- Center strokes on path centerlines and polygon boundaries, with half the width on each side (AD-029). Inside/outside alignment remains a [future capability candidate](../../specifications/phase-3-candidates.md).
 - Support stroke-only paths with straight segments, quadratic and cubic Bézier curves, and explicit closure.
 - Allow multiple disconnected subpaths per handle: `move_to` starts a new section without a connecting segment, and `close()` connects only the current section to its own start. Subpaths share the draw style and transforms (AD-034).
 - Create reusable geometry and draw it repeatedly with explicit transforms/styles. Rebuild when shape data changes.
 - Construct paths from declarative typed command arrays; snapshot their values at creation. The resulting handle is opaque, not an editable/indexable command array (AD-033).
 - Permit explicit path updates using revised commands, snapshotting and validating them before changing active geometry. Invalid updates throw and preserve the previous geometry; successful updates retain the handle identity.
 - Update path geometry outside `draw`; use per-draw transforms for ordinary placement changes. The update operation's name remains open.
-- Filled curved paths, holes, and fill rules are Phase 3 candidates.
+- Filled curved paths, holes, and fill rules remain future capability candidates.
 
 ## Scenarios
 
@@ -183,7 +183,7 @@ Use `[paths-and-polygons]` in relevant suite names and add actual file/suite lin
 
 ## Notes
 
-AD-015, AD-033 through AD-036, and AD-039. Phase 2 fixes `update` as the
+AD-015, AD-033 through AD-036, and AD-039. The current contract fixes `update` as the
 explicit update operation, flat caps, the fixed miter/bevel policy, and the
 documented validation rules. Command sequencing after closure, empty-subpath
 behavior, overlapping-edge policy, and advanced fill rules remain deferred.

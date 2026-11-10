@@ -22,8 +22,9 @@ Choose one lifecycle status and explain relevant limitations:
 - **Implemented:** acceptance criteria satisfied, with verification references.
 - **Deprecated:** still present, but discouraged or scheduled for removal.
 
-If applicable, record the target phase separately. Phase targeting is planning
-information, not evidence of implementation or acceptance.
+If applicable, record active planning metadata separately. Planning metadata is
+not evidence of implementation or acceptance; current behavior should be named
+by its capability.
 
 ## Requirements
 

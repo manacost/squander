@@ -1,8 +1,8 @@
 # Current framework state
 
-This is the default entry point for the current framework contract. Phase 2,
-Phase 3-a, and Phase 3-b are complete and their implemented capabilities are
-listed below. Historical plans and slice evidence are archived under
+This is the default entry point for the current framework contract. Implemented
+capabilities are listed below by the behavior they provide. Historical plans
+and slice evidence are archived under
 [`specifications/history/`](../specifications/history/README.md).
 
 ## Source of truth
@@ -13,7 +13,7 @@ listed below. Historical plans and slice evidence are archived under
   verification references.
 - [`phase-3-candidates.md`](../specifications/phase-3-candidates.md) and
   [`phase-4-candidates.md`](../specifications/phase-4-candidates.md) record
-  future work; candidates are not commitments.
+  active future-work candidates; candidates are not commitments.
 - [`specifications/history/`](../specifications/history/README.md) contains
   historical plans and evidence. Read it only when auditing a past slice.
 - `.codex/plans/` contains temporary execution state and should contain only
@@ -21,7 +21,7 @@ listed below. Historical plans and slice evidence are archived under
 
 ## Implemented capabilities
 
-### Phase 2: WebGPU foundation
+### Rendering and runtime
 
 - [asset-loading](asset-loading/spec.md)
 - [camera-2d](camera-2d/spec.md)
@@ -39,7 +39,7 @@ listed below. Historical plans and slice evidence are archived under
 - [viewport-sizing](viewport-sizing/spec.md)
 - [webgpu-runtime](webgpu-runtime/spec.md)
 
-### Phase 3: composition and input
+### Scenes and input
 
 - [scene-lifecycle](scene-lifecycle/spec.md)
 - [scene-assets](scene-assets/spec.md)
@@ -47,7 +47,7 @@ listed below. Historical plans and slice evidence are archived under
 - [scene-ui](scene-ui/spec.md)
 - [input-routing](input-routing/spec.md)
 
-### Phase 3 draft capabilities
+### Draft capabilities
 
 - [ecs-system](ecs-system/spec.md)
 
@@ -82,7 +82,7 @@ do not treat it as an accepted implementation until its evidence plan passes.
 ## Adding or changing a capability
 
 Copy [`spec_template.md`](spec_template.md) into a stable capability directory.
-Keep the lifecycle status separate from the target phase, link the relevant
+Keep lifecycle status separate from planning metadata, link the relevant
 architecture decisions, and add matching bracketed capability tags to focused
 test suites. Use the [implementation readiness guidance](../specifications/implementation-readiness.md)
 before implementation and run `npm run validate:specs` after contract changes.

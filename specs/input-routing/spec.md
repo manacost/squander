@@ -8,7 +8,9 @@ behavior explicit.
 
 ## Status
 
-Implemented. Target phase: Phase 3-b.
+Implemented.
+
+This is the browser input-routing capability.
 
 ## Requirements
 

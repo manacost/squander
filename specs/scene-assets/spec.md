@@ -2,8 +2,8 @@
 
 ## Status
 
-Implemented. Target phase: Phase 3-a, Slice 2. Required and lazy scene asset
-ownership, shared lifetime, retry, cancellation, and trusted-origin image
+Implemented. Required and lazy scene asset ownership, shared lifetime, retry,
+cancellation, and trusted-origin image
 upload/draw evidence are verified.
 
 ## Goal

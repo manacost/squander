@@ -2,13 +2,13 @@
 
 ## Goal
 
-Make every Phase 2 feature independently learnable and verifiable, then demonstrate composition.
+Make every supported feature independently learnable and verifiable, then demonstrate composition.
 
 ## Status
 
 Implemented.
 
-The Phase 2 documentation contract is implemented and verified through the guide
+The documentation contract is implemented and verified through the guide
 inventory, focused examples, composition playground, type tests, coverage gate,
 and real WebGPU browser suites.
 
@@ -34,7 +34,7 @@ The playground combines geometry, sprites, labels, camera/viewport behavior, ass
 ## Acceptance criteria
 
 - Audit the resource-returning create/load API inventory for ownership/release documentation and examples that show cleanup; identify any missing lifecycle guidance.
-- Inventory every Phase 2 feature against a documentation entry, focused runnable demo, and relevant automated verification; identify missing entries explicitly.
+- Inventory every supported feature against a documentation entry, focused runnable demo, and relevant automated verification; identify missing entries explicitly.
 - Verify documentation routes and demo controls work in browser tests.
 - Exercise the combined playground’s loading, interaction, pause, disposal/recreation, and handled failure flows.
 - Report statements, branches, functions, and lines each greater than 90% for framework runtime code, including renderer CPU logic and Svelte integration, excluding demos/generated/type-only files.

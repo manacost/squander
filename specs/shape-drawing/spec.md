@@ -8,8 +8,8 @@ Draw basic geometric forms without requiring image assets.
 
 Implemented.
 
-The Phase 2 shape contract is implemented and verified through CPU, public type,
-and real WebGPU fixtures.
+The shape contract is implemented and verified through CPU, public type, and
+real WebGPU fixtures.
 
 ## Requirements
 
@@ -19,7 +19,7 @@ and real WebGPU fixtures.
 
 - Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
 
-- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are outside Phase 2 (AD-027).
+- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are not currently supported (AD-027).
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 

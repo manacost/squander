@@ -208,7 +208,7 @@
   create={create_playground}
 >
   {#snippet children(view: GameAdapterView<PlaygroundState, typeof commands>)}
-    <section data-testid="phase-2-playground">
+    <section data-testid="playground">
       <p>status: <output data-testid="playground-status">{view.state.status}</output></p>
       <p>generation: <output data-testid="playground-generation">{view.state.generation}</output></p>
       <p>ticks: <output data-testid="playground-ticks">{view.state.ticks}</output></p>

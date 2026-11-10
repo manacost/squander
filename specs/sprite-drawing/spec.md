@@ -8,12 +8,12 @@ Draw composable textured sprites in predictable order with explicit placement an
 
 Implemented.
 
-The Phase 2 sprite contract is implemented and verified through CPU, public type,
-and real WebGPU fixtures.
+The sprite contract is implemented and verified through CPU, public type, and
+real WebGPU fixtures.
 
 ## Requirements
 
-- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are outside Phase 2 (AD-027).
+- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are not currently supported (AD-027).
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
@@ -94,7 +94,7 @@ consumes the shared type internally.
 ## Notes
 
 AD-008, AD-014, AD-022, and AD-023. Additional blend modes and implicit batching
-policy remain outside Phase 2.
+policy remain outside the current renderer contract.
 Negative-scale behavior remains an API design detail; explicit flips do not imply geometry mirroring.
 The angle convention and helper are agreed; the illustrative draw-option spelling and any branded angle type remain API design details.
 

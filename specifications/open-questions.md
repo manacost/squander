@@ -1,8 +1,8 @@
 # Open contract questions
 
-No blocking contract questions remain for the completed Phase 1, Phase 2,
-Phase 3-a, or Phase 3-b scope. Their accepted behavior is recorded in the
-[decision log](decisions.md) and the implemented capability specs under
+No blocking contract questions remain for the implemented runtime, scene, input,
+and Svelte capabilities. Their accepted behavior is recorded in the [decision
+log](decisions.md) and the implemented capability specs under
 [`../specs/`](../specs/README.md).
 
 This file contains only questions that must be answered before a future
@@ -30,8 +30,8 @@ acceptance evidence, and the relevant documentation.
 - **Simulation and packaging:** Define fixed-step overload behavior, desktop
   wrapper support, safe storage/math utilities, and the supported OS/GPU matrix.
 
-See the [Phase 3 candidate log](phase-3-candidates.md) and
-[Phase 4 candidate log](phase-4-candidates.md) for current placement. Do not
+See the [future capability candidate logs](phase-3-candidates.md) and
+[additional future capability log](phase-4-candidates.md) for current placement. Do not
 reopen accepted decisions in this file; add a superseding decision when a
 future capability changes the architecture.
 
