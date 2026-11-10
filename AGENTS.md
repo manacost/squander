@@ -37,7 +37,7 @@ Name unit tests `*.test.ts` or `*.spec.ts` beneath `src/`; Vitest only discovers
 
 ### WebGPU and coverage rules
 
-- Cover all new framework runtime code with focused Vitest tests. Use TypeScript type tests for public inference and rejected misuse. Revisit the repository-wide greater-than-90% coverage target after Phase 2; do not use legacy PixiJS coverage to evaluate replacement code.
+- Cover all new framework runtime code with focused Vitest tests. Use TypeScript type tests for public inference and rejected misuse. Revisit the repository-wide greater-than-90% coverage target after the replacement runtime stabilizes; do not use legacy PixiJS coverage to evaluate replacement code.
 - Treat TypeScript/Svelte coverage and GPU correctness as separate gates. Coverage must include statements, branches, functions, and lines for new runtime code; WGSL shader behavior requires real WebGPU evidence and is not proven by TypeScript coverage.
 - Test GPU features in Playwright with a real Chromium WebGPU device. Run the page from a secure context: use the trusted local Vite origin (`http://127.0.0.1:<port>` or `http://localhost:<port>`), never `about:blank` or a `data:` URL. Assert `window.isSecureContext`, `navigator.gpu`, adapter creation, and device creation before rendering.
 - Launch the GPU browser with the explicit WebGPU/GPU flags used by the project configuration. Record browser version, OS, GPU adapter/backend, DPR, viewport, and fixture dimensions. A missing `navigator.gpu` or adapter is a failed GPU verification environment, not a passing skip.
@@ -80,8 +80,8 @@ appropriate sidebar section and provide all five parts:
 5. Copyable code samples showing the supported usage path.
 
 Audit these five parts when promoting a capability or adding a visual fixture.
-Record an explicit rationale in the Phase 2 documentation audit when a feature
-is internal, non-visual, deferred, or otherwise does not require this set.
+Record an explicit rationale in the documentation audit when a feature is
+internal, non-visual, deferred, or otherwise does not require this set.
 Composition playgrounds supplement focused pages; they do not replace them.
 
 ### Writing style
