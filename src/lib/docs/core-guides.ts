@@ -32,7 +32,7 @@ export const core_guides = [
       'const texture = await assets.load_texture(blob, { magnification: "nearest" });\nconst pixels = texture.read();\ntexture.release();',
     proof: "CPU tests cover cancellation, retry, and ownership. Real Blob and File fixtures verify texture readback.",
     limitations:
-      "Manifest-specific texture descriptors and atlas manifests are not part of Phase 2. Generic manifest loading is supported.",
+      "Generic manifest loading is supported. Manifest-specific texture descriptors and atlas manifests remain future extensions.",
   },
   {
     slug: "dynamic-assets",
@@ -49,7 +49,7 @@ export const core_guides = [
     sample:
       'const file = new File([png_bytes], "hero.png", { type: "image/png" });\nconst handle = await game.assets.load_texture(file, { signal });\nrenderer.draw_texture(handle.read());',
     proof: "Real Chromium tests load both Blob and File sources and read back deterministic pixels.",
-    limitations: "Identical Blob and File values are loaded independently in Phase 2.",
+    limitations: "Identical Blob and File values are loaded independently.",
   },
   {
     slug: "sprite-drawing",
@@ -66,7 +66,7 @@ export const core_guides = [
     sample:
       "renderer.draw_texture(texture, {\n  x: 120, y: 80, width: 64, height: 64,\n  origin: { x: 0.5, y: 0.5 }, rotation: degrees(15), flip_x: true,\n  tint: rgba(1, 0.8, 0.8, 1), opacity: 0.9,\n});",
     proof: "Real readback verifies atlas regions, tint, opacity, origins, rotation, flips, and sprite submission order.",
-    limitations: "Selectable blend modes and implicit batching policy are outside Phase 2; order remains observable.",
+    limitations: "Selectable blend modes and implicit batching policy are not currently supported; order remains observable.",
   },
   {
     slug: "shape-drawing",
@@ -102,7 +102,7 @@ export const core_guides = [
       "const route = create_path([move_to(0, 0), quadratic_to(40, -30, 80, 0)]);\nconst marker = create_polygon([{ x: 0, y: 0 }, { x: 40, y: 0 }, { x: 20, y: 30 }]);\nroute.update([move_to(0, 0), line_to(100, 20)]);",
     proof:
       "CPU snapshots and tessellation tests cover geometry preparation. Real GPU fixtures verify curves, concave fills, outlines, updates, cache replacement, and ownership.",
-    limitations: "Holes, fill rules, and filled curved paths are Phase 3 candidates.",
+    limitations: "Holes, fill rules, and filled curved paths remain future capability candidates.",
   },
   {
     slug: "camera-2d",
@@ -150,7 +150,7 @@ export const core_guides = [
     test_file: "src/lib/core/runtime/texture_filtering.test.ts",
     example_description: "Compare nearest sampling on the left with linear sampling on the right.",
     explanation:
-      "Set filtering when a texture or font atlas is created. The renderer reuses samplers internally; Phase 2 does not generate mipmaps.",
+      "Set filtering when a texture or font atlas is created. The renderer reuses samplers internally and does not generate mipmaps.",
     types: ["TextureFilteringOptions", 'TextureFilter = "nearest" | "linear"', "WebGpuTexture"],
     sample: 'const handle = await assets.load_texture(blob, {\n  magnification: "nearest",\n  minification: "linear",\n});',
     proof: "Real GPU fixtures distinguish nearest and linear sampling. They also verify minification policy without mipmaps.",
@@ -172,7 +172,8 @@ export const core_guides = [
       "const game = create_game({ renderer, scheduler, setup, update, draw });\nawait game.ready;\ngame.pause();\ngame.resume();\nawait game.dispose();",
     proof:
       "Lifecycle unit tests cover setup races, callback errors, visibility, disposal, and renderer cleanup. Browser demos expose the controls.",
-    limitations: "Scene composition and input routing are separate Phase 3 capabilities. Storage lifecycle remains outside this guide.",
+    limitations:
+      "Scene composition and input routing are documented as separate capabilities. Storage lifecycle remains outside this guide.",
   },
   {
     slug: "game-timing",

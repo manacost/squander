@@ -12,7 +12,7 @@ Implemented.
 
 - Default to linear filtering and permit nearest filtering per texture.
 - Expose independent magnification/minification choices and a shorthand setting both.
-- Phase 2 uses the original mip level; document aliasing/shimmer limits under significant downscaling.
+- The renderer uses the original mip level; document aliasing/shimmer limits under significant downscaling.
 - Do not require duplicate texture pixel storage merely to change sampler settings.
 
 ## Scenarios
@@ -54,7 +54,7 @@ also verifies that filtering options reach every generated atlas/glyph texture.
 
 AD-010. The current CPU policy uses `filter`, `magnification`, and
 `minification`, defaults to linear, and does not represent mipmaps. Mipmaps
-are Phase 4.
+remain a future capability.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

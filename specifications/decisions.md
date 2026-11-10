@@ -8,7 +8,7 @@ later decision supersedes an earlier one only when it says so explicitly.
 
 ## AD-055: Synchronous game controller with asynchronous readiness
 
-The Phase 2 runtime creates a game controller synchronously. The controller
+The current runtime creates a game controller synchronously. The controller
 exposes a `ready` promise; setup completes before the frame loop starts. Setup
 receives an abort signal and the game-owned resource owner. Disposal aborts
 setup, prevents a late loop start, disposes owned resources, and returns the
@@ -21,7 +21,7 @@ scene, ECS, input, or package-boundary API.
 
 ## AD-056: Explicit owner handles and draw leases
 
-The Phase 2 ownership kernel represents each acquisition with an opaque handle.
+The ownership kernel represents each acquisition with an opaque handle.
 Handles can create independent shared acquisitions; releasing one immediately
 invalidates only that handle. A draw lease retains the underlying resource until
 the accepted work completes. The final handle release destroys the resource
@@ -34,7 +34,7 @@ and dependency metadata. There are no consumer-compatibility requirements at
 this stage, and maintaining a transitional package shape would add churn before
 the replacement API exists.
 
-At the Phase 2 migration boundary, make the replacement core available from the
+At the package migration boundary, make the replacement core available from the
 package root and `squander/core`, and expose the optional Svelte host, bridge, and
 integration surface from `squander/svelte`. Remove the PixiJS-era runtime,
 exports, demos, and compatibility layer in the same intentional breaking change.
@@ -66,7 +66,7 @@ The intended monetized distribution is through a controlled desktop runtime;
 browser use primarily serves development, testing, and showcases. A runtime must
 actually support WebGPU: using V8 alone does not establish graphics support.
 
-Desktop packaging is outside Phase 2. Initially validate in a specified Chromium
+Desktop packaging is outside the current runtime. Initially validate in a specified Chromium
 environment; exact browser, OS, and GPU support requirements remain unresolved.
 An HTML canvas may serve as the GPU presentation surface; the Canvas 2D drawing
 API is not the game renderer.
@@ -93,8 +93,8 @@ scene scopes retain assets until explicit release or scene disposal by default;
 unmounting does not imply disposal. Declarative scene asset dependencies will
 use the same ownership mechanism as manual acquisition.
 
-Core ownership primitives belong in Phase 2. Scene-specific automation belongs
-in the future scene layer. Concurrent-load and release policies are clarified in AD-013; exact API signatures remain to be specified.
+Core ownership primitives belong in the runtime. Scene-specific automation belongs
+in the scene layer. Concurrent-load and release policies are clarified in AD-013; exact API signatures remain to be specified.
 
 ## AD-005: Explicit typed asset manifests
 
@@ -108,7 +108,7 @@ or unresolved scope, respectively.
 
 ## AD-006: Initial rendering capabilities
 
-Phase 2 includes:
+The current runtime includes:
 
 - Sprites with atlas regions, tint, opacity, rotation, scaling, and flipping.
 - Filled and outlined rectangles/circles, lines, reusable polygons, and stroked paths (AD-015).
@@ -126,12 +126,12 @@ Custom shaders, render targets, and advanced effects are future candidates.
 
 ## AD-007: Variable timing and hidden-document pause
 
-Phase 2 uses variable update timing (the `UpdateTime` contract is defined in AD-019). Pause gameplay while the document is
+The current runtime uses variable update timing (the `UpdateTime` contract is defined in AD-019). Pause gameplay while the document is
 hidden and reset the timing baseline on return so hidden time does not become
 one large simulation update. Protect against excessive elapsed time while visible;
 the exact cap and configuration remain unresolved.
 
-Optional fixed-step scheduling is a Phase 4 candidate, not Phase 3 scope.
+Optional fixed-step scheduling is a future capability candidate, not part of the current timing contract.
 Automatic draw skipping has been discussed but is not an accepted requirement.
 The proposed simple schedule is one update followed by one draw per animation
 callback; scheduling details still need final specification.
@@ -147,7 +147,7 @@ rendering scene graph is not required.
 
 ## AD-009: Fixed-fit and responsive viewport policies
 
-Support both policies in Phase 2, selected when creating the game:
+Support both policies in the runtime, selected when creating the game:
 
 - **Fixed-fit:** configure a logical width and height. Uniformly scale that area
   to fit the available surface, center it, and letterbox unused space. Use this
@@ -177,7 +177,7 @@ texture pixels to support different sampling settings.
 
 Expose separate magnification (upscaling) and minification (downscaling) controls,
 plus a shorthand that sets both. Exact option names remain to be designed.
-Mipmap support is deferred to Phase 4 as a candidate. Phase 2 samples the original
+Mipmap support is deferred as a future capability. The runtime samples the original
 texture level; substantial downscaling can shimmer or lose detail, even with
 linear filtering. Pre-resizing an asset can reduce memory use when its required
 resolution is known, but does not cover every camera zoom, viewport size, or
@@ -251,7 +251,7 @@ and cubic Bézier curves, and explicit closure. Draw reusable geometry with expl
 transforms and styles; rebuild its geometry when shape data changes.
 
 Dashed strokes and configurable joins/caps are deferred. Filled curved paths,
-holes, and fill rules are Phase 3 candidates. Tessellation, stroke conventions,
+holes, and fill rules are future capability candidates. Tessellation, stroke conventions,
 and invalid-geometry behavior need detailed contracts before implementation.
 
 ## AD-016: Font assets and reusable glyph preparation
@@ -281,7 +281,7 @@ publication and business rules; the UI does not receive a general mutable simula
 Publish relevant changes as needed rather than making all game data reactive.
 
 Svelte owns a game instance and disposes it on host unmount. Hosts and bridges are
-per instance. Phase 3-a adds the optional `<Game onReady>` host: its private DOM
+per instance. The scene UI capability adds the optional `<Game onReady>` host: its private DOM
 layer lets a Svelte scene create and own UI through contextual `create_ui`, while
 core scenes remain independent of Svelte.
 
@@ -351,7 +351,7 @@ regressions or weakening the baseline to hide it.
 Express drawing rotation in radians. Positive angles rotate clockwise in the
 agreed positive-Y-down coordinate system. Provide `degrees(value)` to convert
 degrees to radians, so `degrees(90)` expresses a clockwise quarter-turn. The helper
-belongs in Phase 2 alongside rotation; the broader safe-math capability remains
+belongs in the runtime alongside rotation; the broader safe-math capability remains
 a future candidate. This decision does not settle branded angle types or camera
 rotation semantics.
 
@@ -373,11 +373,11 @@ representation at construction rather than making each draw interpret HSL or hex
 The renderer owns the required color-space conversions.
 
 Exact helper signatures/ranges and internal encoding still need explicit contracts.
-AD-027 defines Phase 2 blending scope. AD-025 defines invalid-input behavior; AD-026 defines opacity
+AD-027 defines the current blending scope. AD-025 defines invalid-input behavior; AD-026 defines opacity
 composition. Supporting HSL
-does not imply HSL interpolation or a palette-manipulation API in Phase 2.
+does not imply HSL interpolation or a palette-manipulation API in the current runtime.
 
-The Phase 2 helper contract uses normalized RGB/RGBA channels in the inclusive
+The helper contract uses normalized RGB/RGBA channels in the inclusive
 range 0–1, degree-based HSL/HSLA hue with saturation/lightness in 0–1, and
 `#RGB`, `#RGBA`, `#RRGGBB`, or `#RRGGBBAA` hex strings. Helpers return one
 readonly RGB/alpha value; hex alpha bytes are divided by 255. These choices are
@@ -407,16 +407,16 @@ calls. Developers can fade an item without constructing a new color.
 This defines source alpha, not the final framebuffer alpha or the blend equation.
 Invalid per-draw opacity handling and internal alpha encoding remain open.
 
-## AD-027: Normal alpha blending in Phase 2
+## AD-027: Normal alpha blending in the current runtime
 
-Use normal source-over alpha blending for every Phase 2 draw: later sprites,
+Use normal source-over alpha blending for every draw: later sprites,
 shapes, paths, polygons, and text appear over earlier content, with transparency
 revealing what is behind them. Apply AD-026's effective source alpha consistently
 across primitive types. Batching must preserve these results and draw order.
 
-Do not expose selectable blend modes in Phase 2. Additional modes, including
-additive and multiply blending, are Phase 3 candidates rather than committed
-implementation scope. Internal alpha encoding and color-space handling remain
+Do not expose selectable blend modes in the current runtime. Additional modes,
+including additive and multiply blending, are future capability candidates rather
+than committed implementation scope. Internal alpha encoding and color-space handling remain
 implementation contracts to resolve and verify.
 
 ## AD-028: Basic shape anchors
@@ -428,7 +428,7 @@ These conventions apply to the underlying geometry of filled and outlined forms;
 stroke alignment is a separate decision. Basic placement does not require an
 origin option. Transformation pivot semantics and exact signatures remain open.
 
-## AD-029: Centered strokes in Phase 2
+## AD-029: Centered strokes in the current runtime
 
 Center strokes on their geometric boundary or path centerline, placing half the
 stroke width on each side. Apply this convention to rectangles, circles, lines,
@@ -436,7 +436,8 @@ paths, and polygon outlines. A circle of radius 10 with stroke width 4 has strok
 radii 8 and 12. AD-031 defines cap/join direction. Very wide or degenerate
 strokes still need separate contracts.
 
-Inside/outside stroke alignment is a Phase 3 candidate, not Phase 2 scope. Keep
+Inside/outside stroke alignment is a future capability candidate, not part of the
+current scope. Keep
 future rendering extensions visible in the candidate log alongside their
 corresponding decisions and capability notes.
 
@@ -448,7 +449,7 @@ zoom 2 as at zoom 1. Viewport scaling and physical display density still apply;
 world units are not a promise of a fixed physical pixel count.
 
 Constant screen-thickness strokes for selection outlines or debug overlays are
-Phase 3 candidates. Nonuniform object-scale behavior remains a separate contract.
+future rendering extensions in the candidate log. Nonuniform object-scale behavior remains a separate contract.
 
 ## AD-031: Fixed flat ends and limited sharp joins
 
@@ -461,7 +462,7 @@ same policy to lines, outlined shapes, and stroked paths/polygons where applicab
 Use a miter ratio of 4, defined as the distance from the corner to the miter
 point divided by the half stroke width. If that ratio would exceed 4, use the
 fixed outer bevel fallback. Rounded ends/corners and configurable cap/join
-styles remain future options recorded in the candidate log; Phase 2 exposes
+styles remain future options recorded in the candidate log; the current runtime exposes
 these fixed defaults.
 
 ## AD-032: Signed rectangles and invalid basic geometry
@@ -511,7 +512,7 @@ A single path handle can contain multiple disconnected subpaths. Each `move_to`
 starts a new subpath without connecting to the previous one. `close()` connects
 only the current subpath back to its own starting point. All subpaths share the
 style and transforms of the draw call. This does not add filled paths or holes
-to Phase 2; paths remain stroke-only.
+to the current path capability; paths remain stroke-only.
 
 Command sequencing after closure, empty subpaths, and malformed sequences remain
 validation details to resolve before implementation.
@@ -630,7 +631,7 @@ zero, negative values, NaN, and infinity. Do not impose an arbitrary gameplay
 minimum or maximum; applications can define their own zoom limits. Numerical
 precision/representability at extreme values still needs implementation guidance.
 
-Cursor-anchored zoom is a Phase 3 convenience candidate, not Phase 2 behavior.
+Cursor-anchored zoom is a future convenience candidate, not current camera behavior.
 
 ## AD-043: Camera rotation is world orientation
 
@@ -656,11 +657,11 @@ when a camera scope is active, not to unscoped drawing.
 The proposed implicit main camera was not adopted. AD-045 selects a synchronous
 `camera.draw(callback)` scope. Exact callback typing, camera ownership/release, snapshot timing, and the screen-coordinate origin remain open. Creating a reusable camera
 does not yet prescribe a dedicated GPU allocation. Svelte remains the UI solution;
-explicit screen-space GPU drawing is also available in Phase 2.
+explicit screen-space GPU drawing is also available in the current runtime.
 
 ## AD-045: Synchronous camera callback scopes
 
-Use `camera.draw(callback)` for Phase 2 camera scopes. Execute the callback
+Use `camera.draw(callback)` for camera scopes. Execute the callback
 synchronously under the camera transform and restore the previous drawing state
 when it exits, including when it throws, using exception-safe cleanup. Errors
 propagate to the existing draw/game failure policy; scope cleanup does not swallow
@@ -672,7 +673,7 @@ a performance difference without measurement. Exact typing/runtime enforcement
 of synchronous callbacks remains open; AD-046 defines nested-camera semantics.
 
 Manual `begin()`/`end()` is a future candidate only if a concrete need emerges;
-record it in the candidate log rather than exposing it in Phase 2.
+record it in the candidate log rather than exposing it in the current runtime.
 
 ## AD-046: Nested cameras replace rather than compose
 
@@ -694,7 +695,7 @@ cameras transform world coordinates into that viewport, not the bars themselves.
 
 ## AD-048: Visibility query now, automatic culling later
 
-Include `camera.is_in_view(bounds)` in Phase 2. Query caller-supplied world-space
+Include `camera.is_in_view(bounds)` in the camera capability. Query caller-supplied world-space
 bounds using camera position, zoom, rotation, and logical viewport dimensions.
 Return false only when the supplied bounds are definitely outside the view;
 return true for partially visible or potentially visible bounds. This is a
@@ -703,8 +704,8 @@ occlusion. Callers must supply bounds covering the rendered content, including
 stroke extent and other relevant expansion.
 
 The query does not automatically skip drawing or change gameplay updates.
-Automatic offscreen bounds culling and more advanced occlusion culling are Phase
-3 candidates, with automatic offscreen culling the initial optimization to
+Automatic offscreen bounds culling and more advanced occlusion culling are future
+capability candidates, with automatic offscreen culling the initial optimization to
 investigate. Require output equivalence, preservation of draw order/transparency,
 and measured benefit before adopting an optimization. Do not couple rendering
 culling to simulation/update scheduling.
@@ -775,10 +776,10 @@ restriction.
 Camera zoom keeps the stricter positive-finite rules of AD-042. Bounds queries
 keep AD-050’s nonfinite-input rejection.
 
-## AD-054: Phase 3-a scene removal disposes the scene
+## AD-054: Scene removal disposes the scene
 
-Phase 3-a supersedes the earlier deferred-scene wording in AD-004 for the
-game-owned scene composer. Removing a scene permanently disposes its lifecycle
+The scene capability supersedes the earlier deferred-scene wording in AD-004 for
+the game-owned scene composer. Removing a scene permanently disposes its lifecycle
 instance and, once scene asset scopes and subscriptions are present, releases
 those scene-owned resources. Remounting the same factory creates a new isolated
 instance. Game-owned assets and programmer-owned signals remain independent of
@@ -792,7 +793,7 @@ game-owned until the final owner releases them. Scene removal releases its
 handles and rejects late attachment; it does not create a second cache or GPU
 lifetime system.
 
-This keeps scene lifetime explicit without changing the Phase 2 ownership
+This keeps scene lifetime explicit without changing the ownership
 contract. See the [scene-assets capability](../specs/scene-assets/spec.md).
 
 ## AD-058: Scene communication uses a game-owned typed bus
@@ -855,5 +856,5 @@ implementation slice. Use the [open questions](open-questions.md) to resolve
 behavior before tests or implementation accidentally establish an undocumented
 policy.
 
-Future work is recorded in the [Phase 3 candidate log](phase-3-candidates.md) and
-[Phase 4 candidate log](phase-4-candidates.md).
+Future work is recorded in the [future capability candidate logs](phase-3-candidates.md)
+and [additional future capability log](phase-4-candidates.md).

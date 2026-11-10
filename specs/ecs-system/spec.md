@@ -14,7 +14,9 @@ world must not be a process-wide singleton.
 
 ## Status
 
-Implemented. Target phase: Phase 3.
+Implemented.
+
+This is an optional ECS module.
 
 The supported v0 implementation is available from the public core module. It
 uses local component tokens, dense sparse-set storage, monotonic IDs by default,

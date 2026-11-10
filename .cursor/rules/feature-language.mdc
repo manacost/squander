@@ -1,0 +1,14 @@
+---
+description: Keep current Squander language focused on capabilities, not completed implementation plans
+globs:
+alwaysApply: true
+---
+
+# Feature-focused language
+
+- Use phase names only for active planning, sequencing, candidate backlogs, or historical records.
+- Once a capability is implemented, refer to it by its feature name, module, or user-visible behavior. Do not describe current library usage as "Phase 1," "Phase 2," or "Phase 3."
+- Keep completed implementation plans and checkpoints under historical documentation. Link to them as evidence when useful, but do not make them the current contract.
+- In current specs, README content, docs, examples, tests, and generated documentation, replace completed phase labels with stable capability names and explain limitations directly.
+- Preserve phase terminology when it is the identifier of an active plan or historical artifact; do not rename archival paths solely to hide their history.
+- When promoting a planned capability, update its current documentation, examples, tests, and type-test names in the same change so the feature becomes the durable seam.

@@ -45,6 +45,10 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - Provide strong TypeScript inference, explicit ownership, focused
   documentation, and separate CPU, type, coverage, browser, and real-WebGPU
   verification signals.
+- Keep current documentation and agent guidance organized around stable
+  capabilities. Use phase terminology only for active plans, candidate
+  backlogs, or historical records; once a capability is implemented, refer to
+  the feature and its observable behavior.
 - Keep deferred capabilities contract-driven: advanced projections, custom
   shaders, render targets, mipmaps, fixed-step scheduling, and action mapping
   require their own supported behavior and evidence before inclusion.

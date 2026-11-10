@@ -2,8 +2,8 @@
 
 ## Status
 
-Implemented. Target phase: Phase 3-a, Slice 3. Typed dispatch, listener
-mutation, error routing, scoped cleanup, disposal, and trusted-origin browser
+Implemented. Typed dispatch, listener mutation, error routing, scoped cleanup,
+disposal, and trusted-origin browser
 evidence are verified.
 
 ## Goal

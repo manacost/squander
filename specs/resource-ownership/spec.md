@@ -8,8 +8,8 @@ Keep shared GPU assets alive exactly while owners retain them, with predictable 
 
 Implemented.
 
-The Phase 2 ownership contract is implemented and verified below. Scene
-automation remains outside this phase.
+The ownership contract is implemented and verified below. Scene automation is
+documented separately in the scene capabilities.
 
 ## Requirements
 
@@ -22,7 +22,7 @@ automation remains outside this phase.
 - Previously accepted draw commands retain valid underlying resources, including commands buffered before GPU submission. The renderer manages safe destruction/reuse; applications need not wait for GPU completion (AD-038).
 - Using a released handle for drawing throws a descriptive error identifying the asset/handle; callback errors follow lifecycle policy.
 - Use opaque typed handles to reduce misuse, while retaining runtime checks because TypeScript cannot invalidate aliases.
-- Future scene ownership retains assets until explicit release or scene disposal, not unmount. Scene automation is outside Phase 2.
+- Scene ownership retains assets until explicit release or scene disposal, not unmount. Scene automation is documented in the scene capabilities.
 
 ## Scenarios
 

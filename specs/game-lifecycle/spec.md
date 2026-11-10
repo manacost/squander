@@ -57,7 +57,7 @@ covered by the Svelte adapter fixture.
 ## Notes
 
 AD-011, AD-012, and AD-055. User cleanup hooks remain application-owned; scene
-automation is outside Phase 2.
+automation is outside the game-lifecycle capability.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

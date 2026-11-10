@@ -50,7 +50,7 @@ Run `npm run lint` for the repository gate. Run `npm run lint:format` and
 `npm run lint:code` separately when diagnosing a failure. Formatting and code
 lint are independent checks, and generated output remains excluded.
 
-The current verification baseline is recorded in the phase closeout evidence
+The current verification baseline is recorded in the archived implementation closeout evidence
 under [`specifications/history/`](history/README.md).
 
 See [toolchain maintenance](toolchain-maintenance.md) for version choices and

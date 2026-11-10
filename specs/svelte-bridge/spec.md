@@ -12,7 +12,7 @@ The adapter exposes one readonly view containing `state`, lifecycle `status`,
 an initialization `error`, and typed `commands`; game code receives the only
 `publish` function.
 
-The Phase 2 bridge contract is implemented and verified below. Scene-owned UI
+The Svelte bridge contract is implemented and verified below. Scene-owned UI
 is documented separately in the [`scene-ui`](../scene-ui/spec.md) capability;
 the core runtime remains Svelte-independent.
 
@@ -93,7 +93,7 @@ Svelte, and the component entry is compiled by Svelte-aware consumers.
 
 ## Notes
 
-AD-017. The Phase 2 subscription shape, SSR boundary, readonly view, command
+AD-017. The subscription shape, SSR boundary, readonly view, command
 disposal behavior, and notification scheduling are implemented as documented;
 richer reactive helpers remain future work.
 

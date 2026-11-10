@@ -8,8 +8,8 @@ View the 2D world through a basic position, zoom, and rotation transform.
 
 Implemented.
 
-The Phase 2 camera contract is implemented and verified through CPU, public type,
-and real WebGPU fixtures.
+The camera contract is implemented and verified through CPU, public type, and
+real WebGPU fixtures.
 
 ## Requirements
 
@@ -122,7 +122,7 @@ advanced projections remain deferred.
 AD-006, AD-014, and AD-040 through AD-053. The current CPU helper uses a
 world-axis-aligned rectangle and transformed-corner AABB for conservative
 visibility. Scope enforcement and numerical tolerances remain open.
-Cursor-anchored zoom is a [Phase 3 candidate](../../specifications/phase-3-candidates.md).
+Cursor-anchored zoom remains a [future capability candidate](../../specifications/phase-3-candidates.md).
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).

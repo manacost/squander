@@ -140,8 +140,8 @@ const font = font_handle.read();`}
     disposal.
   </p>
   <p>
-    Phase 2 intentionally does not promise wrapping, rich layout, shaping, fallback, or arbitrary-script coverage. Supported glyphs
-    requested later are added to the non-evicting atlas until its typed 4096×4096 capacity limit is reached.
+    Text rendering does not promise wrapping, rich layout, shaping, fallback, or arbitrary-script coverage. Supported glyphs requested later
+    are added to the non-evicting atlas until its typed 4096×4096 capacity limit is reached.
   </p>
 </article>
 

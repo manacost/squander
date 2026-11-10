@@ -131,7 +131,7 @@ screenshots are supplemental visual evidence.
 | `src/routes/(docs)/docs/examples/` | Runnable composition and feature examples.                                 |
 | `tests/`                           | Playwright integration and real WebGPU fixtures.                           |
 | `specs/`                           | Capability contracts and promotion criteria.                               |
-| `specifications/history/`          | Archived phase plans, checkpoints, and historical evidence.                |
+| `specifications/history/`          | Archived implementation plans, checkpoints, and historical evidence.       |
 | `specifications/decisions.md`      | Durable architecture decisions and boundaries.                             |
 
 Generated `dist/`, `build/`, and `.svelte-kit/` output is ignored; edit source

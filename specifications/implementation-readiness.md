@@ -1,7 +1,7 @@
 # Effective implementation and verification
 
-This is working guidance for Phase 2 implementation slices. The accepted product
-requirements live in capability specs and the decision log. These practices help
+This is working guidance for implementing and verifying new capability slices.
+The accepted product requirements live in capability specs and the decision log. These practices help
 produce useful evidence; they do not add a spec-validation CI gate or mandate a
 particular test library or strict test-first workflow.
 

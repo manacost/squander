@@ -3,12 +3,12 @@
 ## Goal
 
 Compose multiple game scenes through a game-owned ordered stack while preserving
-the Phase 2 game lifecycle, error, and disposal guarantees.
+the game lifecycle, error, and disposal guarantees.
 
 ## Status
 
-Implemented. Target phase: Phase 3-a, Slice 1. Lifecycle, ordering, failure,
-replacement, teardown, and trusted-origin browser evidence are verified.
+Implemented. Lifecycle, ordering, failure, replacement, teardown, and
+trusted-origin browser evidence are verified.
 
 ## Requirements
 
@@ -97,7 +97,7 @@ const scene = await game.scenes.mount(async ({ signal }) => {
 await game.scenes.remove(scene);
 ```
 
-The scene factory and lifecycle hooks are the supported Phase 3-a core path.
+The scene factory and lifecycle hooks are the supported scene-composition path.
 
 ## Test references
 
@@ -110,9 +110,9 @@ The scene factory and lifecycle hooks are the supported Phase 3-a core path.
 
 ## Notes
 
-This slice intentionally supersedes the earlier Phase 2 wording that
-unmounting does not imply disposal. Removing a scene permanently disposes its
-scene instance; scene asset scopes and subscriptions follow this lifecycle.
+Removing a scene permanently disposes its scene instance; scene asset scopes and
+subscriptions follow this lifecycle. Unmounting a host does not replace the
+scene's explicit disposal contract.
 
 The implementation builds above `create_game` and `create_frame_loop`; it does
 not introduce a rendering scene graph or expand the legacy ECS experiment.

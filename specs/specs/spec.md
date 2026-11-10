@@ -55,8 +55,8 @@ skill review; no automated enforcement or CI validator is required.
   - **Accepted:** requirements agreed; implementation incomplete.
   - **Implemented:** acceptance criteria satisfied, with verification references.
   - **Deprecated:** still present, but discouraged or scheduled for removal.
-- Record any target phase separately from lifecycle status. A future-phase
-  candidate may remain a draft; phase targeting does not imply acceptance.
+- Record active planning metadata separately from lifecycle status. A future
+  candidate may remain a draft; planning metadata does not imply acceptance.
 - Write descriptions and usage explanations so they can inform future
   high-level system documentation. No generator is required now.
 
@@ -105,7 +105,7 @@ skill review; no automated enforcement or CI validator is required.
   decision links using readable prose and lists.
 - Missing tests and unresolved design details are visible.
 - The template and capability specs use the defined lifecycle vocabulary and
-  distinguish phase targeting from status.
+  distinguish planning metadata from status.
 - Future documentation generation is described without claiming it is implemented.
 - A repository skill at `.agents/skills/spec-validate/SKILL.md` describes the
   on-demand checks and reports traceability without claiming behavioral coverage.
@@ -144,8 +144,8 @@ establish behavioral coverage or test traceability.
 
 - The [architecture decision log](../../specifications/decisions.md) records
   accepted framework decisions from the ongoing interview.
-- The existing phase candidate logs are planning backlogs, not capability specs.
-  Their planning IDs do not replace capability names as stable spec IDs.
+- The existing candidate logs are planning backlogs, not capability specs. Their
+  planning IDs do not replace capability names as stable spec IDs.
 - Open questions include the remaining section guidance.
 - The location of existing planning documents has not changed as part of
   establishing the capability directory convention.

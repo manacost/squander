@@ -7,9 +7,8 @@ core scene runtime to Svelte or exposing a separate overlay host.
 
 ## Status
 
-Implemented. Target phase: Phase 3-a, Slice 4. The `Game` host, typed scene UI
-handles, stack replacement, SSR boundary, host teardown, and browser evidence
-are verified.
+Implemented. The `Game` host, typed scene UI handles, stack replacement, SSR
+boundary, host teardown, and browser evidence are verified.
 
 ## Requirements
 

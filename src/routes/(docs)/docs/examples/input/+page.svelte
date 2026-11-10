@@ -139,7 +139,7 @@ console.log(gamepads.state.all());`}</code
 
   <h2>Scope and limitations</h2>
   <p>
-    Phase 3B handles raw devices, ownership, and browser default-action policy. Action mapping, rebinding, text input/IME, gesture
+    Input routing handles raw devices, ownership, and browser default-action policy. Action mapping, rebinding, text input/IME, gesture
     recognition, pointer hit testing, and haptics remain separate capabilities. A physical gamepad must be connected and exposed to the
     browser before its state can be observed.
   </p>
