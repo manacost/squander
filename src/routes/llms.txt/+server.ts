@@ -653,7 +653,16 @@ Use the live page as the end-to-end reference for combining a pure game model,
 For a repository checkout, run focused CPU tests with \`npm run test:unit\`,
 type checks with \`npm run test:type\`, and Svelte diagnostics with
 \`npm run check\`. Run \`npm run test:integration\` for browser flows and
+\`npm run test:benchmark:ecs\` plus \`npm run test:benchmark:ecs:browser\` for
+the Node and trusted-local-origin ECS benchmark profiles. Run
 \`npm run test:webgpu\` for real WebGPU rendering.
+
+CI has two lanes. Pull requests use standard GitHub-hosted runners for portable
+CPU, type, package, documentation, browser, ECS, and advisory benchmark checks.
+Real WebGPU verification runs separately on protected \`main\` pushes or manual
+dispatch using a trusted Linux GPU runner. Do not send untrusted pull-request
+code to a persistent self-hosted GPU runner. The hardware lane records browser,
+OS, adapter, backend, DPR, viewport, and fixture metadata as artifacts.
 
 Real WebGPU verification must use trusted local HTTP or HTTPS, assert secure
 context, adapter creation, and device creation, and verify deterministic pixel

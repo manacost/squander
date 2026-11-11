@@ -121,6 +121,8 @@ npm run test:unit
 npm run test:type
 npm run check
 npm run test:integration
+npm run test:benchmark:ecs
+npm run test:benchmark:ecs:browser
 npm run test:webgpu
 npm run check:coverage
 npm run validate:specs
@@ -133,6 +135,14 @@ The WebGPU suite requires trusted local Chromium with the configured GPU flags.
 Missing WebGPU is a failed verification environment, not a passing skip.
 Deterministic texture/buffer readback is the rendering correctness gate;
 screenshots are supplemental visual evidence.
+
+CI uses two verification lanes. Pull requests run the portable quality lane on
+standard GitHub-hosted runners, including CPU, type, package, documentation,
+browser, ECS, and advisory benchmark checks. Real WebGPU verification stays in
+the protected hardware lane and runs on `main` pushes or manual dispatch against
+a trusted Linux GPU runner. Pull requests must not execute untrusted code on a
+persistent self-hosted GPU runner. The hardware lane records its browser, host,
+adapter, backend, viewport, DPR, and fixture metadata as artifacts.
 
 ## Repository map
 
