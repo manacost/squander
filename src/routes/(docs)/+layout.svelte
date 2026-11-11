@@ -43,6 +43,7 @@
       children: [
         { label: "signals and events", href: resolve("/(docs)/docs/utilities") },
         { label: "random", href: resolve("/(docs)/docs/utilities/random") },
+        { label: "UI styles", href: resolve("/(docs)/docs/utilities/ui-styles") },
       ],
     },
     {

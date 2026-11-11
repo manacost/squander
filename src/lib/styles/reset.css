@@ -1,0 +1,63 @@
+@layer squander.reset {
+  :where(*, *::before, *::after) {
+    box-sizing: border-box;
+  }
+
+  :where(html) {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  :where(body) {
+    min-block-size: 100vh;
+    margin: 0;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd) {
+    margin: 0;
+  }
+
+  :where(ul, ol) {
+    margin: 0;
+    padding-inline-start: 1.5rem;
+  }
+
+  :where(button, input, optgroup, select, textarea) {
+    font: inherit;
+  }
+
+  :where(button, [type="button"], [type="submit"], [type="reset"]) {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :where(img, picture, svg, video, canvas) {
+    display: block;
+    max-inline-size: 100%;
+  }
+
+  :where(img, video) {
+    block-size: auto;
+  }
+
+  :where(textarea) {
+    resize: vertical;
+  }
+
+  :where([hidden]) {
+    display: none !important;
+  }
+
+  :where(:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :where(*, *::before, *::after) {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

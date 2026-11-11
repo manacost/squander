@@ -12,6 +12,8 @@ assert.deepEqual(Object.keys(package_json.exports), [
   "./signals",
   "./svelte",
   "./svelte/adapter",
+  "./styles/reset.css",
+  "./styles/ui.css",
 ]);
 
 const root = await import("squander");
@@ -37,5 +39,10 @@ assert.equal(typeof svelte_adapter.create_game_adapter, "function");
 
 await assert.rejects(import("squander/core/runtime/game"), (error) => error?.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
 await assert.rejects(import("squander/docs/core-guides"), (error) => error?.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
+
+const reset_stylesheet = new URL("../dist/styles/reset.css", import.meta.url);
+const ui_stylesheet = new URL("../dist/styles/ui.css", import.meta.url);
+assert.equal((await readFile(reset_stylesheet, "utf8")).includes("@layer squander.reset"), true);
+assert.equal((await readFile(ui_stylesheet, "utf8")).includes("@layer squander.ui"), true);
 
 console.log("Validated explicit package exports and rejected undocumented deep imports");

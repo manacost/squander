@@ -10,6 +10,7 @@ declare module "prismjs" {
   const Prism: {
     languages: {
       javascript: Grammar;
+      css?: Grammar;
       markup: MarkupGrammar;
       svelte: MarkupGrammar;
       typescript?: Grammar;

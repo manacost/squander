@@ -147,6 +147,22 @@ monospace face that makes examples feel executable rather than ornamental.
 **The Two-Speed Type Rule.** Headings carry the personality; body and code
 carry the information. Never make utility text compete with a guide title.
 
+### Game UI type
+
+The shipped opt-in game UI theme uses a deliberately shallow heading scale:
+`1.5rem`, `1.375rem`, `1.25rem`, `1.125rem`, `1rem`, and `0.875rem`. Each step
+is close enough to keep HUDs and menus from reading like documents. Placement,
+grouping, contrast, and state carry the hierarchy. The display font and heading
+weight remain overridable through `--squander-font-display` and
+`--squander-font-heading-weight`.
+
+Game UI spacing is half-step compact by default. Forms align labels and controls
+in tight rows, and borders are reserved for actual control boundaries, tables,
+rules, and dialog edges. The default control surface is deep berry (`#741c3b`),
+with lighter berry boundaries and dark berry quiet rules. Buttons use a flat
+lower ledge as their primary depth cue, controlled by
+`--squander-button-ledge-size`.
+
 ## Layout
 
 Documentation uses a two-part workbench: a persistent left rail and a flexible
@@ -190,8 +206,8 @@ capsules, decorative clipping, and boxed wells.
 ### Buttons and action links
 
 - **Shape:** Compact, square, and quietly tactile.
-- **Primary/action surface:** Instrument slate background (`#39435b`) with white text and `0.65rem 0.9rem` padding.
-- **Hover:** Shift to slate hover (`#4a5a7b`) without glow or lift.
+- **Primary/action surface:** Instrument slate background (`#39435b`) with white text, compact padding, and a flat lower ledge.
+- **Hover:** Shift to slate hover (`#4a5a7b`) without glow, full border, or lift.
 - **Focus:** Preserve a visible browser or project focus treatment; never rely on color alone.
 
 ### Navigation

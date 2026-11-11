@@ -63,7 +63,9 @@
     "./svelte/adapter": {
       "types": "./dist/svelte/adapter.d.ts",
       "default": "./dist/svelte/adapter.js"
-    }
+    },
+    "./styles/reset.css": "./dist/styles/reset.css",
+    "./styles/ui.css": "./dist/styles/ui.css"
   },
   "files": [
     "dist",

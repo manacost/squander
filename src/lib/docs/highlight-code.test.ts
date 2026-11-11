@@ -12,4 +12,9 @@ describe("highlight_code", () => {
     expect(highlighted_code).toContain('<span class="token builtin">Promise</span>');
     expect(highlighted_code).toContain('<span class="token punctuation">&lt;</span>Game');
   });
+
+  it("highlights CSS and HTML samples", () => {
+    expect(highlight_code(":root { color: red; }", "css")).toContain('class="token selector"');
+    expect(highlight_code("<button>Start</button>", "html")).toContain('class="token tag"');
+  });
 });

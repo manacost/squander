@@ -135,7 +135,10 @@ const runtime_probe = `
   const ecs = await import("squander/ecs");
   const signals = await import("squander/signals");
   const adapter = await import("squander/svelte/adapter");
+  const reset_styles = import.meta.resolve("squander/styles/reset.css");
+  const ui_styles = import.meta.resolve("squander/styles/ui.css");
   if (typeof root.create_game !== "function" || typeof core.create_path !== "function" || typeof runtime.create_game !== "function" || typeof ecs.create_world !== "function" || typeof signals.create_signal !== "function" || typeof adapter.create_game_adapter !== "function") process.exit(1);
+  if (!reset_styles.endsWith("/styles/reset.css") || !ui_styles.endsWith("/styles/ui.css")) process.exit(1);
   if ("GameHost" in root || "app" in root) process.exit(1);
   try {
     await import("squander/core/runtime/game");

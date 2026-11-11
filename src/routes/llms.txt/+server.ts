@@ -94,6 +94,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 - [Scenes](#scenes)
 - [Text and fonts](#text-and-fonts)
 - [Svelte 5 game UI bridge](#svelte-5-game-ui-bridge)
+- [UI styles](#ui-styles)
 - [ECS Arena proof game](#ecs-arena-proof-game)
 - [Snake example](#snake-example)
 - [TypeScript and ownership rules](#typescript-and-ownership-rules)
@@ -603,6 +604,29 @@ experiences without becoming a dependency of the core runtime.
 The adapter is Node-safe and does not make the core runtime import Svelte. A host
 owns its subscriptions and game and disposes both on unmount. Svelte remains a
 required package peer until the package boundary changes.
+
+## UI styles
+
+Squander ships two independent, opt-in CSS entry points for game-facing HTML
+UI. Import \`squander/styles/reset.css\` for a global normalized baseline and
+\`squander/styles/ui.css\` for the dark-only quiet utility theme. The theme does
+not import the reset, so consumers can choose either layer or both:
+
+\`\`\`css
+@import "squander/styles/reset.css";
+@import "squander/styles/ui.css";
+\`\`\`
+
+The theme styles semantic HTML such as headings, links, buttons, form controls,
+dialogs, menus, fieldsets, tables, details, progress, and status outputs. It
+uses \`--squander-*\` custom properties for colors, typography, control sizing,
+focus treatment, and radius. Its heading sizes use a shallow 2px step scale so
+game UI hierarchy comes from grouping, placement, contrast, and state instead
+of document-style title jumps. Forms use compact aligned rows, and buttons use a
+flat lower ledge rather than a full border. Controls default to a deep berry
+surface (\`#741c3b\`). The rules are in a low-priority CSS layer so an application
+can override them. It does not style the WebGPU canvas, create layout
+components, add runtime behavior, or provide a light palette.
 
 ## Snake example
 

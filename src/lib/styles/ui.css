@@ -1,0 +1,281 @@
+@layer squander.ui {
+  :root {
+    color-scheme: dark;
+    --squander-color-canvas: #05070d;
+    --squander-color-surface: #151923;
+    --squander-color-surface-raised: #232121;
+    --squander-color-control: #741c3b;
+    --squander-color-control-hover: #8c3153;
+    --squander-color-control-ledge: #451827;
+    --squander-color-text: #eef2fb;
+    --squander-color-text-muted: #b8c5e4;
+    --squander-color-text-subtle: #8e9abd;
+    --squander-color-border: #cc7891;
+    --squander-color-border-quiet: #5b2d40;
+    --squander-color-accent: #d77980;
+    --squander-color-accent-hover: #e4979b;
+    --squander-color-danger: #e58b91;
+    --squander-color-success: #8fd7a4;
+    --squander-font-body: ui-sans-serif, system-ui, sans-serif;
+    --squander-font-display: ui-sans-serif, system-ui, sans-serif;
+    --squander-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --squander-font-heading-weight: 500;
+    --squander-heading-line-height: 1.25;
+    --squander-font-size-h1: 1.5rem;
+    --squander-font-size-h2: 1.375rem;
+    --squander-font-size-h3: 1.25rem;
+    --squander-font-size-h4: 1.125rem;
+    --squander-font-size-h5: 1rem;
+    --squander-font-size-h6: 0.875rem;
+    --squander-radius: 0.2rem;
+    --squander-control-size: 2.25rem;
+    --squander-button-ledge-size: 3px;
+    --squander-focus-width: 2px;
+    --squander-focus-offset: 3px;
+  }
+
+  :where(html, body) {
+    background: var(--squander-color-canvas);
+    color: var(--squander-color-text);
+    font-family: var(--squander-font-body);
+  }
+
+  :where(body) {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6) {
+    color: var(--squander-color-text);
+    font-family: var(--squander-font-display);
+    font-weight: var(--squander-font-heading-weight);
+    line-height: var(--squander-heading-line-height);
+  }
+
+  :where(h1) {
+    font-size: var(--squander-font-size-h1);
+  }
+
+  :where(h2) {
+    font-size: var(--squander-font-size-h2);
+  }
+
+  :where(h3) {
+    font-size: var(--squander-font-size-h3);
+  }
+
+  :where(h4) {
+    font-size: var(--squander-font-size-h4);
+  }
+
+  :where(h5) {
+    font-size: var(--squander-font-size-h5);
+  }
+
+  :where(h6) {
+    font-size: var(--squander-font-size-h6);
+  }
+
+  :where(a) {
+    color: var(--squander-color-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  :where(a:hover) {
+    color: var(--squander-color-accent-hover);
+  }
+
+  :where(code, kbd, samp, pre) {
+    font-family: var(--squander-font-mono);
+  }
+
+  :where(code, kbd, samp) {
+    color: var(--squander-color-text-muted);
+  }
+
+  :where(pre) {
+    overflow: auto;
+    border-block: 1px solid var(--squander-color-border-quiet);
+    background: var(--squander-color-surface);
+    padding: 0.5rem;
+  }
+
+  :where(hr) {
+    border: 0;
+    border-block-start: 1px solid var(--squander-color-border-quiet);
+    margin-block: 0.75rem;
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
+    min-block-size: var(--squander-control-size);
+    border: 1px solid var(--squander-color-border);
+    border-radius: var(--squander-radius);
+    background: var(--squander-color-control);
+    color: var(--squander-color-text);
+    font: inherit;
+  }
+
+  :where(button) {
+    min-block-size: var(--squander-control-size);
+    cursor: pointer;
+    border: 0;
+    border-block-end: var(--squander-button-ledge-size) solid var(--squander-color-control-ledge);
+    border-radius: var(--squander-radius);
+    background: var(--squander-color-control);
+    color: var(--squander-color-text);
+    font: inherit;
+    padding-block: 0.25rem;
+    padding-inline: 0.6rem;
+  }
+
+  :where(button:hover:not(:disabled)) {
+    background: var(--squander-color-control-hover);
+    border-block-end-color: var(--squander-color-control);
+  }
+
+  :where(button:active:not(:disabled)) {
+    background: var(--squander-color-surface-raised);
+    border-block-end-width: 1px;
+    transform: translateY(2px);
+  }
+
+  :where(button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible) {
+    outline: var(--squander-focus-width) solid var(--squander-color-accent);
+    outline-offset: var(--squander-focus-offset);
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
+    padding-block: 0.25rem;
+    padding-inline: 0.45rem;
+  }
+
+  :where(input)::placeholder,
+  :where(textarea)::placeholder {
+    color: var(--squander-color-text-subtle);
+    opacity: 1;
+  }
+
+  :where(textarea) {
+    min-block-size: 4rem;
+  }
+
+  :where(input[type="checkbox"], input[type="radio"], input[type="range"], progress) {
+    accent-color: var(--squander-color-accent);
+  }
+
+  :where(input[type="checkbox"], input[type="radio"]) {
+    inline-size: 1rem;
+    block-size: 1rem;
+  }
+
+  :where(button:disabled, input:disabled, select:disabled, textarea:disabled) {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  :where(label) {
+    color: var(--squander-color-text-muted);
+  }
+
+  :where(fieldset) {
+    display: grid;
+    gap: 0.5rem;
+    border: 0;
+    margin: 0;
+    padding-block: 0.5rem;
+    padding-inline: 0;
+  }
+
+  :where(fieldset > p) {
+    display: grid;
+    grid-template-columns: minmax(5rem, max-content) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+  }
+
+  :where(legend) {
+    padding-inline: 0;
+    color: var(--squander-color-text);
+    font-family: var(--squander-font-display);
+    font-size: var(--squander-font-size-h5);
+    font-weight: var(--squander-font-heading-weight);
+    line-height: 1.2;
+  }
+
+  :where(menu) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  :where(dialog) {
+    max-inline-size: min(32rem, calc(100vw - 2rem));
+    border: 1px solid var(--squander-color-border);
+    border-radius: var(--squander-radius);
+    background: var(--squander-color-surface);
+    color: var(--squander-color-text);
+    padding: 0.625rem;
+  }
+
+  :where(dialog)::backdrop {
+    background: rgb(5 7 13 / 80%);
+  }
+
+  :where(details) {
+    padding-block: 0.375rem;
+  }
+
+  :where(summary) {
+    cursor: pointer;
+    color: var(--squander-color-text-muted);
+  }
+
+  :where(output, [role="status"], [role="alert"]) {
+    display: block;
+    color: var(--squander-color-text-muted);
+    padding-block: 0.375rem;
+  }
+
+  :where([role="alert"]) {
+    color: var(--squander-color-danger);
+  }
+
+  :where(table) {
+    border-collapse: collapse;
+    inline-size: 100%;
+  }
+
+  :where(th, td) {
+    border-block-end: 1px solid var(--squander-color-border-quiet);
+    padding-block: 0.325rem;
+    padding-inline: 0.375rem;
+    text-align: start;
+    vertical-align: top;
+  }
+
+  :where(th) {
+    color: var(--squander-color-text);
+    font-weight: 600;
+  }
+
+  :where(td) {
+    color: var(--squander-color-text-muted);
+  }
+
+  ::selection {
+    background: var(--squander-color-accent);
+    color: var(--squander-color-canvas);
+  }
+
+  @media (max-width: 30rem) {
+    :where(fieldset > p) {
+      grid-template-columns: 1fr;
+      gap: 0.125rem;
+    }
+  }
+}
