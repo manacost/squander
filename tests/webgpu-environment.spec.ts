@@ -10,6 +10,8 @@ test("records the real WebGPU verification environment", async ({ browser, page 
     if (adapter === null) throw new Error("WebGPU adapter creation failed");
     const device = await adapter.requestDevice();
     const info = adapter.info;
+    const adapter_description = info.description.toLowerCase();
+    const adapter_architecture = info.architecture.toLowerCase();
     return {
       secure_context: window.isSecureContext,
       browser_gpu: true,
@@ -19,6 +21,7 @@ test("records the real WebGPU verification environment", async ({ browser, page 
       adapter_architecture: info.architecture,
       adapter_device: info.device,
       adapter_description: info.description,
+      hardware_adapter: adapter_architecture !== "swiftshader" && !adapter_description.includes("swiftshader"),
       device_pixel_ratio: window.devicePixelRatio,
       fixture_width: 1,
       fixture_height: 1,
@@ -41,5 +44,6 @@ test("records the real WebGPU verification environment", async ({ browser, page 
   expect(record.browser_gpu).toBe(true);
   expect(record.adapter).toBe(true);
   expect(record.device).toBe(true);
+  expect(record.hardware_adapter).toBe(true);
   expect(record.device_lost_promise).toBe(true);
 });
