@@ -4,6 +4,15 @@ import { readFile } from "node:fs/promises";
 const package_json = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 assert.equal(package_json.peerDependencies?.["pixi.js"], undefined);
 assert.equal(package_json.devDependencies?.["pixi.js"], undefined);
+assert.deepEqual(Object.keys(package_json.exports), [
+  ".",
+  "./core",
+  "./core/runtime",
+  "./ecs",
+  "./signals",
+  "./svelte",
+  "./svelte/adapter",
+]);
 
 const root = await import("squander");
 const core = await import("squander/core");
@@ -26,4 +35,7 @@ assert.equal(typeof signals.create_signal, "function");
 assert.equal(typeof signals.create_event_dispatcher, "function");
 assert.equal(typeof svelte_adapter.create_game_adapter, "function");
 
-console.log("Validated package subpaths: squander/core, squander/core/runtime, squander/ecs, squander/signals, squander/svelte/adapter");
+await assert.rejects(import("squander/core/runtime/game"), (error) => error?.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
+await assert.rejects(import("squander/docs/core-guides"), (error) => error?.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
+
+console.log("Validated explicit package exports and rejected undocumented deep imports");

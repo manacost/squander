@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Jump Rope
+Comment=A Squander jumping-rope game
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/jumping-rope %u
+Terminal=false
+Type=Application
+Icon=jumping-rope
+Categories=Utility;
+StartupWMClass=jumping-rope
+
+ 

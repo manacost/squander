@@ -1,0 +1,31 @@
+name: WebGPU verification
+
+on:
+  pull_request:
+  push:
+    branches: "main"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webgpu:
+    # This label must identify a trusted runner with a real WebGPU device.
+    runs-on: [self-hosted, webgpu]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run real WebGPU verification
+        run: npm run test:webgpu

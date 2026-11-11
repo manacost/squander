@@ -1,6 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import CodeBlock from "../../../../lib/docs/CodeBlock.svelte";
+  import { documentation_examples } from "../_examples/example-sources.js";
 </script>
 
 <svelte:head><title>Getting started · Squander</title></svelte:head>
@@ -22,30 +23,7 @@
     Put this in a route such as <code>src/routes/+page.svelte</code>. <code>Game</code> creates the browser-side game after mount, owns its renderer
     and frame loop, and disposes them when the page unmounts.
   </p>
-  <CodeBlock
-    language="svelte"
-    code={`<script lang="ts">
-  import { Game, type GameReadyContext } from "squander/svelte";
-
-  const start_game = async ({ scenes }: GameReadyContext): Promise<void> => {
-    await scenes.mount(({ renderer }) => ({
-      name: "main",
-      draw: () => {
-        void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
-      },
-    }));
-  };
-\u003C/script>
-
-<Game class="game-canvas" onReady={start_game} />
-
-<style>
-  :global(.game-canvas) {
-    width: min(100%, 800px);
-    aspect-ratio: 16 / 9;
-  }
-</style>`}
-  />
+  <CodeBlock language="svelte" code={documentation_examples.getting_started} />
 
   <h2>What you get</h2>
   <ul>

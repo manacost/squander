@@ -1,4 +1,7 @@
 import pkg from "../../../package.json" with { type: "json" };
+import { documentation_examples } from "../(docs)/docs/_examples/example-sources.js";
+
+const repository_url = pkg.repository.url.replace(/^git\+/, "").replace(/\.git$/, "");
 
 const llms_text = `# Squander
 
@@ -65,7 +68,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
 ## Author and project
 
 - Author and maintainer: Rory Duncan
-- GitHub: https://github.com/manacost/squander
+- GitHub: ${repository_url}
 - npm: https://www.npmjs.com/package/squander
 - License: MIT
 - Current package version in this repository: ${pkg.version}
@@ -111,20 +114,7 @@ Create a route such as \`src/routes/+page.svelte\` and mount the exported
 renderer and frame loop, and disposes them when the page unmounts:
 
 \`\`\`svelte
-<script lang="ts">
-  import { Game, type GameReadyContext } from "squander/svelte";
-
-  const start_game = async ({ scenes }: GameReadyContext): Promise<void> => {
-    await scenes.mount(({ renderer }) => ({
-      name: "main",
-      draw: () => {
-        void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
-      },
-    }));
-  };
-</script>
-
-<Game class="game-canvas" onReady={start_game} />
+${documentation_examples.getting_started.trimEnd()}
 \`\`\`
 
 The first scene clears the canvas so a successful setup is visible. WebGPU
@@ -180,6 +170,11 @@ in client-side lifecycle code and use SvelteKit for routing, delivery, and the
 surrounding experience. Use Svelte 5 runes in new application components, and
 keep gameplay state in the game unless it is UI state that the bridge
 intentionally publishes.
+
+The core runtime does not import Svelte at runtime. The Svelte integration is
+optional at the API level, but this package currently declares Svelte as a
+required peer dependency, so install Svelte even when using only the core entry
+points.
 
 ## Recommended project structure
 
@@ -246,25 +241,7 @@ composer. Setup runs before the frame loop starts. The \`update\` callback
 advances game state, and \`draw\` submits frame-local commands.
 
 \`\`\`ts
-import { create_game } from "squander";
-
-const game = create_game({
-  renderer: { canvas, width: 800, height: 450 },
-  scheduler,
-  setup: async ({ assets }) => {
-    // Load game-owned assets before the first frame.
-    void assets;
-  },
-  update: ({ delta_seconds }) => {
-    // Advance the player, enemies, and simulation.
-    void delta_seconds;
-  },
-  draw: () => {
-    // Submit renderer commands here.
-  },
-});
-
-await game.ready;
+${documentation_examples.root_game.trimEnd()}
 \`\`\`
 
 ## Signals and event dispatch
@@ -384,11 +361,7 @@ Use \`create_webgpu_renderer\` directly when a standalone renderer is useful;
 normally \`create_game\` creates and owns it.
 
 \`\`\`ts
-import { create_webgpu_renderer } from "squander/core/runtime";
-
-const renderer = await create_webgpu_renderer({ canvas, width: 800, height: 450 });
-await renderer.clear({ red: 0.04, green: 0.05, blue: 0.1, alpha: 1 });
-renderer.dispose();
+${documentation_examples.webgpu.trimEnd()}
 \`\`\`
 
 Handle \`WebGpuUnavailableError\` and \`GameDeviceLostError\` at an
@@ -406,11 +379,7 @@ explicit handles: release them when the owner no longer needs them. Accepted
 draws retain a safe lease until the renderer can release the underlying resource.
 
 \`\`\`ts
-const response = await fetch(asset("textures/player.png"), { signal });
-if (!response.ok) throw new Error(\`texture request failed: \${response.status}\`);
-const hero = await assets.load_texture(await response.blob(), { filter: "nearest", signal });
-renderer.draw_texture(hero.read(), { x: 400, y: 225, width: 64, height: 64 });
-hero.release();
+${documentation_examples.assets.trimEnd()}
 \`\`\`
 
 Use \`game.resources\` and \`game.geometry\` for resources that need a game
@@ -631,8 +600,9 @@ experiences without becoming a dependency of the core runtime.
 </GameHost>
 \`\`\`
 
-The adapter is optional, Node-safe, and does not make the core runtime depend on
-Svelte. A host owns its subscriptions and game and disposes both on unmount.
+The adapter is Node-safe and does not make the core runtime import Svelte. A host
+owns its subscriptions and game and disposes both on unmount. Svelte remains a
+required package peer until the package boundary changes.
 
 ## Snake example
 

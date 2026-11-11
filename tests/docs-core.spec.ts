@@ -1,13 +1,14 @@
 import { expect, test } from "@playwright/test";
+import package_json from "../package.json" with { type: "json" };
 
 test("core documentation is present in the sidebar and links to focused guides", async ({ page }) => {
   await page.goto("/docs/core");
-  await expect(page.getByRole("link", { name: "v8.1.0" })).toBeVisible();
+  await expect(page.getByRole("link", { name: `v${package_json.version}` })).toBeVisible();
   await expect(page.getByRole("link", { name: "core" })).toHaveAttribute("href", "/docs/core");
   await expect(page.getByRole("link", { name: "demos" })).toHaveAttribute("href", "/docs/examples/playground");
-  await page.getByRole("button", { name: "Toggle core section" }).click();
-  await page.getByRole("button", { name: "Toggle demos section" }).click();
   const text_link = page.locator('a.nested[href="/docs/examples/text"]');
+  await expect(text_link).toBeVisible();
+  await page.getByRole("button", { name: "Toggle demos section" }).click();
   await expect(text_link).toHaveAttribute("href", "/docs/examples/text");
   const input_link = page.locator('a.nested[href="/docs/examples/input"]');
   await expect(input_link).toHaveAttribute("href", "/docs/examples/input");
@@ -58,9 +59,7 @@ test("project structure guide recommends a route-edge and ECS-aware organization
 test("the docs landing page leads with Squander's code-first value", async ({ page }) => {
   await page.goto("/");
 
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Build games with TypeScript — or worse, just squander your time" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Squander your time building games" })).toBeVisible();
   await expect(page.getByText("code-first browser game toolkit")).toBeVisible();
   await expect(page.getByRole("heading", { level: 2, name: "Code-first, loop-owned" })).toBeVisible();
   await expect(page.getByText("Love2D")).toBeVisible();

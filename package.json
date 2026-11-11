@@ -29,7 +29,9 @@
     "check:coverage": "node verification/assert-coverage.mjs",
     "validate:specs": "node verification/validate-specs.mjs",
     "validate:package": "node verification/validate-package-exports.mjs",
-    "validate:consumer": "node verification/validate-isolated-consumer.mjs"
+    "validate:docs": "node verification/validate-docs.mjs",
+    "validate:consumer:fast": "node verification/validate-isolated-consumer.mjs --mode=fast",
+    "validate:consumer": "npm run package && node verification/validate-isolated-consumer.mjs --mode=full"
   },
   "exports": {
     ".": {
@@ -61,8 +63,7 @@
     "./svelte/adapter": {
       "types": "./dist/svelte/adapter.d.ts",
       "default": "./dist/svelte/adapter.js"
-    },
-    "./*": "./dist/*"
+    }
   },
   "files": [
     "dist",
@@ -109,7 +110,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ancient-cat/squander.git"
+    "url": "git+https://github.com/manacost/squander.git"
   },
   "engines": {
     "node": ">=22.17.0"

@@ -100,7 +100,7 @@ export const create_browser_input_adapter = (options: BrowserInputAdapterOptions
   host.addEventListener("wheel", on_wheel, { capture: true, passive: false });
 
   const focus = (): void => {
-    host.focus();
+    host.focus({ preventScroll: true });
   };
 
   const dispose = (): void => {

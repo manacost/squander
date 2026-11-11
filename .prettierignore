@@ -3,3 +3,10 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 .impeccable/hook.cache.json
+
+# Generated Wails consumer-project output
+examples/wails-jumping-rope/jumping-rope/build/**
+examples/wails-jumping-rope/jumping-rope/frontend/.svelte-kit/**
+examples/wails-jumping-rope/jumping-rope/frontend/bindings/**
+examples/wails-jumping-rope/jumping-rope/frontend/dist/**
+examples/wails-jumping-rope/jumping-rope/Taskfile.yml

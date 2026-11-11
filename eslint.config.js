@@ -17,6 +17,9 @@ export default defineConfig(
       "playwright-report/**",
       "test-results/**",
       "coverage/**",
+      "examples/wails-jumping-rope/**",
+      "verification/docs-examples/**",
+      "verification/consumer-fixtures/**",
       // Copied agent skill bundles are not product runtime, app, or test code.
       ".agents/**",
       ".github/skills/**",

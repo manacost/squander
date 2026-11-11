@@ -158,7 +158,8 @@
       {/each}
     </nav>
     <div class="links">
-      <a class="external-link" href="https://github.com/ancient-cat/squander" target="_blank">github</a>
+      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- External repository URL comes from package metadata. -->
+      <a class="external-link" href={data.package.repository_url} target="_blank">github</a>
       <a class="external-link" href="https://www.npmjs.com/package/squander" target="_blank">npm</a>
     </div>
   </header>

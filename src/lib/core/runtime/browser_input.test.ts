@@ -7,14 +7,14 @@ import { create_input_router, type InputEvent } from "./input.js";
 const pointer = (type: string, values: Record<string, unknown> = {}): PointerEvent => {
   const event = new Event(type, { bubbles: true, cancelable: true });
   Object.defineProperties(event, {
-    button: { value: values.button ?? 0 },
-    buttons: { value: values.buttons ?? 1 },
-    clientX: { value: values.clientX ?? 15 },
-    clientY: { value: values.clientY ?? 25 },
-    movementX: { value: values.movementX ?? 2 },
-    movementY: { value: values.movementY ?? 3 },
-    pointerId: { value: values.pointerId ?? 7 },
-    pointerType: { value: values.pointerType ?? "mouse" },
+    button: { value: Object.hasOwn(values, "button") ? values.button : 0 },
+    buttons: { value: Object.hasOwn(values, "buttons") ? values.buttons : 1 },
+    clientX: { value: Object.hasOwn(values, "clientX") ? values.clientX : 15 },
+    clientY: { value: Object.hasOwn(values, "clientY") ? values.clientY : 25 },
+    movementX: { value: Object.hasOwn(values, "movementX") ? values.movementX : 2 },
+    movementY: { value: Object.hasOwn(values, "movementY") ? values.movementY : 3 },
+    pointerId: { value: Object.hasOwn(values, "pointerId") ? values.pointerId : 7 },
+    pointerType: { value: Object.hasOwn(values, "pointerType") ? values.pointerType : "mouse" },
   });
   return event as PointerEvent;
 };
@@ -60,12 +60,35 @@ describe("[input-routing] create_browser_input_adapter", () => {
     adapter.dispose();
   });
 
+  it("ignores contenteditable targets and non-element keyboard targets by default", () => {
+    const host = document.createElement("div");
+    const editable = document.createElement("div");
+    editable.setAttribute("contenteditable", "true");
+    const text = document.createTextNode("text");
+    editable.append(text);
+    host.append(editable);
+    document.body.append(host);
+    const handler = vi.fn(() => "consume_and_prevent_default" as const);
+    const router = create_input_router();
+    router.on_global(handler);
+    const adapter = create_browser_input_adapter({ host, router });
+
+    editable.dispatchEvent(new KeyboardEvent("keydown", { key: "A", code: "KeyA", cancelable: true, bubbles: true }));
+    text.dispatchEvent(new KeyboardEvent("keydown", { key: "B", code: "KeyB", cancelable: true, bubbles: true }));
+
+    expect(handler).toHaveBeenCalledOnce();
+    adapter.dispose();
+  });
+
   it("can explicitly capture editable controls and recognizes contenteditable descendants", () => {
     const host = document.createElement("div");
     const editable = document.createElement("div");
-    editable.contentEditable = "true";
+    editable.setAttribute("contenteditable", "true");
+    const disabled_editable = document.createElement("div");
+    disabled_editable.setAttribute("contenteditable", "false");
     const input = document.createElement("input");
-    host.append(editable, input);
+    editable.append(input);
+    host.append(editable, disabled_editable);
     document.body.append(host);
     const handler = vi.fn(() => "consume_and_prevent_default" as const);
     const router = create_input_router();
@@ -73,8 +96,9 @@ describe("[input-routing] create_browser_input_adapter", () => {
     const adapter = create_browser_input_adapter({ host, router, capture_editable: true });
     const event = new KeyboardEvent("keydown", { key: "A", code: "KeyA", cancelable: true, bubbles: true });
     input.dispatchEvent(event);
+    disabled_editable.dispatchEvent(new KeyboardEvent("keydown", { key: "B", code: "KeyB", cancelable: true, bubbles: true }));
 
-    expect(handler).toHaveBeenCalledOnce();
+    expect(handler).toHaveBeenCalledTimes(2);
     expect(event.defaultPrevented).toBe(true);
     adapter.dispose();
   });
@@ -146,16 +170,67 @@ describe("[input-routing] create_browser_input_adapter", () => {
     });
     host.dispatchEvent(pointer("pointerdown", { pointerType: "touch" }));
     host.dispatchEvent(wheel);
+    host.dispatchEvent(new Event("wheel", { cancelable: true }));
 
     expect(focus).toHaveBeenCalledOnce();
-    expect(received.at(-1)).toEqual(expect.objectContaining({ phase: "wheel", pointer_type: "mouse", wheel_x: 8, wheel_y: 9 }));
+    expect(received[1]).toEqual(expect.objectContaining({ phase: "wheel", pointer_type: "mouse", wheel_x: 8, wheel_y: 9 }));
     expect(wheel.defaultPrevented).toBe(true);
+    adapter.dispose();
+  });
+
+  it("uses safe defaults when pointer fields are missing", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const received: InputEvent[] = [];
+    const router = create_input_router();
+    router.on_global((event) => {
+      received.push(event);
+      return "pass";
+    });
+    const adapter = create_browser_input_adapter({ host, router });
+
+    host.dispatchEvent(
+      pointer("pointermove", {
+        button: undefined,
+        movementX: undefined,
+        movementY: undefined,
+        pointerId: undefined,
+        pointerType: undefined,
+      }),
+    );
+
+    expect(received[0]).toEqual(
+      expect.objectContaining({ button: -1, movement_x: 0, movement_y: 0, pointer_id: 0, pointer_type: "mouse" }),
+    );
+    adapter.dispose();
+  });
+
+  it("does not capture pass-through presses or release uncaptured pointer cancels", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const set_capture = vi.fn();
+    const release_capture = vi.fn();
+    Object.defineProperties(host, {
+      setPointerCapture: { value: set_capture },
+      hasPointerCapture: { value: () => false },
+      releasePointerCapture: { value: release_capture },
+    });
+    const router = create_input_router();
+    router.on_global(() => "pass");
+    const adapter = create_browser_input_adapter({ host, router });
+
+    host.dispatchEvent(pointer("pointerdown"));
+    host.dispatchEvent(pointer("pointercancel"));
+
+    expect(set_capture).not.toHaveBeenCalled();
+    expect(release_capture).not.toHaveBeenCalled();
     adapter.dispose();
   });
 
   it("detaches listeners and can focus the host explicitly", () => {
     const host = document.createElement("div");
     document.body.append(host);
+    const focus = vi.spyOn(host, "focus");
     const handler = vi.fn(() => "consume" as const);
     const router = create_input_router();
     router.on_global(handler);
@@ -166,5 +241,6 @@ describe("[input-routing] create_browser_input_adapter", () => {
     adapter.focus();
 
     expect(handler).not.toHaveBeenCalled();
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
   });
 });

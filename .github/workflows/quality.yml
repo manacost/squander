@@ -1,0 +1,62 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: "main"
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate capability specifications
+        run: npm run validate:specs
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check types and Svelte diagnostics
+        run: npm run check
+
+      - name: Check public type contracts
+        run: npm run test:type
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Check runtime coverage
+        run: npm run test:coverage:runtime
+
+      - name: Enforce runtime coverage
+        run: npm run check:coverage
+
+      - name: Build site and package
+        run: npm run build
+
+      - name: Validate package exports
+        run: npm run validate:package
+
+      - name: Validate packed consumers
+        run: npm run validate:consumer
+
+      - name: Validate documentation examples
+        run: npm run validate:docs
+
+      - name: Run browser integration tests
+        run: npm run test:integration

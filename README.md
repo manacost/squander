@@ -6,7 +6,6 @@ sprites, primitives, paths, polygons, cameras, viewports, filtering, fonts,
 scenes, input routing, scene-owned UI, and typed UI state bridges.
 
 This checkout contains the npm package and the SvelteKit documentation site.
-The package version is `8.0.0`.
 
 ## Develop locally
 
@@ -28,24 +27,37 @@ Useful routes:
 ## Use the core runtime
 
 The package root and `squander/core` expose the same replacement runtime. The
-core package has no Svelte dependency.
+core runtime does not import Svelte at runtime, but this package currently
+requires Svelte as a peer dependency for its Svelte entry points.
 
 ```sh
 npm install squander@^8 svelte@^5
 ```
 
+<!-- example:root-game:start -->
+
 ```ts
-import { create_game } from "squander";
+import { create_game, type FrameScheduler } from "squander";
 
 const canvas = document.querySelector("canvas");
 if (!(canvas instanceof HTMLCanvasElement)) throw new Error("canvas is required");
 
+const scheduler: FrameScheduler = {
+  request_frame: (callback) => requestAnimationFrame(callback),
+  cancel_frame: (handle) => {
+    if (typeof handle !== "number") throw new Error("browser frame handles must be numbers");
+    cancelAnimationFrame(handle);
+  },
+  now_seconds: () => performance.now() / 1000,
+};
+
 const game = create_game({
   renderer: { canvas, width: 800, height: 450 },
+  scheduler,
   setup: ({ renderer }) => {
     void renderer;
   },
-  update: (delta_seconds) => {
+  update: ({ delta_seconds }) => {
     void delta_seconds;
   },
   draw: () => undefined,
@@ -53,6 +65,8 @@ const game = create_game({
 
 await game.ready;
 ```
+
+<!-- example:root-game:end -->
 
 Use `squander/core/runtime` when importing lower-level runtime types. Resources
 returned by the game-owned asset and geometry APIs are explicit handles and

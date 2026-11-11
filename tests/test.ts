@@ -1,12 +1,15 @@
 import { expect, test } from "@playwright/test";
+import package_json from "../package.json" with { type: "json" };
+
+const repository_url = package_json.repository.url.replace(/^git\+/, "").replace(/\.git$/, "");
 
 test("home page presents the project and primary navigation", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { level: 1, name: "squander" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "squander", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "core" })).toBeVisible();
   await expect(page.getByRole("link", { name: "npm" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "github" })).toHaveAttribute("href", "https://github.com/ancient-cat/squander");
+  await expect(page.getByRole("link", { name: "github" })).toHaveAttribute("href", repository_url);
 });
 
 test("documentation navigation opens the Core API guides", async ({ page }) => {

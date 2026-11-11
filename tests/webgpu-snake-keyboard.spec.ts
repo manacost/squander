@@ -9,8 +9,9 @@ test("Snake keeps keyboard controls in the game after starting from the menu", a
   await expect(page.getByTestId("snake-status")).toHaveText("playing");
   await expect(page.locator("canvas")).toBeFocused();
 
+  const scroll_before_direction = await page.evaluate(() => window.scrollY);
   await page.keyboard.press("ArrowDown");
 
   await expect(page.getByTestId("snake-direction")).toHaveText("down");
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scroll_before_direction);
 });
