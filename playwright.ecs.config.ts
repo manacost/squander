@@ -2,7 +2,7 @@ import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
   testDir: "tests",
-  testMatch: /ecs.*\.spec\.[jt]s/,
+  testMatch: /ecs-browser\.spec\.[jt]s/,
   use: {
     browserName: "chromium",
     baseURL: "http://127.0.0.1:4174",
