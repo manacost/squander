@@ -185,12 +185,12 @@ export const core_guides = [
     test_file: "src/lib/core/runtime/frame_loop.test.ts",
     example_description: "Watch motion advance from frame deltas supplied by the scheduler.",
     explanation:
-      "The scheduler supplies monotonic time to update callbacks. The frame loop clamps large deltas, resets timing after suspension, and does not advance simulation while paused.",
-    types: ["FrameScheduler", "UpdateTime", "FrameLoopState", "max_delta_seconds"],
+      "The scheduler supplies monotonic time to update callbacks. The default frame loop clamps large deltas, while fixed_step opts into bounded fixed updates and reports discarded catch-up time.",
+    types: ["FrameScheduler", "UpdateTime", "FrameLoopState", "max_delta_seconds", "FixedStepOptions"],
     sample:
       "const scheduler: FrameScheduler = {\n  request_frame: requestAnimationFrame,\n  cancel_frame: cancelAnimationFrame,\n  now_seconds: () => performance.now() / 1000,\n};",
     proof: "Frame-loop tests cover delta clamping, pause/resume, visibility suspension, timing reset, and callback failure.",
-    limitations: "Fixed-step simulation and scheduler integrations beyond the browser frame API are deferred.",
+    limitations: "Interpolation, rollback, and scheduler integrations beyond the browser frame API are deferred.",
   },
   {
     slug: "webgpu-runtime",

@@ -113,6 +113,57 @@ describe("[game-lifecycle] frame loop", () => {
     expect(draws).toBe(4);
   });
 
+  it("runs bounded fixed steps and reports discarded catch-up time", () => {
+    const scheduler = create_scheduler();
+    const updates: { delta: number; discarded: number; clamped: boolean }[] = [];
+    let draws = 0;
+    const loop = create_frame_loop({
+      scheduler: scheduler.scheduler,
+      fixed_step: { step_seconds: 0.1, max_steps_per_frame: 2 },
+      update: (time) => {
+        updates.push({ delta: time.delta_seconds, discarded: time.discarded_seconds, clamped: time.delta_was_clamped });
+      },
+      draw: () => {
+        draws += 1;
+      },
+    });
+
+    loop.start();
+    scheduler.tick();
+    scheduler.advance(0.25);
+    scheduler.tick();
+    scheduler.advance(0.05);
+    scheduler.tick();
+    scheduler.advance(0.65);
+    scheduler.tick();
+
+    expect(updates.map((update) => update.delta)).toEqual([0.1, 0.1, 0.1, 0.1]);
+    expect(updates.at(-1)?.delta).toBeCloseTo(0.1);
+    expect(updates.at(-1)?.discarded).toBeCloseTo(0.55);
+    expect(updates.at(-1)?.clamped).toBe(true);
+    expect(draws).toBe(4);
+  });
+
+  it("rejects invalid fixed-step options", () => {
+    const scheduler = create_scheduler();
+    expect(() =>
+      create_frame_loop({
+        scheduler: scheduler.scheduler,
+        fixed_step: { step_seconds: 0 },
+        update: () => undefined,
+        draw: () => undefined,
+      }),
+    ).toThrow(RangeError);
+    expect(() =>
+      create_frame_loop({
+        scheduler: scheduler.scheduler,
+        fixed_step: { step_seconds: 0.1, max_steps_per_frame: 0 },
+        update: () => undefined,
+        draw: () => undefined,
+      }),
+    ).toThrow(RangeError);
+  });
+
   it("suspends both callbacks while hidden and makes disposal idempotent", async () => {
     const scheduler = create_scheduler();
     let updates = 0;

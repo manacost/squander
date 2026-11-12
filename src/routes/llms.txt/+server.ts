@@ -27,7 +27,8 @@ game code, and agent-assisted development.
 
 Squander targets 2D browser games. WebGPU is the rendering path; a WebGL
 fallback is not promised. Advanced projections, custom shaders, render targets,
-mipmaps, and fixed-step simulation are future work rather than current APIs.
+and mipmaps are future work rather than current APIs. Fixed-step simulation is
+available as an opt-in game timing mode.
 
 ## Current goals
 
@@ -53,7 +54,7 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
   backlogs, or historical records; once a capability is implemented, refer to
   the feature and its observable behavior.
 - Keep deferred capabilities contract-driven: advanced projections, custom
-  shaders, render targets, mipmaps, fixed-step scheduling, and action mapping
+  shaders, render targets, mipmaps, and action mapping
   require their own supported behavior and evidence before inclusion.
 - The initial ECS capability is available from \`squander/ecs\`: define local
   object-shaped component tokens, create independent worlds, run typed fluent
@@ -381,8 +382,26 @@ game.resume();
 await game.dispose();
 \`\`\`
 
-Current timing is variable-step browser-frame timing. A fixed-step simulation is
-not part of the current runtime.
+Variable-step browser-frame timing remains the default. Opt into bounded fixed
+updates when simulation needs stable increments:
+
+\`\`\`ts
+const game = create_game({
+  renderer,
+  scheduler,
+  fixed_step: { step_seconds: 1 / 60, max_steps_per_frame: 5 },
+  update: (time) => {
+    simulate(time.delta_seconds);
+    if (time.discarded_seconds > 0) report_overload(time.discarded_seconds);
+  },
+  draw: (frame) => draw_game(frame),
+});
+\`\`\`
+
+The runtime runs a bounded update batch and draws once afterward. When the
+bound is reached, \`UpdateTime.discarded_seconds\` reports discarded catch-up
+time. Pause and hidden visibility do not advance the accumulator; interpolation
+and rollback are not included.
 
 ## WebGPU renderer
 

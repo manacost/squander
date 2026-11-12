@@ -874,6 +874,16 @@ Application code does not need to await or catch the internal submission
 promise. See the [game-lifecycle capability](../specs/game-lifecycle/spec.md)
 and [resource-ownership capability](../specs/resource-ownership/spec.md).
 
+## AD-065: Fixed-step simulation is opt-in and bounded
+
+Variable-step browser timing remains the default. A caller may opt into
+`fixed_step` with a positive `step_seconds` and a bounded
+`max_steps_per_frame`. The runtime runs the available fixed updates, draws once
+after that batch, and discards excess catch-up time when the bound is reached.
+The final update reports `discarded_seconds`; pause, hidden visibility, and
+disposal do not advance the accumulator. Interpolation and rollback are not
+part of this contract. See the [fixed-step capability](../specs/fixed-step/spec.md).
+
 ## Implementation readiness
 
 Capability contracts live under [specs](../specs/README.md). Their lifecycle

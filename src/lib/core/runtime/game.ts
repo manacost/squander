@@ -2,7 +2,7 @@ import { create_frame_loop, type FrameLoop, type FrameLoopOptions, type FrameLoo
 import { create_resource_owner, type ResourceOwner } from "./resource_ownership.js";
 import { create_geometry_owner, type GeometryOwner } from "./geometry_ownership.js";
 import { create_asset_cache, type AssetCache, type AssetManifest } from "./asset_loading.js";
-import type { UpdateTime } from "./timing.js";
+import type { FixedStepOptions, UpdateTime } from "./timing.js";
 import {
   create_webgpu_renderer,
   type ClearColor,
@@ -65,6 +65,7 @@ export type GameOptions<Manifest extends AssetManifest = AssetManifest> = Readon
   device_lost?: PromiseLike<unknown>;
   on_error?: (error: GameDeviceLostError | GameInitializationError | GameRuntimeError) => void;
   max_delta_seconds?: number;
+  fixed_step?: FixedStepOptions;
 }>;
 
 export type Game<Manifest extends AssetManifest = AssetManifest, EventMap extends SceneEventMap = SceneEventMap> = Readonly<{
@@ -95,6 +96,7 @@ const create_loop_options = (
   draw,
   on_error,
   max_delta_seconds: options.max_delta_seconds,
+  fixed_step: options.fixed_step,
 });
 
 function normalize_manifest<Manifest extends AssetManifest>(manifest: Manifest | undefined): Manifest;

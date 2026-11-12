@@ -4,6 +4,12 @@ export type UpdateTime = Readonly<{
   update_index: number;
   measured_delta_seconds: number;
   delta_was_clamped: boolean;
+  discarded_seconds: number;
+}>;
+
+export type FixedStepOptions = Readonly<{
+  step_seconds: number;
+  max_steps_per_frame?: number;
 }>;
 
 export type UpdateClockOptions = Readonly<{
@@ -29,6 +35,7 @@ const create_update_time = (
   update_index: number,
   measured_delta_seconds: number,
   delta_was_clamped: boolean,
+  discarded_seconds: number,
 ): UpdateTime =>
   Object.freeze({
     delta_seconds,
@@ -36,6 +43,7 @@ const create_update_time = (
     update_index,
     measured_delta_seconds,
     delta_was_clamped,
+    discarded_seconds,
   });
 
 export const create_update_clock = (options: UpdateClockOptions = {}): UpdateClock => {
@@ -54,7 +62,7 @@ export const create_update_clock = (options: UpdateClockOptions = {}): UpdateClo
 
     if (previous_timestamp_seconds === undefined) {
       previous_timestamp_seconds = timestamp_seconds;
-      const first_time = create_update_time(0, elapsed_seconds, update_index, 0, false);
+      const first_time = create_update_time(0, elapsed_seconds, update_index, 0, false, 0);
       update_index += 1;
       return first_time;
     }
@@ -62,7 +70,7 @@ export const create_update_clock = (options: UpdateClockOptions = {}): UpdateClo
     if (first_sample_after_reset) {
       first_sample_after_reset = false;
       previous_timestamp_seconds = timestamp_seconds;
-      const reset_time = create_update_time(0, elapsed_seconds, update_index, 0, false);
+      const reset_time = create_update_time(0, elapsed_seconds, update_index, 0, false, 0);
       update_index += 1;
       return reset_time;
     }
@@ -72,7 +80,7 @@ export const create_update_clock = (options: UpdateClockOptions = {}): UpdateClo
     const delta_seconds = Math.min(measured_delta_seconds, max_delta_seconds);
     const delta_was_clamped = delta_seconds !== measured_delta_seconds;
     elapsed_seconds += delta_seconds;
-    const time = create_update_time(delta_seconds, elapsed_seconds, update_index, measured_delta_seconds, delta_was_clamped);
+    const time = create_update_time(delta_seconds, elapsed_seconds, update_index, measured_delta_seconds, delta_was_clamped, 0);
     update_index += 1;
     return time;
   };

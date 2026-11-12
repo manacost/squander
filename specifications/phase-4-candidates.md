@@ -5,18 +5,17 @@ Last updated: 2026-10-22.
 These are future candidates, not committed scope. Acceptance criteria and test
 mappings must be defined before implementation.
 
-Earlier closeout work does not promote fixed-step scheduling or mipmaps into the
-current runtime.
+Earlier closeout work does not promote mipmaps into the current runtime.
 
-## P4-001: Optional fixed-step scheduling
+## P4-001: Optional fixed-step scheduling — promoted
 
 The runtime uses variable `update(dt)` timing. Consider an optional scheduler that
-advances simulation at a fixed interval independently of drawing.
+advances simulation at a fixed interval independently of drawing. The accepted
+contract is now implemented in [fixed-step](../specs/fixed-step/spec.md).
 
-Explore bounded catch-up updates, drawing between batches of updates,
-interpolation support, and overload behavior. No fixed-step or automatic draw
-skipping API is committed by this entry. A fixed timestep alone does not
-guarantee deterministic simulation or a sustainable update rate.
+The implementation uses bounded catch-up updates, one draw after each browser
+callback's update batch, and explicit overload reporting. Interpolation,
+rollback, and automatic draw skipping remain uncommitted.
 
 ## P4-002: Mipmap support
 

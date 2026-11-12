@@ -28,8 +28,9 @@ acceptance evidence, and the relevant documentation.
   is accepted in [render-frame](../specs/render-frame/spec.md).
 - **Text and assets:** Define rich layout, shaping, fallback, supplied atlas
   import, generated manifests, and advanced font workflows.
-- **Simulation and packaging:** Define fixed-step overload behavior, desktop
-  wrapper support, safe storage/math utilities, and the supported OS/GPU matrix.
+- **Simulation and packaging:** Define desktop wrapper support, safe
+  storage/math utilities, and the supported OS/GPU matrix. Fixed-step overload
+  behavior is accepted in [fixed-step](../specs/fixed-step/spec.md).
 
 See the [future capability candidate logs](phase-3-candidates.md) and
 [additional future capability log](phase-4-candidates.md) for current placement. Do not

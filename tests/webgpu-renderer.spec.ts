@@ -248,7 +248,9 @@ test("[game-lifecycle] handles a rejected frame submission without an unhandled 
       renderer_factory: async () => fake_renderer,
       scheduler,
       update: () => undefined,
-      draw: (frame) => frame.draw_commands([]),
+      draw: (frame) => {
+        frame.draw_commands([]);
+      },
       on_error: (error) => errors.push(error),
     });
     await game.ready;

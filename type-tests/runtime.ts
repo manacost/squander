@@ -21,6 +21,7 @@ import {
   type WebGpuRenderer,
   type WebGpuFont,
   type ResourceHandle,
+  type FixedStepOptions,
 } from "../src/lib/index.js";
 
 const renderer = {
@@ -28,6 +29,11 @@ const renderer = {
   width: 1,
   height: 1,
 };
+const fixed_step: FixedStepOptions = { step_seconds: 1 / 60, max_steps_per_frame: 5 };
+// @ts-expect-error Fixed-step durations must be numeric.
+const invalid_fixed_step: FixedStepOptions = { step_seconds: "1/60" };
+void fixed_step;
+void invalid_fixed_step;
 
 const path: Path = create_path([move_to(0, 0), line_to(1, 1), close()]);
 const polygon: Polygon = create_polygon([
@@ -82,6 +88,7 @@ const game = create_game({
     now_seconds: () => 0,
   },
   renderer,
+  fixed_step,
   setup: ({ geometry: game_geometry }) => {
     const handle = game_geometry.create({ vertices: [{ x: 0, y: 0 }], indices: [0, 0, 0] });
     handle.read(game_geometry);

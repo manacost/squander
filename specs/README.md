@@ -29,6 +29,7 @@ and slice evidence are archived under
 - [feature-documentation](feature-documentation/spec.md)
 - [game-lifecycle](game-lifecycle/spec.md)
 - [game-timing](game-timing/spec.md)
+- [fixed-step](fixed-step/spec.md)
 - [paths-and-polygons](paths-and-polygons/spec.md)
 - [resource-ownership](resource-ownership/spec.md)
 - [shape-drawing](shape-drawing/spec.md)
@@ -81,7 +82,7 @@ readback. Coverage and mocked GPU tests do not replace real-device evidence.
 ## Future work
 
 Read the candidate logs for deferred behavior such as action mapping,
-cursor-anchored zoom, automatic culling, custom shaders, fixed-step scheduling,
+cursor-anchored zoom, automatic culling, custom shaders,
 and mipmaps. The [ecs-system](ecs-system/spec.md) document is a Draft contract;
 do not treat it as an accepted implementation until its evidence plan passes.
 
