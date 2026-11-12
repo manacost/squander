@@ -51,6 +51,7 @@ and slice evidence are archived under
 ### Draft capabilities
 
 - [ecs-system](ecs-system/spec.md)
+- [ecs-system-composition](ecs-system-composition/spec.md)
 - [render-frame](render-frame/spec.md)
 - [renderer-performance](renderer-performance/spec.md)
 

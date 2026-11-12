@@ -259,9 +259,10 @@ Component values are object-shaped and must be structured-cloneable for
 `export()`, `import()`, and `toSnapshots()`. Functions, DOM objects, GPU handles,
 and other runtime-only values belong behind an application-owned serializer.
 
-The system factories are ordinary
-application code; they are shown to illustrate composition, not a required ECS
-protocol.
+The system factories are ordinary application code; they are shown to
+illustrate composition, not a required ECS protocol. The optional
+[`ecs-system-composition`](../ecs-system-composition/spec.md) helper provides
+ordered caller-owned execution without changing that boundary.
 
 The application-owned ECS Arena proof game in
 `src/routes/(game)/scenes/ecs-arena/+page.svelte` exercises this contract in a

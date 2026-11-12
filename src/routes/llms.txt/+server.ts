@@ -58,9 +58,9 @@ available as an opt-in game timing mode.
   require their own supported behavior and evidence before inclusion.
 - The initial ECS capability is available from \`squander/ecs\`: define local
   object-shaped component tokens, create independent worlds, run typed fluent
-  queries, and use world-level \`export()\`/\`import()\` snapshots. The ECS does
-  not register or schedule systems; callers compose ordinary systems and
-  lifecycle hooks. Node and trusted-local-origin browser benchmark profiles
+  queries, and use world-level \`export()\`/\`import()\` snapshots. The optional
+  \`create_ecs_system_pipeline\` helper orders caller-owned systems but does
+  not register them with a global scheduler. Node and trusted-local-origin browser benchmark profiles
   guard the supported workloads. Monotonic numeric IDs are the default;
   create_world(schema, { entity_policy: "generational" }) opts into packed
   generational handles and stale-handle checks. Archetype and typed-column
@@ -346,9 +346,20 @@ identity policy.
 World-level \`export()\` and \`import()\` preserve numeric entity IDs and
 component values without requiring persistence codecs on each component.
 JSON, binary formats, migrations, and runtime-only value policies belong in an
-application-owned serializer. The ECS provides no scheduler or system registry;
-callers decide whether an ordinary system exposes \`enter\`, \`update\`,
-\`draw\`, or \`exit\`, and where to invoke those hooks.
+application-owned serializer. The ECS provides no ambient scheduler or system
+registry; callers decide whether ordinary systems expose \`enter\`, \`update\`,
+\`draw\`, or \`exit\`, and where to invoke those hooks. When ordered updates
+are useful, use the optional caller-owned pipeline:
+
+\`\`\`ts
+import { create_ecs_system_pipeline } from "squander/ecs";
+
+const simulation = create_ecs_system_pipeline<typeof world.schema>([
+  { update: ({ world, time }) => movement_system(world, time.delta_seconds) },
+  { enabled: debug_enabled, update: ({ world }) => debug_system(world) },
+]);
+simulation.run(world, time);
+\`\`\`
 
 ## ECS Arena proof game
 

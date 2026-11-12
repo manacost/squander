@@ -1,4 +1,5 @@
-import { create_world, define_component, define_components } from "../src/lib/ecs/index.js";
+import { create_ecs_system_pipeline, create_world, define_component, define_components } from "../src/lib/ecs/index.js";
+import type { UpdateTime } from "../src/lib/core/runtime/timing.js";
 
 type Position = { x: number; y: number };
 type Velocity = { x: number; y: number };
@@ -16,6 +17,24 @@ generational_world.add(generational_entity, position, { x: 0, y: 0 });
 
 const policy: "monotonic" | "generational" = generational_world.entity_policy;
 void policy;
+
+const pipeline = create_ecs_system_pipeline<typeof schema>([
+  {
+    update: ({ world, time }) => {
+      const typed_time: UpdateTime = time;
+      world.read(entity, position);
+      void typed_time;
+    },
+  },
+]);
+pipeline.run(world, {
+  delta_seconds: 0.1,
+  elapsed_seconds: 0.1,
+  update_index: 0,
+  measured_delta_seconds: 0.1,
+  delta_was_clamped: false,
+  discarded_seconds: 0,
+});
 
 world.add(entity, position, { x: 0, y: 0 });
 world.add(entity, velocity, { x: 1, y: 0 });

@@ -52,7 +52,9 @@
   <header class="guide-intro">
     <p class="eyebrow">ECS guide</p>
     <h1>Entity-component system</h1>
-    <p class="summary">Create local schemas, query object-shaped components, and keep system composition in the caller.</p>
+    <p class="summary">
+      Create local schemas, query object-shaped components, and compose ordered systems without giving up caller ownership.
+    </p>
   </header>
 
   <section class="intro-section" aria-labelledby="what-is-ecs-title">
@@ -106,6 +108,10 @@
     <li><code>Query&lt;Schema, Included&gt;</code></li>
     <li><code>QueryMatch&lt;Schema, Included&gt;</code></li>
     <li><code>WorldSnapshot&lt;Schema&gt;</code></li>
+    <li><code>create_ecs_system_pipeline&lt;Schema&gt;()</code></li>
+    <li>
+      <code>EcsSystem&lt;Schema&gt;</code>, <code>EcsSystemContext&lt;Schema&gt;</code>, and <code>EcsSystemPipeline&lt;Schema&gt;</code>
+    </li>
   </ul>
 
   <h2>Minimum viable example</h2>
@@ -140,27 +146,29 @@ world.import(snapshot);`}
 
   <h2>Caller-owned systems</h2>
   <p>
-    Systems are ordinary application modules. The ECS supplies data and queries, while a scene or game loop chooses which lifecycle hooks to
-    call and in what order.
+    Systems are ordinary application modules. The optional pipeline helper supplies stable order and one shared timing snapshot, while the
+    caller still chooses when to run it. There is no ambient registration or hidden animation loop.
   </p>
   <CodeBlock
     language="typescript"
-    code={`const movement = {
-  enter: () => {},
-  update: () => {
-    world.query().with(position).each(({ read, write }) => {
-      write(position).x += read(position).y;
-    });
-  },
-  draw: () => {},
-};
+    code={`import { create_ecs_system_pipeline } from "squander/ecs";
 
-// The caller owns scheduling and may expose only the hooks it needs.
-const scene = {
-  enter: movement.enter,
-  update: movement.update,
-  draw: movement.draw,
-};`}
+const simulation = create_ecs_system_pipeline<typeof world.schema>([
+  {
+    update: ({ world: simulation_world, time }) => {
+      simulation_world.query().with(position).each(({ read, write }) => {
+        write(position).x += read(position).y * time.delta_seconds;
+      });
+    },
+  },
+  {
+    enabled: debug_enabled,
+    update: ({ world: simulation_world }) => draw_debug_data(simulation_world),
+  },
+]);
+
+// The caller owns the game update boundary.
+simulation.run(world, time);`}
   />
 
   <h2>Scope and limitations</h2>
@@ -169,7 +177,8 @@ const scene = {
     iteration finishes. Monotonic IDs are the default; generational IDs are available through <code
       >{`{ entity_policy: "generational" }`}</code
     >. Snapshot values must be structured-cloneable. The ECS does not provide a scheduler or system registry. JSON and binary serialization,
-    migrations, typed columns, and archetype storage remain application or later optimization seams.
+    migrations, typed columns, and archetype storage remain application or later optimization seams. The pipeline is optional and does not
+    replace scene lifecycle hooks.
   </p>
 </article>
 
