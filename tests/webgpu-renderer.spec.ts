@@ -173,6 +173,113 @@ test("[render-frame] captures ordered layers from one logical frame", async ({ p
   expect(result.second_pixel).toEqual([0, 0, 255, 255]);
 });
 
+test("[game-lifecycle] handles a rejected frame submission without an unhandled rejection", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("lifecycle verification requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("lifecycle verification requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("lifecycle verification adapter creation failed");
+    const device = await adapter.requestDevice();
+    let callback: (() => void) | undefined;
+    let unhandled_rejection = false;
+    const rejection_listener = (event: PromiseRejectionEvent): void => {
+      unhandled_rejection = true;
+      event.preventDefault();
+    };
+    addEventListener("unhandledrejection", rejection_listener);
+    const scheduler = {
+      request_frame: (next_callback: () => void) => {
+        callback = next_callback;
+        return 1;
+      },
+      cancel_frame: () => {
+        callback = undefined;
+      },
+      now_seconds: () => 0,
+    };
+    const cause = new Error("browser submission failure");
+    const fake_renderer = {
+      begin_frame: () => ({
+        draw_commands: () => undefined,
+        submit: async () => {
+          throw cause;
+        },
+        capture: async () => new Uint8Array(),
+      }),
+      clear: async () => new Uint8Array(),
+      create_texture: () => {
+        throw new Error("unused");
+      },
+      create_texture_from_image: () => {
+        throw new Error("unused");
+      },
+      create_texture_from_blob: async () => {
+        throw new Error("unused");
+      },
+      create_font_from_url: async () => {
+        throw new Error("unused");
+      },
+      draw_texture: async () => new Uint8Array(),
+      draw_textures: async () => new Uint8Array(),
+      draw_text: async () => new Uint8Array(),
+      draw_commands: async () => new Uint8Array(),
+      resize: () => undefined,
+      get_viewport: () => ({
+        logical_width: 1,
+        logical_height: 1,
+        css_width: 1,
+        css_height: 1,
+        physical_width: 1,
+        physical_height: 1,
+        content_width: 1,
+        content_height: 1,
+        offset_x: 0,
+        offset_y: 0,
+      }),
+      dispose: () => undefined,
+    } as unknown as import("../src/lib/core/runtime/webgpu_renderer.js").WebGpuRenderer;
+    const game_module = (await import(
+      new URL("/src/lib/core/runtime/game.ts", location.origin).href
+    )) as typeof import("../src/lib/core/runtime/game.js");
+    const errors: unknown[] = [];
+    const game = game_module.create_game({
+      renderer: { canvas: document.createElement("canvas"), width: 1, height: 1 },
+      renderer_factory: async () => fake_renderer,
+      scheduler,
+      update: () => undefined,
+      draw: (frame) => frame.draw_commands([]),
+      on_error: (error) => errors.push(error),
+    });
+    await game.ready;
+    callback?.();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    removeEventListener("unhandledrejection", rejection_listener);
+    const error = errors[0];
+    const state = game.get_state();
+    await game.dispose();
+    return {
+      secure: window.isSecureContext,
+      gpu: "gpu" in navigator,
+      device: device.lost instanceof Promise,
+      error_name: error instanceof Error ? error.name : "unknown",
+      cause_message: error instanceof Error && error.cause instanceof Error ? error.cause.message : "unknown",
+      unhandled_rejection,
+      callback_pending: callback !== undefined,
+      state,
+    };
+  });
+
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.device).toBe(true);
+  expect(result.error_name).toBe("GameRuntimeError");
+  expect(result.cause_message).toBe("browser submission failure");
+  expect(result.unhandled_rejection).toBe(false);
+  expect(result.callback_pending).toBe(false);
+  expect(result.state).toBe("stopped");
+});
+
 test("[webgpu-runtime] isolates simultaneous game devices and disposal", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

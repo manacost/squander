@@ -68,6 +68,9 @@ Current verification:
   runtime errors in the `[game-lifecycle] game setup` suite, including one
   application-and-scene frame submission, in-flight disposal, and asynchronous
   submission failure.
+- [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts) covers
+  the browser promise boundary with a trusted WebGPU environment assertion,
+  including no unhandled rejection and cancellation of the queued callback.
 
 The game controller exposes a synchronous factory with a `ready` promise. Setup
 receives an abort signal, renderer, geometry owner, resource owner, and asset
