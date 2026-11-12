@@ -53,7 +53,9 @@ implemented and listed below for historical traceability.
 - Manual camera `begin()`/`end()` scopes if a concrete need emerges beyond the
   synchronous, exception-safe `camera.draw(callback)` API (AD-045).
 
-- Custom shaders, render targets, and advanced rendering effects.
+- Broader custom shader layouts and advanced rendering effects; the constrained
+  fragment-effect capability is now implemented in
+  [custom-shader-effects](../specs/custom-shader-effects/spec.md).
 - Generated asset manifests.
 - Advanced text layout, complex-script shaping, and richer font capabilities.
 - Desktop packaging validation against a concrete wrapper/OS/GPU support matrix.

@@ -208,7 +208,7 @@ export const core_guides = [
       'const renderer = await create_webgpu_renderer({ canvas, width: 800, height: 450 });\nconst frame = renderer.begin_frame();\nframe.draw_commands([{ kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: { red: 0, green: 0, blue: 0, alpha: 1 } } }]);\nawait frame.submit();\nrenderer.dispose();',
     proof:
       "Real Chromium tests assert secure context, GPU availability, adapter/device creation, deterministic readback, and two-game isolation.",
-    limitations: "Custom shaders, render targets, and advanced GPU resource APIs are deferred.",
+    limitations: "Render targets and constrained texture fragment effects are available; arbitrary GPU resource APIs remain deferred.",
   },
   {
     slug: "resource-ownership",
@@ -243,7 +243,26 @@ export const core_guides = [
       'const target = renderer.create_render_target({ width: 800, height: 450 });\nconst frame = renderer.begin_frame();\nframe.set_target(target);\nframe.draw_commands(scene_commands);\nframe.set_target();\nframe.draw_commands([{ kind: "texture", draw: { texture: target } }]);\ntarget.release();\nawait frame.submit();',
     proof: "Trusted WebGPU readback verifies offscreen rendering, target sampling, and release-before-submit ownership.",
     limitations:
-      "Targets use the preferred canvas format. Mipmaps, multisampling, arbitrary formats, and custom shaders remain separate capabilities.",
+      "Targets use the preferred canvas format. Mipmaps, multisampling, arbitrary formats, and broader shader layouts remain separate capabilities.",
+  },
+  {
+    slug: "custom-shader-effects",
+    label: "custom shader effects",
+    title: "Custom shader effects",
+    summary: "Apply a constrained fragment effect while Squander owns GPU resources.",
+    evidence_kind: "test",
+    evidence_label: "Read the custom-shader WebGPU test",
+    test_file: "tests/webgpu-renderer.spec.ts",
+    example_description: "Use a fixed fragment body and numeric uniforms to transform a sampled texture.",
+    explanation:
+      "Effects run after texture sampling and tinting. The body can read color, normalized uv coordinates, and a four-vector uniform array; bindings, pipelines, and disposal remain private.",
+    types: ["ShaderEffectOptions", "WebGpuShaderEffect", "TextureDrawOptions.effect"],
+    sample:
+      'const effect = renderer.create_shader_effect({\n  fragment_code: "return vec4f(color.rgb * uniforms[0].x, color.a);",\n  uniforms: [0.75],\n});\nawait renderer.draw_texture(texture, { effect });\neffect.release();',
+    proof:
+      "CPU validation tests and trusted Chromium WebGPU readback verify metadata rejection, uniform-driven output, and renderer ownership.",
+    limitations:
+      "Only texture and render-target draws are supported. Custom vertex code, arbitrary bindings, storage textures, mipmaps, and untrusted-source security guarantees are out of scope.",
   },
   {
     slug: "svelte-bridge",

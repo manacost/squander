@@ -427,6 +427,14 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     await expect(renderer.draw_texture(texture, { opacity: 2 })).rejects.toThrow(/opacity/);
     await expect(renderer.draw_texture(texture, { blend_mode: "unsupported" as "normal" })).rejects.toThrow(/unsupported blend mode/);
     await expect(renderer.draw_texture(texture, { tint: { red: 2, green: 0, blue: 0, alpha: 1 } })).rejects.toThrow(/between/);
+    expect(() => renderer.create_shader_effect({ fragment_code: "" })).toThrow(/fragment_code/);
+    expect(() => renderer.create_shader_effect({ fragment_code: "@group(0) fn effect() -> vec4f { return color; }" })).toThrow(
+      /WGSL items/,
+    );
+    expect(() => renderer.create_shader_effect({ fragment_code: "return color;", uniforms: [Number.NaN] })).toThrow(/finite/);
+    const shader_effect = renderer.create_shader_effect({ fragment_code: "return color;", uniforms: [1] });
+    await renderer.draw_texture(texture, { effect: shader_effect });
+    shader_effect.release();
     await renderer.draw_commands([{ kind: "geometry", draw: { geometry, owner: geometry_owner, color } }]);
     await renderer.draw_commands([{ kind: "geometry", draw: { geometry, owner: geometry_owner, color } }]);
     geometry.update(geometry_owner, {

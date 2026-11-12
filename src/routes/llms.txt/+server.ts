@@ -26,8 +26,9 @@ game code, and agent-assisted development.
   supported and deferred behavior.
 
 Squander targets 2D browser games. WebGPU is the rendering path; a WebGL
-fallback is not promised. Advanced projections, custom shaders, render targets,
-and mipmaps are future work rather than current APIs. Fixed-step simulation is
+fallback is not promised. Mipmaps, swappable projections, and arbitrary GPU
+resource APIs remain deferred. Production frames, render targets, and
+constrained texture fragment effects are available. Fixed-step simulation is
 available as an opt-in game timing mode.
 
 ## Current goals
@@ -53,8 +54,8 @@ available as an opt-in game timing mode.
   capabilities. Use phase terminology only for active plans, candidate
   backlogs, or historical records; once a capability is implemented, refer to
   the feature and its observable behavior.
-- Keep deferred capabilities contract-driven: advanced projections, custom
-  shaders, render targets, and mipmaps
+- Keep deferred capabilities contract-driven: advanced projections, broader
+  custom shaders, and mipmaps
   require their own supported behavior and evidence before inclusion.
 - The initial ECS capability is available from \`squander/ecs\`: define local
   object-shaped component tokens, create independent worlds, run typed fluent
@@ -449,9 +450,10 @@ ${documentation_examples.webgpu.trimEnd()}
 \`\`\`
 
 Handle \`WebGpuUnavailableError\` and \`GameDeviceLostError\` at an
-application boundary. Renderer-owned targets are available for offscreen
-composition; custom shaders, mipmaps, and swappable projections remain outside
-the current contract.
+application boundary. Renderer-owned targets and constrained texture fragment
+effects are available for offscreen composition and postprocessing; mipmaps,
+swappable projections, and arbitrary shader bindings remain outside the current
+contract.
 
 \`\`\`ts
 const target = renderer.create_render_target({ width: 800, height: 450 });
@@ -462,6 +464,19 @@ frame.set_target();
 frame.draw_commands([{ kind: "texture", draw: { texture: target } }]);
 target.release();
 await frame.submit();
+\`\`\`
+
+Custom effects receive the sampled and tinted \`color\`, normalized \`uv\`, and
+up to 16 numeric values exposed as \`uniforms[0]\` through \`uniforms[3]\`.
+Squander owns shader bindings, pipelines, and GPU buffers.
+
+\`\`\`ts
+const effect = renderer.create_shader_effect({
+  fragment_code: "return vec4f(color.rgb * uniforms[0].x, color.a);",
+  uniforms: [0.75],
+});
+await renderer.draw_texture(texture, { effect });
+effect.release();
 \`\`\`
 
 ## Assets and resources

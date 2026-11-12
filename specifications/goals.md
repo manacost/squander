@@ -78,9 +78,11 @@ capability specifications, and durable rationale belongs in the decision log.
 - Squander is browser-first and currently targets 2D games. Future desktop
   embedding can build on the same runtime but is not a current product
   requirement.
-- Advanced projections, custom shaders, render targets, mipmaps, fixed-step
-  scheduling, action mapping, and other deferred capabilities must earn their
-  own contracts and evidence before becoming supported behavior.
+- Advanced projections, mipmaps, broader shader/resource APIs, and other
+  deferred capabilities must earn their own contracts and evidence before
+  becoming supported behavior. Production frames, fixed-step scheduling, action
+  mapping, render targets, and constrained texture effects have earned those
+  contracts.
 - The core runtime must remain useful without Svelte. Svelte and SvelteKit are
   integration and delivery choices, not prerequisites for game simulation or
   rendering.

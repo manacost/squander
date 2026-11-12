@@ -885,6 +885,18 @@ The final update reports `discarded_seconds`; pause, hidden visibility, and
 disposal do not advance the accumulator. Interpolation and rollback are not
 part of this contract. See the [fixed-step capability](../specs/fixed-step/spec.md).
 
+## AD-066: Custom effects use a constrained fragment-body contract
+
+Texture draws may opt into a renderer-owned fragment effect. The caller supplies
+only a validated fragment body plus at most 16 finite numeric uniform values;
+Squander owns the fixed vertex layout, sampled texture, uniform buffer, bind
+group, pipeline variants, and disposal. The body receives `color`, `uv`, and a
+four-vector uniform array and must return a `vec4f`. Raw WGSL module items,
+bindings, resources, custom vertex work, and arbitrary GPU objects remain
+private. Compilation failures follow the normal draw and game lifecycle error
+path. This is an API-shape restriction, not a security boundary for untrusted
+shader source. See the [custom shader effects capability](../specs/custom-shader-effects/spec.md).
+
 ## Implementation readiness
 
 Capability contracts live under [specs](../specs/README.md). Their lifecycle

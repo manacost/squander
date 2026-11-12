@@ -56,6 +56,15 @@ export type WebGpuRenderTarget = Readonly<{
   release: () => void;
 }>;
 
+export type ShaderEffectOptions = Readonly<{
+  fragment_code: string;
+  uniforms?: readonly number[];
+}>;
+
+export type WebGpuShaderEffect = Readonly<{
+  release: () => void;
+}>;
+
 export type TextureDrawOptions = Readonly<{
   region?: Readonly<{ x: number; y: number; width: number; height: number }>;
   x?: number;
@@ -72,6 +81,7 @@ export type TextureDrawOptions = Readonly<{
   shape_x?: number;
   shape_y?: number;
   blend_mode?: BlendMode;
+  effect?: WebGpuShaderEffect;
 }>;
 
 export type TextureDraw = Readonly<{ texture: WebGpuTexture | WebGpuRenderTarget; options?: TextureDrawOptions }>;
@@ -122,6 +132,7 @@ export type WebGpuRenderer = Readonly<{
   clear: (color: ClearColor) => Promise<Uint8Array>;
   create_texture: (pixels: Uint8Array, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
   create_render_target: (options: RenderTargetOptions) => WebGpuRenderTarget;
+  create_shader_effect: (options: ShaderEffectOptions) => WebGpuShaderEffect;
   create_texture_from_image: (image: CanvasImageSource, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
   create_texture_from_blob: (source: Blob, options?: TextureFilteringOptions, signal?: AbortSignal) => Promise<WebGpuTexture>;
   create_font_from_url: (source: string, options?: FontOptions) => Promise<WebGpuFont>;
@@ -158,6 +169,21 @@ const resolve_blend_mode = (value: unknown): BlendMode => {
   throw new RangeError(`unsupported blend mode: ${label}`);
 };
 
+const validate_shader_effect = (options: ShaderEffectOptions): readonly number[] => {
+  if (typeof options.fragment_code !== "string" || options.fragment_code.trim().length === 0 || options.fragment_code.length > 4096) {
+    throw new RangeError("shader effect fragment_code must be a nonempty string no longer than 4096 characters");
+  }
+  if (!/\breturn\b/.test(options.fragment_code)) throw new RangeError("shader effect fragment_code must return a vec4f value");
+  if (/@(group|binding)|\b(var|fn|struct|texture|sampler|import)\b/.test(options.fragment_code)) {
+    throw new RangeError("shader effect fragment_code cannot declare GPU bindings or WGSL items");
+  }
+  const uniforms = options.uniforms ?? [];
+  if (uniforms.length > 16 || uniforms.some((value) => !Number.isFinite(value))) {
+    throw new RangeError("shader effect uniforms must contain at most 16 finite numbers");
+  }
+  return uniforms;
+};
+
 const copy_bytes_per_row_alignment = 256;
 
 const default_clear_color: ClearColor = Object.freeze({ red: 0, green: 0, blue: 0, alpha: 1 });
@@ -165,7 +191,7 @@ const default_clear_color: ClearColor = Object.freeze({ red: 0, green: 0, blue: 
 const get_readback_bytes_per_row = (width: number): number =>
   Math.ceil((width * 4) / copy_bytes_per_row_alignment) * copy_bytes_per_row_alignment;
 
-const textured_shader = /* wgsl */ `
+const create_textured_shader = (fragment_code: string): string => /* wgsl */ `
 struct VertexOutput {
   @builtin(position) position: vec4f,
   @location(0) uv: vec2f,
@@ -190,6 +216,10 @@ fn vertex_main(
 
 @group(0) @binding(0) var texture_sampler: sampler;
 @group(0) @binding(1) var texture_data: texture_2d<f32>;
+struct EffectUniforms {
+  values: array<vec4f, 4>,
+};
+@group(0) @binding(2) var<uniform> effect_uniforms: EffectUniforms;
 
 @fragment
 fn fragment_main(input: VertexOutput) -> @location(0) vec4f {
@@ -212,9 +242,14 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4f {
       discard;
     }
   }
-  return textureSample(texture_data, texture_sampler, input.uv) * input.tint;
+  let color = textureSample(texture_data, texture_sampler, input.uv) * input.tint;
+  let uniforms = effect_uniforms.values;
+  let uv = input.uv;
+  ${fragment_code}
 }
 `;
+
+const textured_shader = create_textured_shader("return color;");
 
 const normalize_readback = (
   pixels: Uint8Array,
@@ -277,10 +312,23 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     filtering: ReturnType<typeof resolve_texture_filtering>;
   }>;
   const render_target_states = new WeakMap<WebGpuRenderTarget, RenderTargetState>();
+  type ShaderEffectState = Readonly<{
+    resource: ResourceHandle<GPUBuffer>;
+    fragment_code: string;
+    pipelines: Map<BlendMode, GPURenderPipeline>;
+  }>;
+  const shader_effect_states = new WeakMap<WebGpuShaderEffect, ShaderEffectState>();
+  const default_uniform_resource = resources.acquire(
+    device.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST }),
+    (resource) => {
+      resource.destroy();
+    },
+  );
   const pipeline_bind_group_layout = device.createBindGroupLayout({
     entries: [
       { binding: 0, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
       { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: "float", viewDimension: "2d", multisampled: false } },
+      { binding: 2, visibility: GPUShaderStage.FRAGMENT, buffer: { type: "uniform", minBindingSize: 64 } },
     ],
   });
   const pipeline_layout = device.createPipelineLayout({ bindGroupLayouts: [pipeline_bind_group_layout] });
@@ -302,7 +350,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
     };
   };
-  const create_pipeline = (blend_mode: BlendMode): GPURenderPipeline =>
+  const create_pipeline = (blend_mode: BlendMode, shader_code: string = textured_shader): GPURenderPipeline =>
     device.createRenderPipeline({
       layout: pipeline_layout,
       vertex: {
@@ -321,7 +369,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         ],
       },
       fragment: {
-        module: device.createShaderModule({ code: textured_shader }),
+        module: device.createShaderModule({ code: shader_code }),
         entryPoint: "fragment_main",
         targets: [{ format, blend: blend_state(blend_mode) }],
       },
@@ -334,6 +382,13 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   ]);
   const pipeline = pipelines.get("normal");
   if (pipeline === undefined) throw new Error("normal blend pipeline was not created");
+  const get_effect_pipeline = (effect: ShaderEffectState, blend_mode: BlendMode): GPURenderPipeline => {
+    const cached = effect.pipelines.get(blend_mode);
+    if (cached !== undefined) return cached;
+    const created = create_pipeline(blend_mode, create_textured_shader(effect.fragment_code));
+    effect.pipelines.set(blend_mode, created);
+    return created;
+  };
   let disposed = false;
   const device_lost = device.lost.then((info) => info);
   let solid_texture: WebGpuTexture | undefined;
@@ -346,7 +401,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   const sampler_cache = new Map<string, GPUSampler>();
   type ReusableBuffer = { buffer: GPUBuffer; capacity: number; usage: number; in_use: boolean };
   const reusable_buffers: ReusableBuffer[] = [];
-  type BindGroupCache = WeakMap<GPUTexture, WeakMap<GPUSampler, GPUBindGroup>>;
+  type BindGroupCache = WeakMap<GPUTexture, WeakMap<GPUSampler, WeakMap<GPUBuffer, GPUBindGroup>>>;
   let bind_group_cache: BindGroupCache = new WeakMap();
 
   const acquire_reusable_buffer = (required_size: number, usage: number): ReusableBuffer => {
@@ -367,13 +422,18 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     }
   };
 
-  const get_bind_group = (texture: GPUTexture, sampler: GPUSampler): GPUBindGroup => {
+  const get_bind_group = (texture: GPUTexture, sampler: GPUSampler, uniform_buffer: GPUBuffer): GPUBindGroup => {
     let sampler_groups = bind_group_cache.get(texture);
     if (sampler_groups === undefined) {
       sampler_groups = new WeakMap();
       bind_group_cache.set(texture, sampler_groups);
     }
-    const cached = sampler_groups.get(sampler);
+    let uniform_groups = sampler_groups.get(sampler);
+    if (uniform_groups === undefined) {
+      uniform_groups = new WeakMap();
+      sampler_groups.set(sampler, uniform_groups);
+    }
+    const cached = uniform_groups.get(uniform_buffer);
     if (cached !== undefined) {
       return cached;
     }
@@ -382,9 +442,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       entries: [
         { binding: 0, resource: sampler },
         { binding: 1, resource: texture.createView() },
+        { binding: 2, resource: { buffer: uniform_buffer } },
       ],
     });
-    sampler_groups.set(sampler, bind_group);
+    uniform_groups.set(uniform_buffer, bind_group);
     return bind_group;
   };
 
@@ -489,6 +550,20 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     return target;
   };
 
+  const create_shader_effect = (effect_options: ShaderEffectOptions): WebGpuShaderEffect => {
+    const uniforms = validate_shader_effect(effect_options);
+    const uniform_values = new Float32Array(16);
+    uniform_values.set(uniforms);
+    const buffer = device.createBuffer({ size: uniform_values.byteLength, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    device.queue.writeBuffer(buffer, 0, uniform_values);
+    const resource = resources.acquire(buffer, (resource_to_destroy) => {
+      resource_to_destroy.destroy();
+    });
+    const effect = Object.freeze({ release: resource.release });
+    shader_effect_states.set(effect, { resource, fragment_code: effect_options.fragment_code, pipelines: new Map() });
+    return effect;
+  };
+
   const create_texture_from_image = (
     image: CanvasImageSource,
     width: number,
@@ -541,6 +616,12 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     if (target_state === undefined) throw new Error("render target does not belong to this renderer");
     const borrowed_lease = target_leases?.get(texture);
     return borrowed_lease === undefined ? target_state : { ...target_state, borrowed_lease };
+  };
+  const resolve_effect = (effect: WebGpuShaderEffect | undefined): ShaderEffectState | undefined => {
+    if (effect === undefined) return undefined;
+    const state = shader_effect_states.get(effect);
+    if (state === undefined) throw new Error("shader effect does not belong to this renderer");
+    return state;
   };
 
   const render_commands = async (
@@ -845,6 +926,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           shape_x: 0,
           shape_y: 0,
           blend_mode: draw.blend_mode,
+          effect: undefined,
         };
       }
       const source_texture = resolve_texture(draw.texture, submission.target_leases);
@@ -951,12 +1033,16 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         shape_x,
         shape_y,
         blend_mode: draw.blend_mode,
+        effect: resolve_effect(options.effect),
       };
     });
     const leases = encoded_draws.map(({ texture }) => texture.borrowed_lease ?? texture.resource.acquire_lease());
     const owned_leases = encoded_draws
       .map(({ texture }, index) => (texture.borrowed_lease === undefined ? leases[index] : undefined))
       .filter((lease): lease is ResourceLease<GPUTexture> => lease !== undefined);
+    const uniform_leases = encoded_draws.map(({ effect }) =>
+      effect === undefined ? default_uniform_resource.acquire_lease() : effect.resource.acquire_lease(),
+    );
     const samplers = encoded_draws.map(({ texture }) => {
       const key = `${texture.filtering.magnification}:${texture.filtering.minification}`;
       const cached = sampler_cache.get(key);
@@ -969,7 +1055,14 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     });
     type DrawBatch =
       | { kind: "geometry"; draw_index: number; vertex_data: Float32Array; vertex_count: number; blend_mode: BlendMode }
-      | { kind: "texture"; draw_indices: number[]; vertex_parts: Float32Array[]; vertex_count: number; blend_mode: BlendMode };
+      | {
+          kind: "texture";
+          draw_indices: number[];
+          vertex_parts: Float32Array[];
+          vertex_count: number;
+          blend_mode: BlendMode;
+          effect?: ShaderEffectState;
+        };
     const batches: DrawBatch[] = [];
     encoded_draws.forEach((draw, index) => {
       if (draw.geometry_key !== undefined && draw.geometry_snapshot !== undefined) {
@@ -986,6 +1079,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       if (
         previous?.kind === "texture" &&
         previous.blend_mode === draw.blend_mode &&
+        previous.effect === draw.effect &&
         leases[previous.draw_indices[0] ?? index].resource === leases[index].resource &&
         samplers[previous.draw_indices[0] ?? index] === samplers[index]
       ) {
@@ -1000,6 +1094,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         vertex_parts: [draw.vertex_data],
         vertex_count: draw.vertex_count,
         blend_mode: draw.blend_mode,
+        effect: draw.effect,
       });
     });
     const dynamic_vertex_size = batches.reduce(
@@ -1059,7 +1154,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     });
     const bind_groups = batches.map((batch) => {
       const draw_index = batch.kind === "geometry" ? batch.draw_index : batch.draw_indices[0];
-      return get_bind_group(leases[draw_index].resource, samplers[draw_index]);
+      return get_bind_group(leases[draw_index].resource, samplers[draw_index], uniform_leases[draw_index].resource);
     });
 
     const target = submission.target?.lease.resource ?? context.getCurrentTexture();
@@ -1080,7 +1175,9 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       ],
     });
     batches.forEach((batch, index) => {
-      const batch_pipeline = pipelines.get(batch.blend_mode);
+      const draw_index = batch.kind === "geometry" ? batch.draw_index : batch.draw_indices[0];
+      const effect = encoded_draws[draw_index].effect;
+      const batch_pipeline = effect === undefined ? pipelines.get(batch.blend_mode) : get_effect_pipeline(effect, batch.blend_mode);
       if (batch_pipeline === undefined) throw new Error(`blend pipeline is missing: ${batch.blend_mode}`);
       pass.setPipeline(batch_pipeline);
       pass.setBindGroup(0, bind_groups[index]);
@@ -1097,6 +1194,9 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       return undefined;
     } finally {
       owned_leases.forEach((lease) => {
+        lease.release();
+      });
+      uniform_leases.forEach((lease) => {
         lease.release();
       });
       release_reusable_buffer(dynamic_vertex_storage);
@@ -1265,6 +1365,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     clear,
     create_texture,
     create_render_target,
+    create_shader_effect,
     create_texture_from_image,
     create_texture_from_blob,
     create_font_from_url: (source: string, options?: FontOptions) => create_webgpu_font(renderer_api, source, options),

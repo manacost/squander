@@ -76,6 +76,7 @@ const create_fake_renderer = (state: FakeRendererState = { frames: [] }): WebGpu
       filtering: { magnification: "nearest", minification: "nearest" },
       release: () => undefined,
     }),
+    create_shader_effect: () => ({ release: () => undefined }),
     create_texture,
     create_texture_from_image: (_image, width, height) => create_texture(new Uint8Array(), width, height),
     create_texture_from_blob: async (_source) => create_texture(new Uint8Array(), 1, 1),

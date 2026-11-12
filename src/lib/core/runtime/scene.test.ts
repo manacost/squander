@@ -33,6 +33,7 @@ const create_renderer = (): WebGpuRenderer => {
       filtering: { magnification: "nearest", minification: "nearest" },
       release: () => undefined,
     }),
+    create_shader_effect: () => ({ release: () => undefined }),
     create_texture: () => texture(),
     create_texture_from_image: () => texture(),
     create_texture_from_blob: () => Promise.resolve(texture()),

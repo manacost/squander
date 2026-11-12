@@ -261,6 +261,49 @@ test("[render-targets] renders offscreen and composites the target", async ({ pa
   expect(result.pixels).toEqual([255, 0, 0, 255]);
 });
 
+test("[custom-shader-effects] applies constrained fragment code and uniforms", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("shader-effect verification requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("shader-effect verification requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("shader-effect verification adapter creation failed");
+    const device = await adapter.requestDevice();
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
+    const texture = renderer.create_texture(new Uint8Array([255, 128, 64, 255]), 1, 1, { filter: "nearest" });
+    const target = renderer.create_render_target({ width: 1, height: 1, filtering: { filter: "nearest" } });
+    const effect = renderer.create_shader_effect({
+      fragment_code: "return vec4f(color.r * uniforms[0].x, color.g, color.b, color.a);",
+      uniforms: [0.5],
+    });
+    const frame = renderer.begin_frame();
+    frame.set_target(target);
+    frame.draw_commands([{ kind: "texture", draw: { texture } }]);
+    frame.set_target();
+    frame.draw_commands([{ kind: "texture", draw: { texture: target, options: { effect } } }]);
+    const capture = frame.capture();
+    await frame.submit();
+    const pixels = await capture;
+    effect.release();
+    texture.release();
+    target.release();
+    renderer.dispose();
+    device.destroy();
+    return { secure: window.isSecureContext, gpu: "gpu" in navigator, pixels: Array.from(pixels.slice(0, 4)) };
+  });
+
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.pixels[0]).toBeCloseTo(128, -1);
+  expect(result.pixels[1]).toBeCloseTo(128, -1);
+  expect(result.pixels[2]).toBeCloseTo(64, -1);
+  expect(result.pixels[3]).toBe(255);
+});
+
 test("[game-lifecycle] handles a rejected frame submission without an unhandled rejection", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

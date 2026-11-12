@@ -36,6 +36,7 @@ and slice evidence are archived under
 - [sprite-drawing](sprite-drawing/spec.md)
 - [blend-modes](blend-modes/spec.md)
 - [render-targets](render-targets/spec.md)
+- [custom-shader-effects](custom-shader-effects/spec.md)
 - [svelte-bridge](svelte-bridge/spec.md)
 - [text-drawing](text-drawing/spec.md)
 - [texture-filtering](texture-filtering/spec.md)
@@ -85,9 +86,9 @@ readback. Coverage and mocked GPU tests do not replace real-device evidence.
 
 ## Future work
 
-Read the candidate logs for deferred behavior such as action mapping,
-cursor-anchored zoom, automatic culling, custom shaders,
-and mipmaps. The [ecs-system](ecs-system/spec.md) document is a Draft contract;
+Read the candidate logs for deferred behavior such as cursor-anchored zoom,
+automatic culling, broader custom shaders, and mipmaps. The
+[ecs-system](ecs-system/spec.md) document is a Draft contract;
 do not treat it as an accepted implementation until its evidence plan passes.
 
 ## Adding or changing a capability
