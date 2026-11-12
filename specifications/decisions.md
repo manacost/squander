@@ -862,6 +862,18 @@ not a public collection of renderer subsystems. Raw encoders, passes, views,
 cache structures, and GPU resources remain private. See the
 [render-frame capability](../specs/render-frame/spec.md).
 
+## AD-064: Frame submission failures are lifecycle failures
+
+The game runtime owns the promise returned by each production frame
+submission. A rejection is delivered once through `GameRuntimeError`, keeps the
+original cause, cancels a queued follow-up frame, and stops the loop. Device
+loss remains a distinct `GameDeviceLostError`. Disposal waits for accepted
+submission cleanup before releasing renderer-owned resources and is idempotent.
+
+Application code does not need to await or catch the internal submission
+promise. See the [game-lifecycle capability](../specs/game-lifecycle/spec.md)
+and [resource-ownership capability](../specs/resource-ownership/spec.md).
+
 ## Implementation readiness
 
 Capability contracts live under [specs](../specs/README.md). Their lifecycle

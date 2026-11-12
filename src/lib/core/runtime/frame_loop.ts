@@ -37,6 +37,10 @@ export const create_frame_loop = (options: FrameLoopOptions): FrameLoop => {
     if (state === "disposed") {
       return;
     }
+    if (frame_handle !== undefined) {
+      options.scheduler.cancel_frame(frame_handle);
+      frame_handle = undefined;
+    }
     state = "stopped";
     options.on_error?.(error);
   };

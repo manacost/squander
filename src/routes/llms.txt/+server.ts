@@ -369,7 +369,10 @@ multiplayer.
 Use \`game.ready\` to await renderer creation and setup. Use \`pause\`,
 \`resume\`, and \`set_visibility\` for lifecycle control. Call \`dispose\`
 when a game leaves the page. The frame loop clamps unusually large deltas,
-resets timing after suspension, and does not update while paused.
+resets timing after suspension, and does not update while paused. The runtime
+owns frame-submission promises: a rejection stops future frames, reports one
+\`GameRuntimeError\` with the original cause, and is not an unhandled rejection.
+Disposal waits for accepted frame cleanup and is safe to call more than once.
 
 \`\`\`ts
 await game.ready;

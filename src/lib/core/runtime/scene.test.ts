@@ -504,7 +504,7 @@ describe("[scene-lifecycle] game-owned scene composer", () => {
       }),
     ).rejects.toThrow("setup failed");
 
-    clock.tick();
+    expect(clock.pending()).toBe(0);
     expect(events).toEqual(["factory"]);
     await game.dispose();
   });

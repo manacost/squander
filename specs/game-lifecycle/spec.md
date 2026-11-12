@@ -18,6 +18,10 @@ Implemented.
 - The normal draw callback receives a `RenderFrame`; the game submits that frame
   after application and scene recording completes. Submission failures are
   routed through the runtime error path and do not become unhandled rejections.
+- A rejected frame submission cancels any already scheduled next frame, stops
+  the loop, and preserves the original cause as `GameRuntimeError.cause`.
+- Disposal waits for accepted frame submissions before releasing the renderer,
+  and repeated disposal calls share one cleanup promise.
 
 ## Scenarios
 
@@ -44,6 +48,8 @@ loop with the original cause available through `GameRuntimeError`.
 - Record application and scene commands during one frame: verify order,
   one submission, no production readback, and safe disposal while submission is
   in flight.
+- Reject an asynchronous frame submission: verify one `GameRuntimeError`, the
+  original cause, no scheduled follow-up frame, and successful disposal.
 
 ## Usage description
 
@@ -60,7 +66,8 @@ Current verification:
 - [`src/lib/core/runtime/game.test.ts`](../../src/lib/core/runtime/game.test.ts)
   covers setup gating, disposal during setup, initialization errors, and
   runtime errors in the `[game-lifecycle] game setup` suite, including one
-  application-and-scene frame submission.
+  application-and-scene frame submission, in-flight disposal, and asynchronous
+  submission failure.
 
 The game controller exposes a synchronous factory with a `ready` promise. Setup
 receives an abort signal, renderer, geometry owner, resource owner, and asset

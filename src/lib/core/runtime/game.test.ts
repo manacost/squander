@@ -21,6 +21,7 @@ const test_renderer_options = { canvas: {} as HTMLCanvasElement, width: 1, heigh
 type FakeRendererState = {
   frames: { commands: RenderCommand[]; submissions: number; captures: number }[];
   submission_gate?: Promise<void>;
+  submission_failure?: Error;
 };
 
 const create_fake_renderer = (state: FakeRendererState = { frames: [] }): WebGpuRenderer => {
@@ -52,6 +53,9 @@ const create_fake_renderer = (state: FakeRendererState = { frames: [] }): WebGpu
       submit: async () => {
         assert_open();
         await state.submission_gate;
+        if (state.submission_failure !== undefined) {
+          throw state.submission_failure;
+        }
         completed = true;
         frame_state.submissions += 1;
       },
@@ -227,6 +231,35 @@ describe("[game-lifecycle] game setup", () => {
     await disposal;
     expect(renderer_dispose).toHaveBeenCalledOnce();
     expect(state.frames[0]?.submissions).toBe(1);
+  });
+
+  it("wraps an asynchronous submission failure and stops future frames", async () => {
+    const scheduler = create_scheduler();
+    const cause = new Error("submission failed");
+    const errors: unknown[] = [];
+    const state: FakeRendererState = { frames: [], submission_failure: cause };
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => create_fake_renderer(state),
+      scheduler: scheduler.scheduler,
+      update: () => undefined,
+      draw: (frame) => {
+        frame.draw_commands([]);
+      },
+      on_error: (error) => errors.push(error),
+    });
+    await game.ready;
+
+    scheduler.tick();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toBeInstanceOf(GameRuntimeError);
+    expect((errors[0] as Error).cause).toBe(cause);
+    expect(game.get_state()).toBe("stopped");
+    expect(scheduler.pending()).toBe(0);
+    await game.dispose();
   });
 
   it("disposes a renderer when setup fails", async () => {
