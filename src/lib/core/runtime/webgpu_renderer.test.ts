@@ -29,10 +29,12 @@ const create_fake_device = (): {
   textures: FakeTexture[];
   buffers: FakeBuffer[];
   render_passes: unknown[];
+  draw_calls: number[];
 } => {
   const textures: FakeTexture[] = [];
   const buffers: FakeBuffer[] = [];
   const render_passes: unknown[] = [];
+  const draw_calls: number[] = [];
   const context_texture = (): FakeTexture => {
     const texture = new FakeTexture();
     textures.push(texture);
@@ -72,7 +74,9 @@ const create_fake_device = (): {
         setPipeline: vi.fn(),
         setBindGroup: vi.fn(),
         setVertexBuffer: vi.fn(),
-        draw: vi.fn(),
+        draw: vi.fn(() => {
+          draw_calls.push(1);
+        }),
         end: vi.fn(),
       };
       return {
@@ -85,7 +89,7 @@ const create_fake_device = (): {
       };
     }),
   };
-  return { device, context, textures, buffers, render_passes };
+  return { device, context, textures, buffers, render_passes, draw_calls };
 };
 
 const install_webgpu = (
@@ -190,6 +194,13 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     const texture = renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1, { filter: "nearest" });
     const sampler_factory = fake.device.createSampler as ReturnType<typeof vi.fn>;
     const buffer_factory = fake.device.createBuffer as ReturnType<typeof vi.fn>;
+    const bind_group_factory = fake.device.createBindGroup as ReturnType<typeof vi.fn>;
+    const draw_calls_before_batch = fake.draw_calls.length;
+    await renderer.draw_commands([
+      { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: rgba(1, 0, 0, 1) } },
+      { kind: "rectangle", draw: { rectangle: { x: 1, y: 0, width: 1, height: 1 }, color: rgba(0, 0, 1, 1) } },
+    ]);
+    expect(fake.draw_calls.length - draw_calls_before_batch).toBe(1);
     const upload_buffer_count = (): number =>
       buffer_factory.mock.calls.filter((call) => {
         const descriptor: unknown = call[0];
@@ -198,10 +209,12 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
       }).length;
     const samplers_before_warm_draws = sampler_factory.mock.calls.length;
     const upload_buffers_before_warm_draws = upload_buffer_count();
+    const bind_groups_before_warm_draws = bind_group_factory.mock.calls.length;
     await renderer.draw_texture(texture);
     await renderer.draw_texture(texture);
     expect(sampler_factory.mock.calls.length - samplers_before_warm_draws).toBe(1);
     expect(upload_buffer_count()).toBe(upload_buffers_before_warm_draws);
+    expect(bind_group_factory.mock.calls.length - bind_groups_before_warm_draws).toBe(1);
     const linear_texture = renderer.create_texture(new Uint8Array([0, 255, 0, 255]), 1, 1, { filter: "linear" });
     await renderer.draw_texture(linear_texture);
     expect(sampler_factory.mock.calls.length - samplers_before_warm_draws).toBe(1);
