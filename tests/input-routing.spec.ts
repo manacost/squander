@@ -7,6 +7,12 @@ test("[input-routing] demo proves scene priority and native browser behavior", a
   await expect(page.getByTestId("input-gamepad-status")).toContainText("gamepad");
 
   const button = page.getByTestId("input-demo-button");
+  await button.focus();
+  await page.keyboard.down("Enter");
+  await expect(page.getByTestId("input-action-status")).toContainText("Confirm pressed");
+  await page.keyboard.up("Enter");
+  await expect(page.getByTestId("input-action-status")).toContainText("Confirm released");
+
   await button.click();
   await expect(page.getByTestId("input-demo-log")).toContainText("native button click");
 

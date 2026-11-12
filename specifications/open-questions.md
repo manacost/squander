@@ -16,8 +16,8 @@ acceptance evidence, and the relevant documentation.
   provides standalone worlds and caller-owned system composition. Future
   adapters, immediate mutation modes, and alternate storage backends need their
   own contracts and workload evidence.
-- **Action mapping:** Define action names, rebinding, device precedence, and
-  how mapped actions coexist with the raw input router.
+- **Action mapping:** The accepted action-name, rebinding, device, and raw
+  router boundary is recorded in [action-mapping](../specs/action-mapping/spec.md).
 - **Text input and IME:** Define composition events, editable-control policy,
   and the boundary between browser text editing and gameplay input.
 - **Camera extensions:** Define cursor-anchored zoom, swappable projections,

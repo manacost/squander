@@ -54,7 +54,7 @@ available as an opt-in game timing mode.
   backlogs, or historical records; once a capability is implemented, refer to
   the feature and its observable behavior.
 - Keep deferred capabilities contract-driven: advanced projections, custom
-  shaders, render targets, mipmaps, and action mapping
+  shaders, render targets, and mipmaps
   require their own supported behavior and evidence before inclusion.
 - The initial ECS capability is available from \`squander/ecs\`: define local
   object-shaped component tokens, create independent worlds, run typed fluent
@@ -301,6 +301,29 @@ events.emit("reset");
 
 These utilities are standalone and reusable. Game-scoped scene events add
 ownership, disposal, and runtime error routing through \`game.scenes.events\`.
+
+## Action mapping
+
+Use \`create_action_map\` to translate raw router events into named gameplay
+actions. The map can combine keyboard, pointer, gamepad button, and analog axis
+bindings, with dead zones, inversion, scale, and deterministic digital edges.
+Call \`update()\` explicitly once per simulation frame; rebinding validates the
+complete replacement atomically.
+
+\`\`\`ts
+const actions = create_action_map({
+  router: game.input,
+  bindings: {
+    confirm: [{ device: "keyboard", code: "Enter" }, { device: "gamepad_button", button: 0 }],
+    move_x: [{ device: "gamepad_axis", axis: 0, dead_zone: 0.2 }],
+  },
+});
+actions.update();
+if (actions.get("confirm").just_pressed) confirm();
+\`\`\`
+
+Action maps do not consume raw input, create a hidden loop, or replace the
+router. Text input, IME, gestures, and hit testing remain separate.
 
 ## Entity-component system
 

@@ -21,8 +21,8 @@ This is the browser input-routing capability.
 - Register and remove scene handlers automatically with scene activation and teardown.
 - Provide an explicit DOM adapter that listens only on a caller-owned host.
 - Provide a per-game gamepad adapter with immutable snapshots and frame-driven polling.
-- Leave action mapping, rebinding, text input, gestures, and renderable hit
-  testing for later capabilities.
+- Action mapping and rebinding are specified in [action-mapping](../action-mapping/spec.md).
+  Text input, gestures, and renderable hit testing remain separate.
 - Optional logical viewport mapping and lifecycle input recovery are specified
   in [input-coordinates](../input-coordinates/spec.md).
 

@@ -3,6 +3,7 @@
   import {
     create_browser_gamepad_adapter,
     create_browser_input_adapter,
+    create_action_map,
     create_input_router,
     type InputEvent,
     type BrowserGamepadAdapter,
@@ -12,6 +13,7 @@
   let host = $state<HTMLElement>();
   let log = $state<string[]>([]);
   let gamepad_status = $state("checking browser support…");
+  let action_status = $state("waiting for Confirm");
   let browser_adapter: BrowserInputAdapter | undefined;
   let gamepad_adapter: BrowserGamepadAdapter | undefined;
 
@@ -31,6 +33,10 @@
   onMount(() => {
     if (host === undefined) return;
     const router = create_input_router();
+    const actions = create_action_map({
+      router,
+      bindings: { confirm: [{ device: "keyboard", code: "Enter" }] },
+    });
     const scene = router.push_scene((event) => {
       if (event.type === "key" && event.key === "Escape" && event.phase === "down") {
         add_log("scene consumed Escape");
@@ -39,6 +45,10 @@
       return "pass";
     });
     router.on_global((event) => {
+      actions.update();
+      const confirm = actions.get("confirm");
+      if (confirm.just_pressed) action_status = "Confirm pressed";
+      if (confirm.just_released) action_status = "Confirm released";
       add_log(describe(event));
       return "pass";
     });
@@ -53,6 +63,7 @@
       return () => {
         window.clearInterval(poll_handle);
         gamepad_adapter?.dispose();
+        actions.dispose();
         browser_adapter?.dispose();
         router.remove_scene(scene);
         router.dispose();
@@ -60,6 +71,7 @@
     } catch (error) {
       gamepad_status = error instanceof Error ? error.message : "gamepad API unavailable";
       return () => {
+        actions.dispose();
         browser_adapter?.dispose();
         router.remove_scene(scene);
         router.dispose();
@@ -79,7 +91,7 @@
 
   <section class="demo" bind:this={host} data-testid="input-demo-host">
     <div class="demo-copy">
-      <p><strong>Try it:</strong> press Escape, click the button, move over the panel, or focus the text field and type.</p>
+      <p><strong>Try it:</strong> press Enter or Escape, click the button, move over the panel, or focus the text field and type.</p>
       <p>Escape is consumed by the scene. The button and text field retain browser behavior.</p>
       <button
         type="button"
@@ -91,6 +103,7 @@
       <label>Editable control <input data-testid="input-demo-editable" placeholder="typing stays native" /></label>
     </div>
     <div class="status" data-testid="input-gamepad-status">{gamepad_status}</div>
+    <div class="status" data-testid="input-action-status">Action map: {action_status}</div>
     <ol data-testid="input-demo-log">
       {#each log as entry, index (index)}
         <li>{entry}</li>
@@ -111,6 +124,10 @@
     only when scenes pass them. Gamepad state is sampled when the owner calls <code>poll()</code>.
   </p>
   <p>
+    Use <code>create_action_map</code> when gameplay should read named actions instead of raw device codes. Call <code>update()</code> once per
+    simulation frame; rebinding and analog dead zones stay inside the action adapter.
+  </p>
+  <p>
     Pass <code>game.get_viewport()</code> to the browser adapter when fixed-fit gameplay needs logical pointer coordinates. Raw host-relative
     coordinates remain available, and letterbox events are marked outside the logical content. Blur and visibility changes clear active keys and
     pointers.
@@ -123,6 +140,7 @@
     <li><code>BrowserInputAdapter</code> and <code>BrowserGamepadAdapter</code></li>
     <li><code>ViewportSize</code> and optional logical pointer fields</li>
     <li><code>GamepadState</code>, <code>GamepadSnapshot</code>, and <code>GamepadButtonSnapshot</code></li>
+    <li><code>create_action_map</code>, <code>ActionBinding</code>, and <code>ActionState</code></li>
   </ul>
 
   <h2>Minimum viable example</h2>
@@ -138,6 +156,15 @@ const browser_input = create_browser_input_adapter({
   router: game.input,
   viewport: game.get_viewport(),
 });
+
+const actions = create_action_map({
+  router: game.input,
+  bindings: {
+    confirm: [{ device: "keyboard", code: "Enter" }, { device: "gamepad_button", button: 0 }],
+  },
+});
+actions.update();
+if (actions.get("confirm").just_pressed) confirm();
 
 const gamepads = create_browser_gamepad_adapter({ router: game.input });
 gamepads.poll();

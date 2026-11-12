@@ -47,6 +47,7 @@ and slice evidence are archived under
 - [scene-signals](scene-signals/spec.md)
 - [scene-ui](scene-ui/spec.md)
 - [input-routing](input-routing/spec.md)
+- [action-mapping](action-mapping/spec.md)
 
 ### Draft capabilities
 
