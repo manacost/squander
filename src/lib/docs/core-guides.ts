@@ -62,11 +62,11 @@ export const core_guides = [
     example_description: "Compare transformed sprites that share one texture but use different tint, flip, opacity, and position settings.",
     explanation:
       "Sprite draws use logical screen or camera-space coordinates. Each draw can specify a source region, origin, flip, rotation, scale, tint, opacity, and submission order.",
-    types: ["WebGpuTexture", "TextureDrawOptions", "TextureRegion", "TextureFilteringOptions", "Color"],
+    types: ["WebGpuTexture", "TextureDrawOptions", "BlendMode", "TextureRegion", "TextureFilteringOptions", "Color"],
     sample:
-      'frame.draw_commands([{ kind: "texture", draw: { texture, options: {\n  x: 120, y: 80, width: 64, height: 64,\n  origin: { x: 0.5, y: 0.5 }, rotation: degrees(15), flip_x: true,\n  tint: rgba(1, 0.8, 0.8, 1), opacity: 0.9,\n} } }]);',
-    proof: "Real readback verifies atlas regions, tint, opacity, origins, rotation, flips, and sprite submission order.",
-    limitations: "Selectable blend modes and implicit batching policy are not currently supported; order remains observable.",
+      'frame.draw_commands([{ kind: "texture", draw: { texture, options: {\n  x: 120, y: 80, width: 64, height: 64,\n  origin: { x: 0.5, y: 0.5 }, rotation: degrees(15), flip_x: true,\n  tint: rgba(1, 0.8, 0.8, 1), opacity: 0.9, blend_mode: "additive",\n} } }]);',
+    proof: "Real readback verifies atlas regions, tint, opacity, origins, rotation, flips, submission order, and blend-mode pixels.",
+    limitations: "The supported modes are normal, additive, and multiply; mipmaps and swappable projections remain outside this guide.",
   },
   {
     slug: "shape-drawing",

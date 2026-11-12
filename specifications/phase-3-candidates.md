@@ -37,8 +37,9 @@ implemented and listed below for historical traceability.
 - **Inside/outside stroke alignment:** selectable alignment beyond the current
   centered strokes; define supported closed geometries and wide-stroke behavior
   before implementation (AD-029).
-- **Additional blend modes:** additive and multiply blending, beyond the current
-  normal source-over alpha blending (AD-027).
+- **Additional blend modes:** promoted into the implemented
+  [blend-modes capability](../specs/blend-modes/spec.md); future modes still
+  require a separate contract and pixel evidence (AD-027).
 
 - **Automatic offscreen culling:** skip rendering work for definitely offscreen
   bounds, building on the current camera capability's explicit `is_in_view` helper. Preserve visible

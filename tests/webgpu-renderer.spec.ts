@@ -173,6 +173,58 @@ test("[render-frame] captures ordered layers from one logical frame", async ({ p
   expect(result.second_pixel).toEqual([0, 0, 255, 255]);
 });
 
+test("[blend-modes] verifies normal, additive, and multiply pixel output", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("blend verification requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("blend verification requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("blend verification adapter creation failed");
+    const device = await adapter.requestDevice();
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const pixels: Record<string, number[]> = {};
+    for (const blend_mode of ["normal", "additive", "multiply"] as const) {
+      const canvas = document.createElement("canvas");
+      document.body.append(canvas);
+      const renderer = await module.create_webgpu_renderer({ canvas, width: 1, height: 1 });
+      pixels[blend_mode] = Array.from(
+        (
+          await renderer.draw_commands([
+            { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: colors.rgba(0.2, 0.2, 0.2, 1) } },
+            {
+              kind: "rectangle",
+              draw: {
+                rectangle: { x: 0, y: 0, width: 1, height: 1 },
+                color: colors.rgba(1, 0, 0, 0.5),
+                blend_mode,
+              },
+            },
+          ])
+        ).slice(0, 4),
+      );
+      renderer.dispose();
+      canvas.remove();
+    }
+    device.destroy();
+    return { secure: window.isSecureContext, gpu: "gpu" in navigator, pixels };
+  });
+
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.pixels.normal[0]).toBeCloseTo(153, -1);
+  expect(result.pixels.additive[0]).toBeCloseTo(179, -1);
+  expect(result.pixels.multiply[0]).toBeCloseTo(77, -1);
+  expect(result.pixels.normal[1]).toBeCloseTo(26, -1);
+  expect(result.pixels.additive[1]).toBeCloseTo(51, -1);
+  expect(result.pixels.multiply[1]).toBeCloseTo(26, -1);
+  expect(result.pixels.normal[3]).toBe(255);
+  expect(result.pixels.additive[3]).toBe(255);
+  expect(result.pixels.multiply[3]).toBe(255);
+});
+
 test("[game-lifecycle] handles a rejected frame submission without an unhandled rejection", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

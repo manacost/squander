@@ -407,17 +407,18 @@ calls. Developers can fade an item without constructing a new color.
 This defines source alpha, not the final framebuffer alpha or the blend equation.
 Invalid per-draw opacity handling and internal alpha encoding remain open.
 
-## AD-027: Normal alpha blending in the current runtime
+## AD-027: Explicit 2D blend modes
 
-Use normal source-over alpha blending for every draw: later sprites,
-shapes, paths, polygons, and text appear over earlier content, with transparency
-revealing what is behind them. Apply AD-026's effective source alpha consistently
-across primitive types. Batching must preserve these results and draw order.
+Use normal source-over alpha blending by default for every draw. Draws may
+explicitly select `normal`, `additive`, or `multiply` through the blend-modes
+capability. Later sprites, shapes, paths, polygons, and text remain in
+submission order, and AD-026's effective source alpha applies consistently
+across primitive types.
 
-Do not expose selectable blend modes in the current runtime. Additional modes,
-including additive and multiply blending, are future capability candidates rather
-than committed implementation scope. Internal alpha encoding and color-space handling remain
-implementation contracts to resolve and verify.
+Blend-mode changes are batch breaks. Compatible adjacent draws may batch only
+when the texture, sampler, target, and blend mode all match. Pipeline variants
+and blend equations remain private renderer details; callers do not manage raw
+WebGPU pipelines. Unsupported runtime values fail clearly.
 
 ## AD-028: Basic shape anchors
 

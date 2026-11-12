@@ -490,8 +490,10 @@ frame.draw_commands([{ kind: "texture", draw: { texture: hero.read(), options: {
 } } }]);
 \`\`\`
 
-Draw order is observable. Selectable blend modes, mipmaps, and anisotropic
-filtering are not currently exposed.
+Draw order is observable. Each draw may use \`blend_mode: "normal"\`,
+\`"additive"\`, or \`"multiply"\`; normal is the default and blend-mode changes
+break batching. Mipmaps, anisotropic filtering, and swappable projections are
+not currently exposed.
 
 ## Shapes
 

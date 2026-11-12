@@ -56,7 +56,9 @@ const create_fake_device = (): {
     queue,
     destroy: vi.fn(),
     createShaderModule: vi.fn(() => ({})),
-    createRenderPipeline: vi.fn(() => ({ getBindGroupLayout: vi.fn(() => ({})) })),
+    createBindGroupLayout: vi.fn(() => ({})),
+    createPipelineLayout: vi.fn(() => ({})),
+    createRenderPipeline: vi.fn(() => ({})),
     createTexture: vi.fn(() => {
       const texture = new FakeTexture();
       textures.push(texture);
@@ -108,6 +110,7 @@ const install_webgpu = (
   vi.stubGlobal("GPUTextureUsage", { TEXTURE_BINDING: 1, COPY_DST: 2, RENDER_ATTACHMENT: 4, COPY_SRC: 8 });
   vi.stubGlobal("GPUBufferUsage", { COPY_DST: 1, MAP_READ: 2, VERTEX: 4, UNIFORM: 8 });
   vi.stubGlobal("GPUMapMode", { READ: 1 });
+  vi.stubGlobal("GPUShaderStage", { FRAGMENT: 2 });
   class TestFontFace {
     public load = async (): Promise<void> => undefined;
   }
@@ -161,7 +164,7 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     expect(no_context.device.destroy as ReturnType<typeof vi.fn>).toHaveBeenCalledOnce();
   });
 
-  it("covers texture uploads, commands, viewport changes, and idempotent disposal", async () => {
+  it("[blend-modes] covers texture uploads, command batch breaks, viewport changes, and idempotent disposal", async () => {
     const fake = install_webgpu();
     const target = canvas();
     (target.getContext as ReturnType<typeof vi.fn>).mockReturnValue(fake.context);
@@ -201,6 +204,14 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
       { kind: "rectangle", draw: { rectangle: { x: 1, y: 0, width: 1, height: 1 }, color: rgba(0, 0, 1, 1) } },
     ]);
     expect(fake.draw_calls.length - draw_calls_before_batch).toBe(1);
+    const draw_calls_before_blend_breaks = fake.draw_calls.length;
+    await renderer.draw_commands([
+      { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: rgba(1, 0, 0, 1) } },
+      { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: rgba(0, 1, 0, 1), blend_mode: "additive" } },
+      { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: rgba(0, 0, 1, 1), blend_mode: "additive" } },
+      { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: rgba(1, 1, 1, 1), blend_mode: "multiply" } },
+    ]);
+    expect(fake.draw_calls.length - draw_calls_before_blend_breaks).toBe(3);
     const upload_buffer_count = (): number =>
       buffer_factory.mock.calls.filter((call) => {
         const descriptor: unknown = call[0];
@@ -401,6 +412,7 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     await expect(renderer.draw_texture(texture, { region: { x: -1, y: 0, width: 1, height: 1 } })).rejects.toThrow(/fit/);
     await expect(renderer.draw_texture(texture, { width: 0 })).rejects.toThrow(/dimensions/);
     await expect(renderer.draw_texture(texture, { opacity: 2 })).rejects.toThrow(/opacity/);
+    await expect(renderer.draw_texture(texture, { blend_mode: "unsupported" as "normal" })).rejects.toThrow(/unsupported blend mode/);
     await expect(renderer.draw_texture(texture, { tint: { red: 2, green: 0, blue: 0, alpha: 1 } })).rejects.toThrow(/between/);
     await renderer.draw_commands([{ kind: "geometry", draw: { geometry, owner: geometry_owner, color } }]);
     await renderer.draw_commands([{ kind: "geometry", draw: { geometry, owner: geometry_owner, color } }]);

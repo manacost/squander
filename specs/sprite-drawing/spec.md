@@ -13,7 +13,8 @@ real WebGPU fixtures.
 
 ## Requirements
 
-- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are not currently supported (AD-027).
+- Use normal source-over alpha blending by default. Per-draw `blend_mode` may
+  select the documented [blend-modes](../blend-modes/spec.md) capability.
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
@@ -93,8 +94,8 @@ consumes the shared type internally.
 
 ## Notes
 
-AD-008, AD-014, AD-022, and AD-023. Additional blend modes and implicit batching
-policy remain outside the current renderer contract.
+AD-008, AD-014, AD-022, and AD-023. Blend modes are documented separately;
+implicit batching policy remains an internal renderer contract.
 Negative-scale behavior remains an API design detail; explicit flips do not imply geometry mirroring.
 The angle convention and helper are agreed; the illustrative draw-option spelling and any branded angle type remain API design details.
 

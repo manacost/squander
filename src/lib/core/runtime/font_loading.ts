@@ -1,4 +1,5 @@
 import type { Color } from "./colors.js";
+import type { BlendMode } from "./render_types.js";
 import type { TextureFilteringOptions } from "./texture_filtering.js";
 import type { WebGpuRenderer, WebGpuTexture } from "./webgpu_renderer.js";
 
@@ -33,6 +34,7 @@ export type TextDrawOptions = Readonly<{
   color?: Color;
   opacity?: number;
   origin?: Readonly<{ x: number; y: number }>;
+  blend_mode?: BlendMode;
 }>;
 
 export type FontGlyph = Readonly<{

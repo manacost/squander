@@ -22,6 +22,9 @@ import type { FlattenedSubpath } from "./path_flattening.js";
 import { create_stroke_geometry } from "./stroke_geometry.js";
 import type { GeometryHandle, GeometryOwner, PreparedGeometry } from "./geometry_ownership.js";
 import { create_webgpu_font, type FontOptions, type TextDrawOptions, type WebGpuFont } from "./font_loading.js";
+import type { BlendMode } from "./render_types.js";
+
+export type { BlendMode } from "./render_types.js";
 
 export type ClearColor = Readonly<{ red: number; green: number; blue: number; alpha: number }>;
 
@@ -55,20 +58,28 @@ export type TextureDrawOptions = Readonly<{
   shape_kind?: number;
   shape_x?: number;
   shape_y?: number;
+  blend_mode?: BlendMode;
 }>;
 
 export type TextureDraw = Readonly<{ texture: WebGpuTexture; options?: TextureDrawOptions }>;
 
-export type RectangleDraw = Readonly<{ rectangle: Rectangle; color: Color; opacity?: number }>;
-export type CircleDraw = Readonly<{ circle: Circle; color: Color; opacity?: number }>;
-export type LineDraw = Readonly<{ line: Line; color: Color; stroke_width: number; opacity?: number }>;
-export type RectangleOutlineDraw = Readonly<{ rectangle: Rectangle; color: Color; stroke_width: number; opacity?: number }>;
-export type CircleOutlineDraw = Readonly<{ circle: Circle; color: Color; stroke_width: number; opacity?: number }>;
-export type TriangleDraw = Readonly<{ vertices: readonly PolygonPoint[]; indices: readonly number[]; color: Color; opacity?: number }>;
-export type StrokeDraw = Readonly<{ subpaths: readonly FlattenedSubpath[]; width: number; color: Color; opacity?: number }>;
-export type PolygonDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; opacity?: number }>;
-export type PolygonOutlineDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; stroke_width: number; opacity?: number }>;
-export type OwnedGeometryDraw = Readonly<{ geometry: GeometryHandle; owner: GeometryOwner; color: Color; opacity?: number }>;
+type DrawBlendOptions = Readonly<{ blend_mode?: BlendMode }>;
+
+export type RectangleDraw = Readonly<{ rectangle: Rectangle; color: Color; opacity?: number }> & DrawBlendOptions;
+export type CircleDraw = Readonly<{ circle: Circle; color: Color; opacity?: number }> & DrawBlendOptions;
+export type LineDraw = Readonly<{ line: Line; color: Color; stroke_width: number; opacity?: number }> & DrawBlendOptions;
+export type RectangleOutlineDraw = Readonly<{ rectangle: Rectangle; color: Color; stroke_width: number; opacity?: number }> &
+  DrawBlendOptions;
+export type CircleOutlineDraw = Readonly<{ circle: Circle; color: Color; stroke_width: number; opacity?: number }> & DrawBlendOptions;
+export type TriangleDraw = Readonly<{ vertices: readonly PolygonPoint[]; indices: readonly number[]; color: Color; opacity?: number }> &
+  DrawBlendOptions;
+export type StrokeDraw = Readonly<{ subpaths: readonly FlattenedSubpath[]; width: number; color: Color; opacity?: number }> &
+  DrawBlendOptions;
+export type PolygonDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; opacity?: number }> & DrawBlendOptions;
+export type PolygonOutlineDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; stroke_width: number; opacity?: number }> &
+  DrawBlendOptions;
+export type OwnedGeometryDraw = Readonly<{ geometry: GeometryHandle; owner: GeometryOwner; color: Color; opacity?: number }> &
+  DrawBlendOptions;
 export type TextDraw = Readonly<{ font: WebGpuFont; text: string; options?: TextDrawOptions }>;
 
 export type RenderCommand = Readonly<
@@ -122,6 +133,14 @@ const assert_color = (color: ClearColor): void => {
       throw new RangeError(`${name} must be finite and between zero and one`);
     }
   }
+};
+
+const resolve_blend_mode = (value: unknown): BlendMode => {
+  if (value === undefined || value === "normal" || value === "additive" || value === "multiply") {
+    return value ?? "normal";
+  }
+  const label = typeof value === "string" ? value : typeof value === "number" || typeof value === "boolean" ? value.toString() : "unknown";
+  throw new RangeError(`unsupported blend mode: ${label}`);
 };
 
 const copy_bytes_per_row_alignment = 256;
@@ -236,39 +255,63 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
 
   context.configure({ device, format, alphaMode: "opaque", usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
   const resources: ResourceOwner = create_resource_owner();
-  const pipeline = device.createRenderPipeline({
-    layout: "auto",
-    vertex: {
-      module: device.createShaderModule({ code: textured_shader }),
-      entryPoint: "vertex_main",
-      buffers: [
-        {
-          arrayStride: 48,
-          attributes: [
-            { shaderLocation: 0, offset: 0, format: "float32x2" },
-            { shaderLocation: 1, offset: 8, format: "float32x2" },
-            { shaderLocation: 2, offset: 16, format: "float32x4" },
-            { shaderLocation: 3, offset: 32, format: "float32x4" },
-          ],
-        },
-      ],
-    },
-    fragment: {
-      module: device.createShaderModule({ code: textured_shader }),
-      entryPoint: "fragment_main",
-      targets: [
-        {
-          format,
-          blend: {
-            color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
-            alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
-          },
-        },
-      ],
-    },
-    primitive: { topology: "triangle-list" },
+  const pipeline_bind_group_layout = device.createBindGroupLayout({
+    entries: [
+      { binding: 0, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+      { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: "float", viewDimension: "2d", multisampled: false } },
+    ],
   });
-  const pipeline_bind_group_layout = pipeline.getBindGroupLayout(0);
+  const pipeline_layout = device.createPipelineLayout({ bindGroupLayouts: [pipeline_bind_group_layout] });
+  const blend_state = (blend_mode: BlendMode): GPUBlendState => {
+    if (blend_mode === "additive") {
+      return {
+        color: { srcFactor: "src-alpha", dstFactor: "one", operation: "add" },
+        alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
+      };
+    }
+    if (blend_mode === "multiply") {
+      return {
+        color: { srcFactor: "dst", dstFactor: "one-minus-src-alpha", operation: "add" },
+        alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
+      };
+    }
+    return {
+      color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
+      alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
+    };
+  };
+  const create_pipeline = (blend_mode: BlendMode): GPURenderPipeline =>
+    device.createRenderPipeline({
+      layout: pipeline_layout,
+      vertex: {
+        module: device.createShaderModule({ code: textured_shader }),
+        entryPoint: "vertex_main",
+        buffers: [
+          {
+            arrayStride: 48,
+            attributes: [
+              { shaderLocation: 0, offset: 0, format: "float32x2" },
+              { shaderLocation: 1, offset: 8, format: "float32x2" },
+              { shaderLocation: 2, offset: 16, format: "float32x4" },
+              { shaderLocation: 3, offset: 32, format: "float32x4" },
+            ],
+          },
+        ],
+      },
+      fragment: {
+        module: device.createShaderModule({ code: textured_shader }),
+        entryPoint: "fragment_main",
+        targets: [{ format, blend: blend_state(blend_mode) }],
+      },
+      primitive: { topology: "triangle-list" },
+    });
+  const pipelines = new Map<BlendMode, GPURenderPipeline>([
+    ["normal", create_pipeline("normal")],
+    ["additive", create_pipeline("additive")],
+    ["multiply", create_pipeline("multiply")],
+  ]);
+  const pipeline = pipelines.get("normal");
+  if (pipeline === undefined) throw new Error("normal blend pipeline was not created");
   let disposed = false;
   const device_lost = device.lost.then((info) => info);
   let solid_texture: WebGpuTexture | undefined;
@@ -477,13 +520,14 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
             height: glyph.height * scale,
             tint: color,
             opacity: options.opacity,
+            blend_mode: options.blend_mode,
           },
         };
         cursor_x += glyph.advance * scale;
         return { kind: "texture", draw };
       });
     });
-    const draws = expanded_commands.map((command): TextureDraw | GeometryDraw => {
+    const raw_draws = expanded_commands.map((command): TextureDraw | GeometryDraw => {
       if (command.kind === "texture") {
         return command.draw;
       }
@@ -686,6 +730,16 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         },
       };
     });
+    const draws = raw_draws.map((draw, index) => {
+      const command = expanded_commands[index];
+      const blend_mode =
+        command.kind === "texture"
+          ? command.draw.options?.blend_mode
+          : command.kind === "text"
+            ? command.draw.options?.blend_mode
+            : command.draw.blend_mode;
+      return { ...draw, blend_mode: resolve_blend_mode(blend_mode) };
+    });
     const canvas_width = logical_width;
     const canvas_height = logical_height;
     const active_camera = get_active_camera();
@@ -720,6 +774,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           shape_kind: 0,
           shape_x: 0,
           shape_y: 0,
+          blend_mode: draw.blend_mode,
         };
       }
       const { texture, options = {} } = draw;
@@ -825,6 +880,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         shape_kind,
         shape_x,
         shape_y,
+        blend_mode: draw.blend_mode,
       };
     });
     const leases = encoded_draws.map(({ texture }) => texture.resource.acquire_lease());
@@ -839,17 +895,24 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       return sampler;
     });
     type DrawBatch =
-      | { kind: "geometry"; draw_index: number; vertex_data: Float32Array; vertex_count: number }
-      | { kind: "texture"; draw_indices: number[]; vertex_parts: Float32Array[]; vertex_count: number };
+      | { kind: "geometry"; draw_index: number; vertex_data: Float32Array; vertex_count: number; blend_mode: BlendMode }
+      | { kind: "texture"; draw_indices: number[]; vertex_parts: Float32Array[]; vertex_count: number; blend_mode: BlendMode };
     const batches: DrawBatch[] = [];
     encoded_draws.forEach((draw, index) => {
       if (draw.geometry_key !== undefined && draw.geometry_snapshot !== undefined) {
-        batches.push({ kind: "geometry", draw_index: index, vertex_data: draw.vertex_data, vertex_count: draw.vertex_count });
+        batches.push({
+          kind: "geometry",
+          draw_index: index,
+          vertex_data: draw.vertex_data,
+          vertex_count: draw.vertex_count,
+          blend_mode: draw.blend_mode,
+        });
         return;
       }
       const previous = batches.at(-1);
       if (
         previous?.kind === "texture" &&
+        previous.blend_mode === draw.blend_mode &&
         leases[previous.draw_indices[0] ?? index].resource === leases[index].resource &&
         samplers[previous.draw_indices[0] ?? index] === samplers[index]
       ) {
@@ -858,7 +921,13 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         previous.vertex_count += draw.vertex_count;
         return;
       }
-      batches.push({ kind: "texture", draw_indices: [index], vertex_parts: [draw.vertex_data], vertex_count: draw.vertex_count });
+      batches.push({
+        kind: "texture",
+        draw_indices: [index],
+        vertex_parts: [draw.vertex_data],
+        vertex_count: draw.vertex_count,
+        blend_mode: draw.blend_mode,
+      });
     });
     const dynamic_vertex_size = batches.reduce(
       (size, batch) => (batch.kind === "texture" ? size + batch.vertex_parts.reduce((total, part) => total + part.byteLength, 0) : size),
@@ -937,8 +1006,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         },
       ],
     });
-    pass.setPipeline(pipeline);
-    batches.forEach((_, index) => {
+    batches.forEach((batch, index) => {
+      const batch_pipeline = pipelines.get(batch.blend_mode);
+      if (batch_pipeline === undefined) throw new Error(`blend pipeline is missing: ${batch.blend_mode}`);
+      pass.setPipeline(batch_pipeline);
       pass.setBindGroup(0, bind_groups[index]);
       pass.setVertexBuffer(0, buffer_entries[index].buffer, buffer_entries[index].offset);
       pass.draw(buffer_entries[index].vertex_count);

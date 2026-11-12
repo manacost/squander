@@ -17,6 +17,7 @@ export { flatten_path } from "./path_flattening.js";
 export type { FlattenedSubpath } from "./path_flattening.js";
 export * from "./polygons.js";
 export * from "./resource_ownership.js";
+export * from "./render_types.js";
 export * from "./shapes.js";
 export { create_scene_event_bus } from "./scene.js";
 export type {

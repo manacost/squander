@@ -25,7 +25,8 @@ holes, and fill rules remain deferred.
 
 - Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
 
-- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are not currently supported (AD-027).
+- Use normal source-over alpha blending by default. Per-draw `blend_mode` may
+  select the documented [blend-modes](../blend-modes/spec.md) capability.
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
