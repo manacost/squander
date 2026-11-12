@@ -273,6 +273,27 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   >();
   const persistent_geometry_buffers = new Set<GPUBuffer>();
   const persistent_geometry_observers = new Set<() => void>();
+  const sampler_cache = new Map<string, GPUSampler>();
+  type ReusableBuffer = { buffer: GPUBuffer; capacity: number; usage: number; in_use: boolean };
+  const reusable_buffers: ReusableBuffer[] = [];
+
+  const acquire_reusable_buffer = (required_size: number, usage: number): ReusableBuffer => {
+    const candidate = reusable_buffers.find((entry) => !entry.in_use && entry.usage === usage && entry.capacity >= required_size);
+    if (candidate !== undefined) {
+      candidate.in_use = true;
+      return candidate;
+    }
+    const capacity = Math.max(256, 2 ** Math.ceil(Math.log2(required_size)));
+    const entry = { buffer: device.createBuffer({ size: capacity, usage }), capacity, usage, in_use: true };
+    reusable_buffers.push(entry);
+    return entry;
+  };
+
+  const release_reusable_buffer = (entry: ReusableBuffer | undefined): void => {
+    if (entry !== undefined) {
+      entry.in_use = false;
+    }
+  };
 
   const submit_and_readback = async (encoder: GPUCommandEncoder, texture: GPUTexture): Promise<Uint8Array> => {
     const readback_bytes_per_row = get_readback_bytes_per_row(surface_width);
@@ -762,11 +783,19 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       };
     });
     const leases = encoded_draws.map(({ texture }) => texture.resource.acquire_lease());
+    const dynamic_vertex_size = encoded_draws.reduce(
+      (size, { geometry_key, geometry_snapshot, vertex_data }) =>
+        geometry_key !== undefined && geometry_snapshot !== undefined ? size : size + vertex_data.byteLength,
+      0,
+    );
+    const dynamic_vertex_storage =
+      dynamic_vertex_size === 0 ? undefined : acquire_reusable_buffer(dynamic_vertex_size, GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST);
+    let dynamic_vertex_offset = 0;
     const buffer_entries = encoded_draws.map(({ vertex_data, geometry_key, geometry_snapshot, vertex_count }) => {
       if (geometry_key !== undefined && geometry_snapshot !== undefined) {
         const cached = cached_geometry_buffers.get(geometry_key);
         if (cached?.snapshot === geometry_snapshot && cached.vertex_count === vertex_count) {
-          return { buffer: cached.buffer, persistent: true };
+          return { buffer: cached.buffer, offset: 0, persistent: true };
         }
         if (cached !== undefined) {
           cached.stop_observing();
@@ -792,22 +821,39 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         persistent_geometry_observers.add(entry.stop_observing);
         cached_geometry_buffers.set(geometry_key, entry);
         persistent_geometry_buffers.add(buffer);
-        return { buffer, persistent: true };
+        return { buffer, offset: 0, persistent: true };
       }
-      const buffer = device.createBuffer({ size: vertex_data.byteLength, usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST });
-      device.queue.writeBuffer(buffer, 0, vertex_data);
-      return { buffer, persistent: false };
+      if (dynamic_vertex_storage === undefined) {
+        throw new Error("dynamic vertex storage was not allocated");
+      }
+      const offset = dynamic_vertex_offset;
+      dynamic_vertex_offset += vertex_data.byteLength;
+      device.queue.writeBuffer(dynamic_vertex_storage.buffer, offset, vertex_data);
+      return { buffer: dynamic_vertex_storage.buffer, offset, persistent: false };
     });
     const samplers = encoded_draws.map(({ texture }) => {
+      const key = `${texture.filtering.magnification}:${texture.filtering.minification}`;
+      const cached = sampler_cache.get(key);
+      if (cached !== undefined) {
+        return cached;
+      }
       const sampler = device.createSampler({ magFilter: texture.filtering.magnification, minFilter: texture.filtering.minification });
-
+      sampler_cache.set(key, sampler);
       return sampler;
     });
-    const uniforms = encoded_draws.map(({ tint, opacity, region, texture, shape_kind, shape_x, shape_y }) => {
-      const uniform = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    const uniform_stride = 256;
+    const uniform_storage =
+      encoded_draws.length === 0
+        ? undefined
+        : acquire_reusable_buffer(encoded_draws.length * uniform_stride, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
+    const uniform_offsets = encoded_draws.map((_, index) => index * uniform_stride);
+    encoded_draws.forEach(({ tint, opacity, region, texture, shape_kind, shape_x, shape_y }, index) => {
+      if (uniform_storage === undefined) {
+        throw new Error("uniform storage was not allocated");
+      }
       device.queue.writeBuffer(
-        uniform,
-        0,
+        uniform_storage.buffer,
+        uniform_offsets[index] ?? 0,
         new Float32Array([
           region.x / texture.width,
           region.y / texture.height,
@@ -823,15 +869,17 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           0,
         ]),
       );
-      return uniform;
     });
     const bind_groups = encoded_draws.map((_, index) => {
+      if (uniform_storage === undefined) {
+        throw new Error("uniform storage was not allocated");
+      }
       return device.createBindGroup({
         layout: pipeline.getBindGroupLayout(0),
         entries: [
           { binding: 0, resource: samplers[index] },
           { binding: 1, resource: leases[index].resource.createView() },
-          { binding: 2, resource: { buffer: uniforms[index] } },
+          { binding: 2, resource: { buffer: uniform_storage.buffer, offset: uniform_offsets[index] ?? 0, size: 48 } },
         ],
       });
     });
@@ -856,7 +904,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     pass.setPipeline(pipeline);
     encoded_draws.forEach(({ vertex_count }, index) => {
       pass.setBindGroup(0, bind_groups[index]);
-      pass.setVertexBuffer(0, buffer_entries[index].buffer);
+      pass.setVertexBuffer(0, buffer_entries[index].buffer, buffer_entries[index].offset);
       pass.draw(vertex_count);
     });
     pass.end();
@@ -871,12 +919,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       leases.forEach((lease) => {
         lease.release();
       });
-      buffer_entries.forEach(({ buffer, persistent }) => {
-        if (!persistent) buffer.destroy();
-      });
-      uniforms.forEach((uniform) => {
-        uniform.destroy();
-      });
+      release_reusable_buffer(dynamic_vertex_storage);
+      release_reusable_buffer(uniform_storage);
     }
   };
 
@@ -979,6 +1023,11 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       buffer.destroy();
     });
     persistent_geometry_buffers.clear();
+    sampler_cache.clear();
+    reusable_buffers.forEach(({ buffer }) => {
+      buffer.destroy();
+    });
+    reusable_buffers.length = 0;
     context.unconfigure();
     device.destroy();
   };

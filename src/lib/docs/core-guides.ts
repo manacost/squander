@@ -150,7 +150,7 @@ export const core_guides = [
     test_file: "src/lib/core/runtime/texture_filtering.test.ts",
     example_description: "Compare nearest sampling on the left with linear sampling on the right.",
     explanation:
-      "Set filtering when a texture or font atlas is created. The renderer reuses samplers internally and does not generate mipmaps.",
+      "Set filtering when a texture or font atlas is created. Warm frames reuse samplers internally, while the renderer still does not generate mipmaps.",
     types: ["TextureFilteringOptions", 'TextureFilter = "nearest" | "linear"', "WebGpuTexture"],
     sample: 'const handle = await assets.load_texture(blob, {\n  magnification: "nearest",\n  minification: "linear",\n});',
     proof: "Real GPU fixtures distinguish nearest and linear sampling. They also verify minification policy without mipmaps.",

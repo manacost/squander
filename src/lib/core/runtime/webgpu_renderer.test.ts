@@ -188,6 +188,23 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
       copies_before_capture,
     );
     const texture = renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1, { filter: "nearest" });
+    const sampler_factory = fake.device.createSampler as ReturnType<typeof vi.fn>;
+    const buffer_factory = fake.device.createBuffer as ReturnType<typeof vi.fn>;
+    const upload_buffer_count = (): number =>
+      buffer_factory.mock.calls.filter((call) => {
+        const descriptor: unknown = call[0];
+        if (descriptor === null || typeof descriptor !== "object" || !("usage" in descriptor)) return false;
+        return descriptor.usage === 5 || descriptor.usage === 9;
+      }).length;
+    const samplers_before_warm_draws = sampler_factory.mock.calls.length;
+    const upload_buffers_before_warm_draws = upload_buffer_count();
+    await renderer.draw_texture(texture);
+    await renderer.draw_texture(texture);
+    expect(sampler_factory.mock.calls.length - samplers_before_warm_draws).toBe(1);
+    expect(upload_buffer_count()).toBe(upload_buffers_before_warm_draws);
+    const linear_texture = renderer.create_texture(new Uint8Array([0, 255, 0, 255]), 1, 1, { filter: "linear" });
+    await renderer.draw_texture(linear_texture);
+    expect(sampler_factory.mock.calls.length - samplers_before_warm_draws).toBe(1);
     expect(texture.filtering).toEqual({ magnification: "nearest", minification: "nearest" });
     expect(() => renderer.create_texture(new Uint8Array(4), 0, 1)).toThrow(/dimensions/);
     expect(() => renderer.create_texture(new Uint8Array(4), 2, 1)).toThrow(/shorter/);
@@ -401,6 +418,7 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     });
     expect(renderer.get_viewport().logical_width).toBe(4);
     texture.release();
+    linear_texture.release();
     glyph_texture.release();
     renderer.dispose();
     geometry.release();
