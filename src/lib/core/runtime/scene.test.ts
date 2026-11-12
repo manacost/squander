@@ -13,6 +13,7 @@ const create_renderer = (): WebGpuRenderer => {
   const empty_draw = (): Promise<Uint8Array> => Promise.resolve(new Uint8Array());
   const begin_frame = () => ({
     draw_commands: () => undefined,
+    set_target: () => undefined,
     submit: async () => undefined,
     capture: async () => new Uint8Array(),
   });
@@ -26,6 +27,12 @@ const create_renderer = (): WebGpuRenderer => {
   return {
     begin_frame,
     clear: empty_draw,
+    create_render_target: () => ({
+      width: 1,
+      height: 1,
+      filtering: { magnification: "nearest", minification: "nearest" },
+      release: () => undefined,
+    }),
     create_texture: () => texture(),
     create_texture_from_image: () => texture(),
     create_texture_from_blob: () => Promise.resolve(texture()),

@@ -166,9 +166,9 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
 
   it("[blend-modes] covers texture uploads, command batch breaks, viewport changes, and idempotent disposal", async () => {
     const fake = install_webgpu();
-    const target = canvas();
-    (target.getContext as ReturnType<typeof vi.fn>).mockReturnValue(fake.context);
-    const renderer = await create_webgpu_renderer({ canvas: target, width: 2, height: 2 });
+    const target_canvas = canvas();
+    (target_canvas.getContext as ReturnType<typeof vi.fn>).mockReturnValue(fake.context);
+    const renderer = await create_webgpu_renderer({ canvas: target_canvas, width: 2, height: 2 });
     const production_frame = renderer.begin_frame({ red: 0.1, green: 0.2, blue: 0.3, alpha: 1 });
     production_frame.draw_commands([
       { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: rgba(1, 0, 0, 1) } },
@@ -230,6 +230,19 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     await renderer.draw_texture(linear_texture);
     expect(sampler_factory.mock.calls.length - samplers_before_warm_draws).toBe(1);
     expect(texture.filtering).toEqual({ magnification: "nearest", minification: "nearest" });
+    const target = renderer.create_render_target({ width: 2, height: 2, filtering: { filter: "nearest" } });
+    const target_frame = renderer.begin_frame();
+    target_frame.set_target(target);
+    target.release();
+    target_frame.draw_commands([{ kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 2, height: 2 }, color: rgba(1, 0, 0, 1) } }]);
+    target_frame.set_target();
+    target_frame.draw_commands([{ kind: "texture", draw: { texture: target, options: { width: 2, height: 2 } } }]);
+    const target_capture = target_frame.capture();
+    await target_frame.submit();
+    await target_capture;
+    expect(fake.render_passes.length).toBeGreaterThan(2);
+    target.release();
+    expect(() => renderer.create_render_target({ width: 0, height: 1 })).toThrow(/dimensions/);
     expect(() => renderer.create_texture(new Uint8Array(4), 0, 1)).toThrow(/dimensions/);
     expect(() => renderer.create_texture(new Uint8Array(4), 2, 1)).toThrow(/shorter/);
     expect((await renderer.clear({ red: 0, green: 0, blue: 0, alpha: 1 })).slice(0, 16)).toHaveLength(16);
@@ -444,6 +457,7 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     expect(renderer.get_viewport().logical_width).toBe(4);
     texture.release();
     linear_texture.release();
+    target.release();
     glyph_texture.release();
     renderer.dispose();
     geometry.release();

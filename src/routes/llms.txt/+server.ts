@@ -449,8 +449,20 @@ ${documentation_examples.webgpu.trimEnd()}
 \`\`\`
 
 Handle \`WebGpuUnavailableError\` and \`GameDeviceLostError\` at an
-application boundary. Custom shaders and render targets are not currently
-public features.
+application boundary. Renderer-owned targets are available for offscreen
+composition; custom shaders, mipmaps, and swappable projections remain outside
+the current contract.
+
+\`\`\`ts
+const target = renderer.create_render_target({ width: 800, height: 450 });
+const frame = renderer.begin_frame();
+frame.set_target(target);
+frame.draw_commands(scene_commands);
+frame.set_target();
+frame.draw_commands([{ kind: "texture", draw: { texture: target } }]);
+target.release();
+await frame.submit();
+\`\`\`
 
 ## Assets and resources
 

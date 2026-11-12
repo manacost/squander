@@ -2,7 +2,7 @@
 
 import { resolve_texture_filtering, type TextureFilteringOptions } from "./texture_filtering.js";
 import { decode_image_source } from "./image_loading.js";
-import { create_resource_owner, type ResourceHandle, type ResourceOwner } from "./resource_ownership.js";
+import { create_resource_owner, type ResourceHandle, type ResourceLease, type ResourceOwner } from "./resource_ownership.js";
 import type { Color } from "./colors.js";
 import { get_active_camera } from "./camera.js";
 import { calculate_responsive_viewport, type ViewportSize } from "./viewport_sizing.js";
@@ -43,6 +43,19 @@ export type WebGpuTexture = Readonly<{
   release: () => void;
 }>;
 
+export type RenderTargetOptions = Readonly<{
+  width: number;
+  height: number;
+  filtering?: TextureFilteringOptions;
+}>;
+
+export type WebGpuRenderTarget = Readonly<{
+  width: number;
+  height: number;
+  filtering: ReturnType<typeof resolve_texture_filtering>;
+  release: () => void;
+}>;
+
 export type TextureDrawOptions = Readonly<{
   region?: Readonly<{ x: number; y: number; width: number; height: number }>;
   x?: number;
@@ -61,7 +74,7 @@ export type TextureDrawOptions = Readonly<{
   blend_mode?: BlendMode;
 }>;
 
-export type TextureDraw = Readonly<{ texture: WebGpuTexture; options?: TextureDrawOptions }>;
+export type TextureDraw = Readonly<{ texture: WebGpuTexture | WebGpuRenderTarget; options?: TextureDrawOptions }>;
 
 type DrawBlendOptions = Readonly<{ blend_mode?: BlendMode }>;
 
@@ -99,6 +112,7 @@ export type RenderCommand = Readonly<
 
 export type RenderFrame = Readonly<{
   draw_commands: (commands: readonly RenderCommand[]) => void;
+  set_target: (target?: WebGpuRenderTarget) => void;
   submit: () => Promise<void>;
   capture: () => Promise<Uint8Array>;
 }>;
@@ -107,11 +121,12 @@ export type WebGpuRenderer = Readonly<{
   begin_frame: (clear_color?: ClearColor) => RenderFrame;
   clear: (color: ClearColor) => Promise<Uint8Array>;
   create_texture: (pixels: Uint8Array, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
+  create_render_target: (options: RenderTargetOptions) => WebGpuRenderTarget;
   create_texture_from_image: (image: CanvasImageSource, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
   create_texture_from_blob: (source: Blob, options?: TextureFilteringOptions, signal?: AbortSignal) => Promise<WebGpuTexture>;
   create_font_from_url: (source: string, options?: FontOptions) => Promise<WebGpuFont>;
   device_lost?: PromiseLike<unknown>;
-  draw_texture: (texture: WebGpuTexture, options?: TextureDrawOptions) => Promise<Uint8Array>;
+  draw_texture: (texture: WebGpuTexture | WebGpuRenderTarget, options?: TextureDrawOptions) => Promise<Uint8Array>;
   draw_textures: (draws: readonly TextureDraw[]) => Promise<Uint8Array>;
   draw_text: (font: WebGpuFont, text: string, options?: TextDrawOptions) => Promise<Uint8Array>;
   draw_commands: (commands: readonly RenderCommand[]) => Promise<Uint8Array>;
@@ -255,6 +270,13 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
 
   context.configure({ device, format, alphaMode: "opaque", usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
   const resources: ResourceOwner = create_resource_owner();
+  type RenderTargetState = Readonly<{
+    resource: ResourceHandle<GPUTexture>;
+    width: number;
+    height: number;
+    filtering: ReturnType<typeof resolve_texture_filtering>;
+  }>;
+  const render_target_states = new WeakMap<WebGpuRenderTarget, RenderTargetState>();
   const pipeline_bind_group_layout = device.createBindGroupLayout({
     entries: [
       { binding: 0, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
@@ -448,6 +470,25 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     });
   };
 
+  const create_render_target = (target_options: RenderTargetOptions): WebGpuRenderTarget => {
+    const { width, height } = target_options;
+    if (!Number.isInteger(width) || width <= 0 || !Number.isInteger(height) || height <= 0) {
+      throw new RangeError("render target dimensions must be positive integers");
+    }
+    const filtering = resolve_texture_filtering(target_options.filtering);
+    const texture = device.createTexture({
+      size: { width, height },
+      format,
+      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+    });
+    const resource = resources.acquire(texture, (resource_to_destroy) => {
+      resource_to_destroy.destroy();
+    });
+    const target = Object.freeze({ width, height, filtering, release: resource.release });
+    render_target_states.set(target, { resource, width, height, filtering });
+    return target;
+  };
+
   const create_texture_from_image = (
     image: CanvasImageSource,
     width: number,
@@ -480,13 +521,38 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     }
   };
 
-  const draw_texture = async (texture: WebGpuTexture, draw_options: TextureDrawOptions = {}): Promise<Uint8Array> => {
+  const draw_texture = async (texture: WebGpuTexture | WebGpuRenderTarget, draw_options: TextureDrawOptions = {}): Promise<Uint8Array> => {
     return draw_textures([{ texture, options: draw_options }]);
+  };
+
+  type ResolvedTexture = Readonly<{
+    resource: ResourceHandle<GPUTexture>;
+    width: number;
+    height: number;
+    filtering: ReturnType<typeof resolve_texture_filtering>;
+    borrowed_lease?: ResourceLease<GPUTexture>;
+  }>;
+  const resolve_texture = (
+    texture: WebGpuTexture | WebGpuRenderTarget,
+    target_leases?: ReadonlyMap<WebGpuRenderTarget, ResourceLease<GPUTexture>>,
+  ): ResolvedTexture => {
+    const target_state = render_target_states.get(texture);
+    if ("resource" in texture) return texture;
+    if (target_state === undefined) throw new Error("render target does not belong to this renderer");
+    const borrowed_lease = target_leases?.get(texture);
+    return borrowed_lease === undefined ? target_state : { ...target_state, borrowed_lease };
   };
 
   const render_commands = async (
     commands: readonly RenderCommand[],
-    submission: Readonly<{ readback: boolean; allow_empty: boolean; clear_color: ClearColor }>,
+    submission: Readonly<{
+      readback: boolean;
+      allow_empty: boolean;
+      clear_color: ClearColor;
+      clear: boolean;
+      target?: Readonly<{ lease: ResourceLease<GPUTexture>; width: number; height: number }>;
+      target_leases?: ReadonlyMap<WebGpuRenderTarget, ResourceLease<GPUTexture>>;
+    }>,
   ): Promise<Uint8Array | undefined> => {
     if (disposed) {
       throw new Error("WebGPU renderer is disposed");
@@ -744,17 +810,21 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     const canvas_height = logical_height;
     const active_camera = get_active_camera();
     const viewport = current_viewport;
+    const output_width = submission.target?.width ?? surface_width;
+    const output_height = submission.target?.height ?? surface_height;
+    const output_content_width = submission.target === undefined ? viewport.content_width * device_scale_x : output_width;
+    const output_content_height = submission.target === undefined ? viewport.content_height * device_scale_y : output_height;
+    const output_offset_x = submission.target === undefined ? viewport.offset_x * device_scale_x : 0;
+    const output_offset_y = submission.target === undefined ? viewport.offset_y * device_scale_y : 0;
     const encoded_draws = draws.map((draw) => {
       if ("geometry" in draw) {
         const tint = draw.geometry.color;
         const opacity = draw.geometry.opacity ?? 1;
         const to_clip_point = (point: PolygonPoint): [number, number] => {
           const screen_point = active_camera?.world_to_screen(point) ?? point;
-          const physical_x = ((screen_point.x * viewport.content_width) / canvas_width) * device_scale_x;
-          const physical_y = ((screen_point.y * viewport.content_height) / canvas_height) * device_scale_y;
-          const offset_x = viewport.offset_x * device_scale_x;
-          const offset_y = viewport.offset_y * device_scale_y;
-          return [((physical_x + offset_x) / surface_width) * 2 - 1, 1 - ((physical_y + offset_y) / surface_height) * 2];
+          const physical_x = (screen_point.x * output_content_width) / canvas_width;
+          const physical_y = (screen_point.y * output_content_height) / canvas_height;
+          return [((physical_x + output_offset_x) / output_width) * 2 - 1, 1 - ((physical_y + output_offset_y) / output_height) * 2];
         };
         const vertex_data = new Float32Array(
           draw.geometry.indices.flatMap((index) => {
@@ -763,7 +833,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           }),
         );
         return {
-          texture: ensure_solid_texture(),
+          texture: resolve_texture(ensure_solid_texture(), submission.target_leases),
           tint,
           opacity,
           vertex_data,
@@ -777,7 +847,9 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           blend_mode: draw.blend_mode,
         };
       }
-      const { texture, options = {} } = draw;
+      const source_texture = resolve_texture(draw.texture, submission.target_leases);
+      const { options = {} } = draw;
+      const texture = source_texture;
       const region = options.region ?? { x: 0, y: 0, width: texture.width, height: texture.height };
       if (!Number.isFinite(region.x) || !Number.isFinite(region.y) || !Number.isFinite(region.width) || !Number.isFinite(region.height)) {
         throw new RangeError("texture region must be finite");
@@ -820,11 +892,9 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       const corners = [corner(0, 0), corner(width, 0), corner(width, height), corner(0, height)];
       const to_clip = ([point_x, point_y]: [number, number]): [number, number] => {
         const screen_point = active_camera?.world_to_screen({ x: point_x, y: point_y }) ?? { x: point_x, y: point_y };
-        const physical_x = ((screen_point.x * viewport.content_width) / canvas_width) * device_scale_x;
-        const physical_y = ((screen_point.y * viewport.content_height) / canvas_height) * device_scale_y;
-        const offset_x = viewport.offset_x * device_scale_x;
-        const offset_y = viewport.offset_y * device_scale_y;
-        return [((physical_x + offset_x) / surface_width) * 2 - 1, 1 - ((physical_y + offset_y) / surface_height) * 2];
+        const physical_x = (screen_point.x * output_content_width) / canvas_width;
+        const physical_y = (screen_point.y * output_content_height) / canvas_height;
+        return [((physical_x + output_offset_x) / output_width) * 2 - 1, 1 - ((physical_y + output_offset_y) / output_height) * 2];
       };
       const positions = corners.map(to_clip);
       const u0 = region.x / texture.width;
@@ -883,7 +953,10 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         blend_mode: draw.blend_mode,
       };
     });
-    const leases = encoded_draws.map(({ texture }) => texture.resource.acquire_lease());
+    const leases = encoded_draws.map(({ texture }) => texture.borrowed_lease ?? texture.resource.acquire_lease());
+    const owned_leases = encoded_draws
+      .map(({ texture }, index) => (texture.borrowed_lease === undefined ? leases[index] : undefined))
+      .filter((lease): lease is ResourceLease<GPUTexture> => lease !== undefined);
     const samplers = encoded_draws.map(({ texture }) => {
       const key = `${texture.filtering.magnification}:${texture.filtering.minification}`;
       const cached = sampler_cache.get(key);
@@ -989,7 +1062,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       return get_bind_group(leases[draw_index].resource, samplers[draw_index]);
     });
 
-    const target = context.getCurrentTexture();
+    const target = submission.target?.lease.resource ?? context.getCurrentTexture();
     const encoder = device.createCommandEncoder();
     const pass = encoder.beginRenderPass({
       colorAttachments: [
@@ -1001,7 +1074,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
             b: submission.clear_color.blue,
             a: submission.clear_color.alpha,
           },
-          loadOp: "clear",
+          loadOp: submission.clear ? "clear" : "load",
           storeOp: "store",
         },
       ],
@@ -1023,7 +1096,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       await submit_without_readback(encoder);
       return undefined;
     } finally {
-      leases.forEach((lease) => {
+      owned_leases.forEach((lease) => {
         lease.release();
       });
       release_reusable_buffer(dynamic_vertex_storage);
@@ -1031,7 +1104,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   };
 
   const draw_commands = async (commands: readonly RenderCommand[]): Promise<Uint8Array> => {
-    const pixels = await render_commands(commands, { readback: true, allow_empty: false, clear_color: default_clear_color });
+    const pixels = await render_commands(commands, { readback: true, allow_empty: false, clear: true, clear_color: default_clear_color });
     if (pixels === undefined) {
       throw new Error("diagnostic render did not produce a capture");
     }
@@ -1043,7 +1116,13 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       throw new Error("WebGPU renderer is disposed");
     }
     assert_color(clear_color);
-    const commands: RenderCommand[] = [];
+    type FrameGroup = Readonly<{
+      commands: RenderCommand[];
+      target?: Readonly<{ state: RenderTargetState; lease: ResourceLease<GPUTexture> }>;
+    }>;
+    const groups: FrameGroup[] = [{ commands: [] }];
+    const target_leases = new Map<WebGpuRenderTarget, ResourceLease<GPUTexture>>();
+    let current_group = groups[0];
     let completed = false;
     let capture_requested = false;
     let capture_promise: Promise<Uint8Array> | undefined;
@@ -1056,19 +1135,61 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     };
     const draw_frame_commands = (next_commands: readonly RenderCommand[]): void => {
       assert_open();
-      commands.push(...next_commands);
+      current_group.commands.push(...next_commands);
+    };
+    const set_target = (target?: WebGpuRenderTarget): void => {
+      assert_open();
+      if (target === undefined) {
+        current_group = { commands: [] };
+        groups.push(current_group);
+        return;
+      }
+      const state = render_target_states.get(target);
+      if (state === undefined) {
+        throw new Error("render target does not belong to this renderer");
+      }
+      const existing_lease = target_leases.get(target);
+      const lease = existing_lease ?? state.resource.acquire_lease();
+      if (existing_lease === undefined) target_leases.set(target, lease);
+      current_group = { commands: [], target: { state, lease } };
+      groups.push(current_group);
     };
     const submit = async (): Promise<void> => {
       assert_open();
       completed = true;
       try {
-        const pixels = await render_commands(commands, { readback: capture_requested, allow_empty: true, clear_color });
-        if (capture_requested && pixels !== undefined) {
-          resolve_capture?.(pixels);
+        const last_canvas_group = groups.findLastIndex((group) => group.target === undefined);
+        const seen_targets = new Set<object>();
+        const canvas_key = {};
+        let captured_pixels: Uint8Array | undefined;
+        for (const [index, group] of groups.entries()) {
+          const target_key = group.target?.state ?? canvas_key;
+          const clear = !seen_targets.has(target_key);
+          seen_targets.add(target_key);
+          const pixels = await render_commands(group.commands, {
+            readback: capture_requested && index === last_canvas_group,
+            allow_empty: true,
+            clear,
+            clear_color,
+            target:
+              group.target === undefined
+                ? undefined
+                : { lease: group.target.lease, width: group.target.state.width, height: group.target.state.height },
+            target_leases,
+          });
+          if (pixels !== undefined) captured_pixels = pixels;
+        }
+        if (capture_requested && captured_pixels !== undefined) {
+          resolve_capture?.(captured_pixels);
         }
       } catch (cause) {
         reject_capture?.(cause);
         throw cause;
+      } finally {
+        target_leases.forEach((lease) => {
+          lease.release();
+        });
+        target_leases.clear();
       }
     };
     const capture = (): Promise<Uint8Array> => {
@@ -1082,7 +1203,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       }
       return capture_promise;
     };
-    return Object.freeze({ draw_commands: draw_frame_commands, submit, capture });
+    return Object.freeze({ draw_commands: draw_frame_commands, set_target, submit, capture });
   };
 
   const draw_textures = async (draws: readonly TextureDraw[]): Promise<Uint8Array> =>
@@ -1143,6 +1264,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     begin_frame,
     clear,
     create_texture,
+    create_render_target,
     create_texture_from_image,
     create_texture_from_blob,
     create_font_from_url: (source: string, options?: FontOptions) => create_webgpu_font(renderer_api, source, options),

@@ -1,4 +1,4 @@
-import type { BlendMode, RenderCommand } from "../src/lib/index.js";
+import type { BlendMode, RenderCommand, WebGpuRenderTarget } from "../src/lib/index.js";
 
 const modes: readonly BlendMode[] = ["normal", "additive", "multiply"];
 const command: RenderCommand = {
@@ -11,7 +11,15 @@ const command: RenderCommand = {
 };
 // @ts-expect-error Blend modes are a closed public union.
 const invalid_mode: BlendMode = "screen";
+const target: WebGpuRenderTarget = {
+  width: 1,
+  height: 1,
+  filtering: { magnification: "nearest", minification: "nearest" },
+  release: () => undefined,
+};
+const target_command: RenderCommand = { kind: "texture", draw: { texture: target } };
 
 void modes;
 void command;
 void invalid_mode;
+void target_command;

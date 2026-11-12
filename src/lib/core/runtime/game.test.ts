@@ -50,6 +50,7 @@ const create_fake_renderer = (state: FakeRendererState = { frames: [] }): WebGpu
         assert_open();
         frame_state.commands.push(...commands);
       },
+      set_target: () => undefined,
       submit: async () => {
         assert_open();
         await state.submission_gate;
@@ -69,6 +70,12 @@ const create_fake_renderer = (state: FakeRendererState = { frames: [] }): WebGpu
   };
   return {
     clear: draw,
+    create_render_target: () => ({
+      width: 1,
+      height: 1,
+      filtering: { magnification: "nearest", minification: "nearest" },
+      release: () => undefined,
+    }),
     create_texture,
     create_texture_from_image: (_image, width, height) => create_texture(new Uint8Array(), width, height),
     create_texture_from_blob: async (_source) => create_texture(new Uint8Array(), 1, 1),

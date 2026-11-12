@@ -35,6 +35,7 @@ and slice evidence are archived under
 - [shape-drawing](shape-drawing/spec.md)
 - [sprite-drawing](sprite-drawing/spec.md)
 - [blend-modes](blend-modes/spec.md)
+- [render-targets](render-targets/spec.md)
 - [svelte-bridge](svelte-bridge/spec.md)
 - [text-drawing](text-drawing/spec.md)
 - [texture-filtering](texture-filtering/spec.md)

@@ -51,6 +51,7 @@ A developer retains another variable pointing to A’s released handle. Drawing 
 
 - Verify repeated basic shape draws expose no disposable handle or per-call texture creation, and mutations after submission do not change captured draw values.
 - Acquire twice, release once, and render through the surviving handle; release the second and verify underlying destruction exactly once.
+- Apply the same lease contract to renderer-owned offscreen targets; an accepted frame retains a target through submission after its application handle is released.
 - Exercise draw-then-release before GPU submission and while work is in flight: verify earlier commands render without released-resource errors, new draws fail, and storage is not destroyed or reused prematurely.
 - Attempt drawing through a released alias and assert an asset-identifying error; double release has no extra effect.
 - Disposing an owner releases its remaining acquisitions without invalidating another live owner.

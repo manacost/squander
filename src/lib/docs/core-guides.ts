@@ -228,6 +228,24 @@ export const core_guides = [
     limitations: "Scene ownership automation and multi-scene asset policies are deferred.",
   },
   {
+    slug: "render-targets",
+    label: "render targets",
+    title: "Render targets",
+    summary: "Compose renderer-owned offscreen targets back into the canvas.",
+    evidence_kind: "test",
+    evidence_label: "Read the render-target WebGPU test",
+    test_file: "tests/webgpu-renderer.spec.ts",
+    example_description: "Render a red layer offscreen, then sample it into the canvas presentation pass.",
+    explanation:
+      "Create an explicit-size target, select it on a frame, record commands, switch back to the canvas, and draw the target as a texture. The renderer owns views, leases, and pipelines.",
+    types: ["WebGpuRenderTarget", "RenderTargetOptions", "RenderFrame.set_target"],
+    sample:
+      'const target = renderer.create_render_target({ width: 800, height: 450 });\nconst frame = renderer.begin_frame();\nframe.set_target(target);\nframe.draw_commands(scene_commands);\nframe.set_target();\nframe.draw_commands([{ kind: "texture", draw: { texture: target } }]);\ntarget.release();\nawait frame.submit();',
+    proof: "Trusted WebGPU readback verifies offscreen rendering, target sampling, and release-before-submit ownership.",
+    limitations:
+      "Targets use the preferred canvas format. Mipmaps, multisampling, arbitrary formats, and custom shaders remain separate capabilities.",
+  },
+  {
     slug: "svelte-bridge",
     label: "Svelte bridge",
     title: "Svelte 5 bridge",
