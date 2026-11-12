@@ -120,7 +120,26 @@ export const core_guides = [
       'const camera = create_camera({ x: 400, y: 225, zoom: 2, rotation: degrees(10), viewport });\ncamera.draw(() => {\n  frame.draw_commands([{ kind: "texture", draw: { texture: hero, options: { x: 400, y: 225 } } }]);\n});',
     proof:
       "Camera CPU tests verify transforms and scope restoration. Real GPU fixtures verify centered focus, zoom, inverse rotation, and conservative visibility.",
-    limitations: "Advanced projections, cursor-anchored zoom, and automatic culling are deferred.",
+    limitations: "Advanced projections and cursor-anchored zoom are deferred. Opt-in bounded render culling is documented separately.",
+  },
+  {
+    slug: "render-culling",
+    label: "render culling",
+    title: "Opt-in render culling",
+    summary: "Skip clearly offscreen bounded commands without changing simulation.",
+    evidence_kind: "test",
+    evidence_label: "Read the render-culling tests",
+    test_file: "src/lib/core/runtime/webgpu_renderer.test.ts",
+    example_description: "Enable culling and attach conservative world bounds to camera-scoped render commands.",
+    explanation:
+      "Culling is disabled by default. When enabled, the renderer uses the active camera's conservative visibility query and skips only definitely offscreen bounded commands; visible, touching, and unbounded commands remain.",
+    types: ["WebGpuRendererOptions.cull_offscreen", "RenderCommand.bounds", "Bounds"],
+    sample:
+      'const renderer = await create_webgpu_renderer({ canvas, width: 800, height: 450, cull_offscreen: true });\ncamera.draw(() => {\n  frame.draw_commands([{ kind: "texture", draw: { texture }, bounds: enemy_bounds }]);\n});',
+    proof:
+      "Camera boundary tests and renderer CPU tests verify conservative filtering. Trusted GPU equivalence and CPU/GPU workload evidence are required before promotion.",
+    limitations:
+      "Bounds are caller-provided world-space hints. Occlusion culling, automatic bounds calculation, and projection changes are deferred.",
   },
   {
     slug: "viewport-sizing",

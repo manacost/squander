@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { create_camera } from "./camera.js";
 import { create_geometry_owner } from "./geometry_ownership.js";
 import { create_webgpu_renderer, WebGpuUnavailableError } from "./webgpu_renderer.js";
 import type { WebGpuFont } from "./font_loading.js";
@@ -476,5 +477,31 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     await expect(
       renderer.draw_commands([{ kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color } }]),
     ).rejects.toThrow("disposed");
+  });
+
+  it("[render-culling] skips only offscreen bounded commands and keeps unbounded draws", async () => {
+    const fake = install_webgpu();
+    const target_canvas = canvas();
+    (target_canvas.getContext as ReturnType<typeof vi.fn>).mockReturnValue(fake.context);
+    const renderer = await create_webgpu_renderer({ canvas: target_canvas, width: 2, height: 2, cull_offscreen: true });
+    const camera = create_camera({ viewport: { logical_width: 2, logical_height: 2 } });
+    const textures = [
+      renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1),
+      renderer.create_texture(new Uint8Array([0, 255, 0, 255]), 1, 1),
+      renderer.create_texture(new Uint8Array([0, 0, 255, 255]), 1, 1),
+    ];
+    const draw_calls_before = fake.draw_calls.length;
+    await camera.draw(() => {
+      return renderer.draw_commands([
+        { kind: "texture", draw: { texture: textures[0] }, bounds: { x: 0, y: 0, width: 1, height: 1 } },
+        { kind: "texture", draw: { texture: textures[1] }, bounds: { x: 100, y: 100, width: 1, height: 1 } },
+        { kind: "texture", draw: { texture: textures[2] } },
+      ]);
+    });
+    expect(fake.draw_calls.length - draw_calls_before).toBe(2);
+    textures.forEach((texture) => {
+      texture.release();
+    });
+    renderer.dispose();
   });
 });

@@ -41,9 +41,10 @@ implemented and listed below for historical traceability.
   [blend-modes capability](../specs/blend-modes/spec.md); future modes still
   require a separate contract and pixel evidence (AD-027).
 
-- **Automatic offscreen culling:** skip rendering work for definitely offscreen
-  bounds, building on the current camera capability's explicit `is_in_view` helper. Preserve visible
-  results and validate measured benefit; do not skip gameplay updates (AD-048).
+- **Automatic offscreen culling:** accepted as the opt-in
+  [render-culling capability](../specs/render-culling/spec.md); promotion still
+  requires real-device equivalence and CPU/GPU workload evidence. Preserve
+  visible results and do not skip gameplay updates (AD-048).
 - **Occlusion culling:** investigate skipping fully hidden content while respecting
   transparency and draw order. More advanced than offscreen checks; require
   correctness evidence and measured benefit before implementation (AD-048).

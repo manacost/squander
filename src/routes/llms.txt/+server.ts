@@ -590,7 +590,19 @@ camera.draw(() => {
 
 Drawing inside a camera scope uses world space; drawing outside it uses screen
 space. Camera scope restoration is synchronous, including when a callback
-throws. Automatic culling and cursor-anchored zoom are deferred.
+throws. Opt-in bounded render culling is available; cursor-anchored zoom and
+swappable projections remain deferred.
+
+\`\`\`ts
+const renderer = await create_webgpu_renderer({ canvas, width: 800, height: 450, cull_offscreen: true });
+camera.draw(() => {
+  frame.draw_commands([{ kind: "texture", draw: { texture }, bounds: enemy_bounds }]);
+});
+\`\`\`
+
+Culling is disabled by default and skips only definitely offscreen bounded
+commands. Visible, edge-touching, and unbounded commands remain. It never skips
+simulation or input.
 
 ## Random
 

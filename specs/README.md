@@ -58,6 +58,7 @@ and slice evidence are archived under
 - [ecs-system-composition](ecs-system-composition/spec.md)
 - [render-frame](render-frame/spec.md)
 - [renderer-performance](renderer-performance/spec.md)
+- [render-culling](render-culling/spec.md)
 
 The [render-frame](render-frame/spec.md) capability is in progress: its public
 contract and CPU lifecycle path are implemented, while full trusted-origin

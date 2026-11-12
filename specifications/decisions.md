@@ -897,6 +897,17 @@ private. Compilation failures follow the normal draw and game lifecycle error
 path. This is an API-shape restriction, not a security boundary for untrusted
 shader source. See the [custom shader effects capability](../specs/custom-shader-effects/spec.md).
 
+## AD-067: Offscreen culling is opt-in and conservative
+
+The renderer may skip a `RenderCommand` only when the caller supplies world
+axis-aligned `bounds`, culling is explicitly enabled on `WebGpuRendererOptions`,
+and the active camera's conservative `is_in_view` query returns false. Without a
+camera, without bounds, or when bounds touch/intersect the view, the command is
+submitted. Culling never affects simulation, input, command recording, or
+resource ownership. It remains disabled by default until separate CPU-bound and
+GPU-bound measurements show a useful tradeoff. See the [render culling
+capability](../specs/render-culling/spec.md).
+
 ## Implementation readiness
 
 Capability contracts live under [specs](../specs/README.md). Their lifecycle

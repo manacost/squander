@@ -304,6 +304,56 @@ test("[custom-shader-effects] applies constrained fragment code and uniforms", a
   expect(result.pixels[3]).toBe(255);
 });
 
+test("[render-culling] preserves pixels when conservative culling is enabled", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("culling verification requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("culling verification requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("culling verification adapter creation failed");
+    const device = await adapter.requestDevice();
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const camera_url = new URL("/src/lib/core/runtime/camera.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const camera_module = (await import(/* @vite-ignore */ camera_url)) as typeof import("../src/lib/core/runtime/camera.js");
+    const commands = [
+      {
+        kind: "rectangle" as const,
+        draw: { rectangle: { x: -1, y: -0.5, width: 1, height: 1 }, color: { red: 1, green: 0, blue: 0, alpha: 1 } },
+        bounds: { x: -1, y: -0.5, width: 1, height: 1 },
+      },
+      {
+        kind: "rectangle" as const,
+        draw: { rectangle: { x: 0, y: -0.5, width: 1, height: 1 }, color: { red: 0, green: 0, blue: 1, alpha: 1 } },
+        bounds: { x: 0, y: -0.5, width: 1, height: 1 },
+      },
+      {
+        kind: "rectangle" as const,
+        draw: { rectangle: { x: 10, y: 10, width: 1, height: 1 }, color: { red: 0, green: 1, blue: 0, alpha: 1 } },
+        bounds: { x: 10, y: 10, width: 1, height: 1 },
+      },
+    ];
+    const camera = camera_module.create_camera({ viewport: { logical_width: 2, logical_height: 1 } });
+    const render = async (cull_offscreen: boolean): Promise<number[]> => {
+      const canvas = document.createElement("canvas");
+      document.body.append(canvas);
+      const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 2, height: 1, cull_offscreen });
+      const pixels = await camera.draw(() => renderer.draw_commands(commands));
+      renderer.dispose();
+      return Array.from(pixels.slice(0, 8));
+    };
+    const without_culling = await render(false);
+    const with_culling = await render(true);
+    device.destroy();
+    return { secure: window.isSecureContext, gpu: "gpu" in navigator, without_culling, with_culling };
+  });
+
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.with_culling).toEqual(result.without_culling);
+  expect(result.with_culling).toEqual([255, 0, 0, 255, 0, 0, 255, 255]);
+});
+
 test("[game-lifecycle] handles a rejected frame submission without an unhandled rejection", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

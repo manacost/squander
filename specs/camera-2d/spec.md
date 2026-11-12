@@ -26,7 +26,7 @@ real WebGPU fixtures.
 - Provide `camera.is_in_view(bounds)` for world-space bounds, accounting for camera position, zoom, rotation, and logical viewport size. False means definitely outside; true means partially or potentially visible, not unoccluded (AD-048).
 - Accept plain `{ x, y, width, height }` world-axis-aligned rectangles for visibility queries, independent of camera rotation. Do not require game entities or resource handles (AD-049).
 - Normalize signed bounds dimensions, count edge touching as potentially visible, and interpret zero-size bounds as point/line queries. Throw for nonfinite bounds coordinates/dimensions (AD-050).
-- Require caller-provided bounds to cover rendered content, including stroke extent. The visibility query does not itself skip draws or updates; automatic culling is deferred.
+- Require caller-provided bounds to cover rendered content, including stroke extent. The visibility query does not skip updates. Opt-in renderer culling may use the same conservative predicate for bounded render commands.
 - Apply the basic camera consistently to world sprites, shapes, paths, polygons, and labels.
 - Outside camera scopes, use logical screen coordinates with origin at the content viewport’s top-left, excluding letterbox bars, positive X right and positive Y down (AD-047).
 - Keep camera transforms separate from viewport fitting and physical resolution.
@@ -114,8 +114,9 @@ Current verification:
   `[camera-2d]` suite.
 
 Nested scope restoration, viewport mapping, and camera transforms across sprites,
-primitives, labels, and owned geometry are implemented. Automatic culling and
-advanced projections remain deferred.
+primitives, labels, and owned geometry are implemented. Opt-in render culling is
+specified separately in [render-culling](../render-culling/spec.md); advanced
+projections remain deferred.
 
 ## Notes
 

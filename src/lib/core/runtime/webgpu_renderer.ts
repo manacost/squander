@@ -4,7 +4,7 @@ import { resolve_texture_filtering, type TextureFilteringOptions } from "./textu
 import { decode_image_source } from "./image_loading.js";
 import { create_resource_owner, type ResourceHandle, type ResourceLease, type ResourceOwner } from "./resource_ownership.js";
 import type { Color } from "./colors.js";
-import { get_active_camera } from "./camera.js";
+import { get_active_camera, type Bounds } from "./camera.js";
 import { calculate_responsive_viewport, type ViewportSize } from "./viewport_sizing.js";
 import {
   has_drawable_area,
@@ -33,6 +33,7 @@ export type WebGpuRendererOptions = Readonly<{
   width: number;
   height: number;
   viewport?: ViewportSize;
+  cull_offscreen?: boolean;
 }>;
 
 export type WebGpuTexture = Readonly<{
@@ -105,20 +106,21 @@ export type OwnedGeometryDraw = Readonly<{ geometry: GeometryHandle; owner: Geom
   DrawBlendOptions;
 export type TextDraw = Readonly<{ font: WebGpuFont; text: string; options?: TextDrawOptions }>;
 
-export type RenderCommand = Readonly<
-  | { kind: "texture"; draw: TextureDraw }
-  | { kind: "rectangle"; draw: RectangleDraw }
-  | { kind: "circle"; draw: CircleDraw }
-  | { kind: "line"; draw: LineDraw }
-  | { kind: "rectangle_outline"; draw: RectangleOutlineDraw }
-  | { kind: "circle_outline"; draw: CircleOutlineDraw }
-  | { kind: "triangles"; draw: TriangleDraw }
-  | { kind: "stroke"; draw: StrokeDraw }
-  | { kind: "polygon"; draw: PolygonDraw }
-  | { kind: "polygon_outline"; draw: PolygonOutlineDraw }
-  | { kind: "geometry"; draw: OwnedGeometryDraw }
-  | { kind: "text"; draw: TextDraw }
->;
+type RenderCommandWithBounds<Kind extends string, Draw> = Readonly<{ kind: Kind; draw: Draw; bounds?: Bounds }>;
+
+export type RenderCommand =
+  | RenderCommandWithBounds<"texture", TextureDraw>
+  | RenderCommandWithBounds<"rectangle", RectangleDraw>
+  | RenderCommandWithBounds<"circle", CircleDraw>
+  | RenderCommandWithBounds<"line", LineDraw>
+  | RenderCommandWithBounds<"rectangle_outline", RectangleOutlineDraw>
+  | RenderCommandWithBounds<"circle_outline", CircleOutlineDraw>
+  | RenderCommandWithBounds<"triangles", TriangleDraw>
+  | RenderCommandWithBounds<"stroke", StrokeDraw>
+  | RenderCommandWithBounds<"polygon", PolygonDraw>
+  | RenderCommandWithBounds<"polygon_outline", PolygonOutlineDraw>
+  | RenderCommandWithBounds<"geometry", OwnedGeometryDraw>
+  | RenderCommandWithBounds<"text", TextDraw>;
 
 export type RenderFrame = Readonly<{
   draw_commands: (commands: readonly RenderCommand[]) => void;
@@ -299,6 +301,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   let logical_height = current_viewport.logical_height;
   let device_scale_x = current_viewport.physical_width / current_viewport.css_width;
   let device_scale_y = current_viewport.physical_height / current_viewport.css_height;
+  const cull_offscreen = options.cull_offscreen ?? false;
   options.canvas.width = surface_width;
   options.canvas.height = surface_height;
   const format = navigator.gpu.getPreferredCanvasFormat();
@@ -642,6 +645,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       throw new RangeError("at least one texture draw is required");
     }
     type GeometryDraw = Readonly<{ geometry: TriangleDraw; handle?: GeometryHandle; snapshot?: PreparedGeometry }>;
+    const active_camera = get_active_camera();
     const expanded_commands = commands.flatMap((command): readonly RenderCommand[] => {
       if (command.kind !== "text") return [command];
       const { font, text, options = {} } = command.draw;
@@ -671,10 +675,14 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
           },
         };
         cursor_x += glyph.advance * scale;
-        return { kind: "texture", draw };
+        return { kind: "texture", draw, bounds: command.bounds };
       });
     });
-    const raw_draws = expanded_commands.map((command): TextureDraw | GeometryDraw => {
+    const visible_commands = expanded_commands.filter((command) => {
+      if (!cull_offscreen || active_camera === undefined || command.bounds === undefined) return true;
+      return active_camera.is_in_view(command.bounds);
+    });
+    const raw_draws = visible_commands.map((command): TextureDraw | GeometryDraw => {
       if (command.kind === "texture") {
         return command.draw;
       }
@@ -878,7 +886,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       };
     });
     const draws = raw_draws.map((draw, index) => {
-      const command = expanded_commands[index];
+      const command = visible_commands[index];
       const blend_mode =
         command.kind === "texture"
           ? command.draw.options?.blend_mode
@@ -889,7 +897,6 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     });
     const canvas_width = logical_width;
     const canvas_height = logical_height;
-    const active_camera = get_active_camera();
     const viewport = current_viewport;
     const output_width = submission.target?.width ?? surface_width;
     const output_height = submission.target?.height ?? surface_height;
