@@ -8,10 +8,15 @@
   let dialogue_handle: SceneHandle | undefined;
 
   const start_game = async ({ scenes }: GameReadyContext): Promise<void> => {
-    const gameplay_scene: SvelteSceneFactory = ({ renderer }) => ({
+    const gameplay_scene: SvelteSceneFactory = () => ({
       name: "gameplay",
-      draw: () => {
-        void renderer.clear({ red: 0.05, green: 0.13, blue: 0.28, alpha: 1 });
+      draw: (frame) => {
+        frame.draw_commands([
+          {
+            kind: "rectangle",
+            draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: { red: 0.05, green: 0.13, blue: 0.28, alpha: 1 } },
+          },
+        ]);
       },
     });
 
@@ -100,9 +105,11 @@
 
   <h2>Mount a persistent layer</h2>
   <CodeBlock
-    code={`const gameplay = scenes.create(({ renderer }) => ({
+    code={`const gameplay = scenes.create(() => ({
   name: "gameplay",
-  draw: () => renderer.clear(world_color),
+  draw: (frame) => frame.draw_commands([
+    { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: world_color } },
+  ]),
 }));
 
 const hud = scenes.create(({ create_ui }) => {

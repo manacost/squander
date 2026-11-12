@@ -10,7 +10,6 @@
   type TextState = Readonly<{ status: "loading" | "ready"; ticks: number }>;
   type TextCommands = Record<string, never>;
 
-  let active_game: RuntimeGame | undefined;
   let font: WebGpuFont | undefined;
   let ticks = 0;
   const font_source = `url("${asset("fonts/GeostarFill-Regular.ttf")}")`;
@@ -45,10 +44,10 @@
         ticks += 1;
         publish({ status: "ready", ticks });
       },
-      draw: () => {
+      draw: (frame) => {
         if (font === undefined) return;
         const current_font = font;
-        void active_game?.renderer.draw_commands([
+        frame.draw_commands([
           {
             kind: "text" as const,
             draw: { font: current_font, text: "Bundled text works", options: { x: 32, y: 32, size: 30, color: rgba(1, 0.82, 0.3, 1) } },
@@ -68,7 +67,6 @@
         ]);
       },
     });
-    active_game = game;
     return game;
   };
 </script>
@@ -114,7 +112,7 @@ const font = font_handle.read();`}
 
   <h2>Draw text</h2>
   <CodeBlock
-    code={`renderer.draw_commands([
+    code={`frame.draw_commands([
   {
     kind: "text",
     draw: {

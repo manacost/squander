@@ -11,6 +11,11 @@ const create_renderer = (): WebGpuRenderer => {
   const owner = create_resource_owner();
   const viewport = calculate_responsive_viewport({ css_width: 1, css_height: 1, device_pixel_ratio: 1 });
   const empty_draw = (): Promise<Uint8Array> => Promise.resolve(new Uint8Array());
+  const begin_frame = () => ({
+    draw_commands: () => undefined,
+    submit: async () => undefined,
+    capture: async () => new Uint8Array(),
+  });
   const texture = () => ({
     resource: owner.acquire({} as GPUTexture, () => undefined),
     width: 1,
@@ -19,6 +24,7 @@ const create_renderer = (): WebGpuRenderer => {
     release: () => undefined,
   });
   return {
+    begin_frame,
     clear: empty_draw,
     create_texture: () => texture(),
     create_texture_from_image: () => texture(),

@@ -35,6 +35,9 @@ test("Snake runs a real WebGPU game loop with accessible state controls", async 
   await expect(page.getByTestId("snake-status")).toHaveText("start");
   await expect(page.getByTestId("snake-start-menu")).toBeVisible();
   await expect(page.getByTestId("snake-touch-up")).toBeDisabled();
+  await page.evaluate(() => {
+    (globalThis as { __snake_capture_requested?: boolean }).__snake_capture_requested = true;
+  });
 
   await expect
     .poll(async () =>

@@ -9,7 +9,7 @@ export type FrameScheduler = Readonly<{
 export type FrameLoopOptions = Readonly<{
   scheduler: FrameScheduler;
   update: (time: UpdateTime) => void;
-  draw: () => void;
+  draw: () => unknown;
   on_error?: (error: unknown) => void;
   max_delta_seconds?: number;
 }>;
@@ -34,6 +34,9 @@ export const create_frame_loop = (options: FrameLoopOptions): FrameLoop => {
   let manually_paused = false;
 
   const report_error = (error: unknown): void => {
+    if (state === "disposed") {
+      return;
+    }
     state = "stopped";
     options.on_error?.(error);
   };
@@ -54,7 +57,23 @@ export const create_frame_loop = (options: FrameLoopOptions): FrameLoop => {
       if (state === "running") {
         options.update(update_clock.sample(options.scheduler.now_seconds()));
       }
-      options.draw();
+      const draw_result = options.draw();
+      if (
+        draw_result !== null &&
+        (typeof draw_result === "object" || typeof draw_result === "function") &&
+        "then" in draw_result &&
+        typeof draw_result.then === "function"
+      ) {
+        void Promise.resolve(draw_result).then(
+          () => {
+            schedule();
+          },
+          (error: unknown) => {
+            report_error(error);
+          },
+        );
+        return;
+      }
     } catch (error) {
       report_error(error);
       return;

@@ -28,9 +28,11 @@ const create_fake_device = (): {
   context: Record<string, unknown>;
   textures: FakeTexture[];
   buffers: FakeBuffer[];
+  render_passes: unknown[];
 } => {
   const textures: FakeTexture[] = [];
   const buffers: FakeBuffer[] = [];
+  const render_passes: unknown[] = [];
   const context_texture = (): FakeTexture => {
     const texture = new FakeTexture();
     textures.push(texture);
@@ -74,13 +76,16 @@ const create_fake_device = (): {
         end: vi.fn(),
       };
       return {
-        beginRenderPass: vi.fn(() => pass),
+        beginRenderPass: vi.fn((descriptor: unknown) => {
+          render_passes.push(descriptor);
+          return pass;
+        }),
         copyTextureToBuffer: vi.fn(),
         finish: vi.fn(() => ({})),
       };
     }),
   };
-  return { device, context, textures, buffers };
+  return { device, context, textures, buffers, render_passes };
 };
 
 const install_webgpu = (
@@ -157,6 +162,31 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     const target = canvas();
     (target.getContext as ReturnType<typeof vi.fn>).mockReturnValue(fake.context);
     const renderer = await create_webgpu_renderer({ canvas: target, width: 2, height: 2 });
+    const production_frame = renderer.begin_frame({ red: 0.1, green: 0.2, blue: 0.3, alpha: 1 });
+    production_frame.draw_commands([
+      { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: rgba(1, 0, 0, 1) } },
+    ]);
+    const copies_before_production_submit = (fake.device.queue as { submit: ReturnType<typeof vi.fn> }).submit.mock.calls.length;
+    await production_frame.submit();
+    expect((fake.device.queue as { submit: ReturnType<typeof vi.fn> }).submit).toHaveBeenCalled();
+    expect(fake.context.getCurrentTexture).toHaveBeenCalled();
+    expect(fake.render_passes.at(-1)).toMatchObject({ colorAttachments: [{ loadOp: "clear", storeOp: "store" }] });
+    expect((fake.device as { createBuffer: ReturnType<typeof vi.fn> }).createBuffer).not.toHaveBeenCalledWith(
+      expect.objectContaining({ usage: 3 }),
+    );
+    expect((fake.device.queue as { submit: ReturnType<typeof vi.fn> }).submit.mock.calls.length).toBeGreaterThan(
+      copies_before_production_submit,
+    );
+    await expect(production_frame.submit()).rejects.toThrow("already completed");
+    const capture_frame = renderer.begin_frame();
+    const copies_before_capture = (fake.device as { createBuffer: ReturnType<typeof vi.fn> }).createBuffer.mock.calls.length;
+    const capture = capture_frame.capture();
+    capture_frame.draw_commands([]);
+    await capture_frame.submit();
+    await capture;
+    expect((fake.device as { createBuffer: ReturnType<typeof vi.fn> }).createBuffer.mock.calls.length).toBeGreaterThan(
+      copies_before_capture,
+    );
     const texture = renderer.create_texture(new Uint8Array([255, 0, 0, 255]), 1, 1, { filter: "nearest" });
     expect(texture.filtering).toEqual({ magnification: "nearest", minification: "nearest" });
     expect(() => renderer.create_texture(new Uint8Array(4), 0, 1)).toThrow(/dimensions/);

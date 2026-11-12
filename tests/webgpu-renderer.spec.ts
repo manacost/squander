@@ -140,6 +140,39 @@ test("[webgpu-runtime] clears and reads back a real canvas texture", async ({ pa
   expect(result.pixels).toEqual([64, 128, 191, 255]);
 });
 
+test("[render-frame] captures ordered layers from one logical frame", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer = await module.create_webgpu_renderer({ canvas, width: 2, height: 1 });
+    const frame = renderer.begin_frame({ red: 0, green: 0, blue: 0, alpha: 1 });
+    const capture = frame.capture();
+    frame.draw_commands([
+      { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: colors.rgba(1, 0, 0, 1) } },
+      { kind: "rectangle", draw: { rectangle: { x: 1, y: 0, width: 1, height: 1 }, color: colors.rgba(0, 0, 1, 1) } },
+    ]);
+    await frame.submit();
+    const pixels = await capture;
+    renderer.dispose();
+    return {
+      secure: window.isSecureContext,
+      gpu: "gpu" in navigator,
+      first_pixel: Array.from(pixels.slice(0, 4)),
+      second_pixel: Array.from(pixels.slice(4, 8)),
+    };
+  });
+
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.first_pixel).toEqual([255, 0, 0, 255]);
+  expect(result.second_pixel).toEqual([0, 0, 255, 255]);
+});
+
 test("[webgpu-runtime] isolates simultaneous game devices and disposal", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

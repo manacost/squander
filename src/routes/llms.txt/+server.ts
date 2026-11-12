@@ -222,8 +222,10 @@ export const start_game = async ({ scenes }: GameReadyContext): Promise<void> =>
   await scenes.mount(({ renderer }) => ({
     name: "play",
     update: ({ delta_seconds }) => movement_system(world, delta_seconds),
-    draw: () => {
-      void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
+    draw: (frame) => {
+      frame.draw_commands([
+        { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: { red: 0.05, green: 0.08, blue: 0.15, alpha: 1 } } },
+      ]);
     },
   }));
 };
@@ -239,7 +241,32 @@ the runtime; Svelte reads only the state the game intentionally publishes.
 The package root exports the core runtime. A game owns its renderer, frame
 loop, input router, asset cache, resource owner, geometry owner, and scene
 composer. Setup runs before the frame loop starts. The \`update\` callback
-advances game state, and \`draw\` submits frame-local commands.
+advances game state, and \`draw(frame)\` records frame-local commands. The
+runtime submits one logical frame after application and scenes have recorded
+their commands.
+
+## Production frame submission
+
+Use the frame supplied to the game or scene draw callback for normal rendering.
+It preserves application-then-scene order, clears once, submits without
+readback, and accepts an empty frame. The renderer remains one public mechanism;
+the frame is only its recording boundary.
+
+\`WebGpuRenderer.begin_frame\` is available for lower-level code:
+
+\`\`\`ts
+const frame = renderer.begin_frame();
+frame.draw_commands([
+  { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: rgba(0, 0, 0, 1) } },
+]);
+await frame.submit();
+\`\`\`
+
+Call \`frame.capture()\` before \`submit()\` only for diagnostic pixel
+evidence. It requests one readback for that frame; production frames should
+not request capture. Existing \`renderer.clear\`, \`draw_texture\`,
+\`draw_textures\`, \`draw_text\`, and \`draw_commands\` methods remain
+readback-oriented compatibility methods during migration.
 
 \`\`\`ts
 ${documentation_examples.root_game.trimEnd()}
@@ -394,7 +421,7 @@ flip, tint, opacity, and submission order. Use \`nearest\` filtering for
 pixel-art games and \`linear\` filtering for smooth art.
 
 \`\`\`ts
-renderer.draw_texture(hero.read(), {
+frame.draw_commands([{ kind: "texture", draw: { texture: hero.read(), options: {
   x: player.x,
   y: player.y,
   width: 48,
@@ -404,7 +431,7 @@ renderer.draw_texture(hero.read(), {
   flip_x: player.facing_left,
   tint: rgba(1, 0.9, 0.9, 1),
   opacity: player.invulnerable ? 0.5 : 1,
-});
+} } }]);
 \`\`\`
 
 Draw order is observable. Selectable blend modes, mipmaps, and anisotropic
@@ -417,7 +444,7 @@ geometry. Supported commands include filled and outlined rectangles, circles,
 and lines. Invalid geometry throws; valid zero-area geometry draws nothing.
 
 \`\`\`ts
-renderer.draw_commands([
+frame.draw_commands([
   {
     kind: "rectangle",
     draw: { rectangle: { x: 20, y: 20, width: 180, height: 24 }, color: rgba(0.1, 0.1, 0.15, 1) },

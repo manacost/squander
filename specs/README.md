@@ -50,6 +50,11 @@ and slice evidence are archived under
 ### Draft capabilities
 
 - [ecs-system](ecs-system/spec.md)
+- [render-frame](render-frame/spec.md)
+
+The [render-frame](render-frame/spec.md) capability is in progress: its public
+contract and CPU lifecycle path are implemented, while full trusted-origin
+layered WebGPU evidence remains a promotion gate.
 
 ## Verification baseline
 

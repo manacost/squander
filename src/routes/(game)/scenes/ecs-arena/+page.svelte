@@ -188,8 +188,8 @@
         arena.update(time.delta_seconds);
         publish_state?.(arena.get_state());
       },
-      draw: () => {
-        void game.renderer.draw_commands(create_draw_commands(arena.get_render_state())).catch(() => undefined);
+      draw: (frame) => {
+        frame.draw_commands(create_draw_commands(arena.get_render_state()));
       },
     });
     return game;

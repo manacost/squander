@@ -23,8 +23,9 @@ acceptance evidence, and the relevant documentation.
 - **Camera extensions:** Define cursor-anchored zoom, swappable projections,
   and any screen-space stroke policy before implementation.
 - **Rendering extensions:** Define culling correctness, custom shaders, render
-  targets, blend modes, curved fills, holes, and fill rules with measured
-  performance and real-device evidence.
+  targets, blend modes, curved fills, holes, fill rules, and renderer reuse with
+  measured performance and real-device evidence. The production frame boundary
+  is accepted in [render-frame](../specs/render-frame/spec.md).
 - **Text and assets:** Define rich layout, shaping, fallback, supplied atlas
   import, generated manifests, and advanced font workflows.
 - **Simulation and packaging:** Define fixed-step overload behavior, desktop

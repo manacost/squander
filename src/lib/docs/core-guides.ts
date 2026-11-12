@@ -47,7 +47,7 @@ export const core_guides = [
       "Use the same loading API for generated images and user-provided files. Decoding and upload honor AbortSignal, while the returned handle controls access and release.",
     types: ["Blob", "File", "AbortSignal", "ResourceHandle<WebGpuTexture>", "ImageDecodeError"],
     sample:
-      'const file = new File([png_bytes], "hero.png", { type: "image/png" });\nconst handle = await game.assets.load_texture(file, { signal });\nrenderer.draw_texture(handle.read());',
+      'const file = new File([png_bytes], "hero.png", { type: "image/png" });\nconst handle = await game.assets.load_texture(file, { signal });\nframe.draw_commands([{ kind: "texture", draw: { texture: handle.read() } }]);',
     proof: "Real Chromium tests load both Blob and File sources and read back deterministic pixels.",
     limitations: "Identical Blob and File values are loaded independently.",
   },
@@ -64,7 +64,7 @@ export const core_guides = [
       "Sprite draws use logical screen or camera-space coordinates. Each draw can specify a source region, origin, flip, rotation, scale, tint, opacity, and submission order.",
     types: ["WebGpuTexture", "TextureDrawOptions", "TextureRegion", "TextureFilteringOptions", "Color"],
     sample:
-      "renderer.draw_texture(texture, {\n  x: 120, y: 80, width: 64, height: 64,\n  origin: { x: 0.5, y: 0.5 }, rotation: degrees(15), flip_x: true,\n  tint: rgba(1, 0.8, 0.8, 1), opacity: 0.9,\n});",
+      'frame.draw_commands([{ kind: "texture", draw: { texture, options: {\n  x: 120, y: 80, width: 64, height: 64,\n  origin: { x: 0.5, y: 0.5 }, rotation: degrees(15), flip_x: true,\n  tint: rgba(1, 0.8, 0.8, 1), opacity: 0.9,\n} } }]);',
     proof: "Real readback verifies atlas regions, tint, opacity, origins, rotation, flips, and sprite submission order.",
     limitations: "Selectable blend modes and implicit batching policy are not currently supported; order remains observable.",
   },
@@ -81,7 +81,7 @@ export const core_guides = [
       "Shapes are frame-local commands, so you can submit them without allocating per-call GPU resources. Signed rectangles are normalized; invalid geometry throws, and valid zero-area shapes draw nothing.",
     types: ["RectangleDraw", "CircleDraw", "LineDraw", "RectangleOutlineDraw", "CircleOutlineDraw", "Color"],
     sample:
-      'renderer.draw_commands([\n  { kind: "rectangle", draw: { rectangle: { x: 20, y: 20, width: 80, height: 40 }, color: rgba(0.2, 0.5, 1, 1) } },\n  { kind: "circle", draw: { circle: { x: 140, y: 40, radius: 20 }, color: rgba(1, 0.3, 0.3, 1) } },\n]);',
+      'frame.draw_commands([\n  { kind: "rectangle", draw: { rectangle: { x: 20, y: 20, width: 80, height: 40 }, color: rgba(0.2, 0.5, 1, 1) } },\n  { kind: "circle", draw: { circle: { x: 140, y: 40, radius: 20 }, color: rgba(1, 0.3, 0.3, 1) } },\n]);',
     proof:
       "CPU validation covers inputs. Real GPU fixtures verify fills, outlines, circles, lines, centered strokes, joins, and degenerate inputs.",
     limitations: "Rounded caps/joins, dashed strokes, and inside/outside alignment are deferred.",
@@ -117,7 +117,7 @@ export const core_guides = [
       "camera.draw temporarily maps world coordinates into the logical viewport. It restores the previous camera synchronously, even when the callback throws. Drawing outside the scope remains in screen space.",
     types: ["Camera", "CameraOptions", "CameraViewport", "Bounds", "Point"],
     sample:
-      "const camera = create_camera({ x: 400, y: 225, zoom: 2, rotation: degrees(10), viewport });\ncamera.draw(() => {\n  renderer.draw_texture(hero, { x: 400, y: 225 });\n});",
+      'const camera = create_camera({ x: 400, y: 225, zoom: 2, rotation: degrees(10), viewport });\ncamera.draw(() => {\n  frame.draw_commands([{ kind: "texture", draw: { texture: hero, options: { x: 400, y: 225 } } }]);\n});',
     proof:
       "Camera CPU tests verify transforms and scope restoration. Real GPU fixtures verify centered focus, zoom, inverse rotation, and conservative visibility.",
     limitations: "Advanced projections, cursor-anchored zoom, and automatic culling are deferred.",
@@ -203,9 +203,9 @@ export const core_guides = [
     example_description: "See the production WebGPU renderer create a surface and draw a frame.",
     explanation:
       "The renderer owns the adapter, device, canvas context, pipelines, textures, samplers, and readback path. Device loss is reported as a typed game error.",
-    types: ["WebGpuRenderer", "WebGpuRendererOptions", "WebGpuUnavailableError", "GameDeviceLostError"],
+    types: ["WebGpuRenderer", "WebGpuRendererOptions", "RenderFrame", "WebGpuUnavailableError", "GameDeviceLostError"],
     sample:
-      "const renderer = await create_webgpu_renderer({ canvas, width: 800, height: 450 });\nconst pixels = await renderer.clear({ red: 0, green: 0, blue: 0, alpha: 1 });\nrenderer.dispose();",
+      'const renderer = await create_webgpu_renderer({ canvas, width: 800, height: 450 });\nconst frame = renderer.begin_frame();\nframe.draw_commands([{ kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: { red: 0, green: 0, blue: 0, alpha: 1 } } }]);\nawait frame.submit();\nrenderer.dispose();',
     proof:
       "Real Chromium tests assert secure context, GPU availability, adapter/device creation, deterministic readback, and two-game isolation.",
     limitations: "Custom shaders, render targets, and advanced GPU resource APIs are deferred.",

@@ -3,7 +3,7 @@
   import { create_camera, create_game, create_path, create_polygon, degrees, flatten_path, rgba, type RuntimeGame } from "../core/index.js";
   import type { GameBridge } from "../core/runtime/bridge.js";
   import type { GameAdapterView } from "../svelte/adapter.js";
-  import type { RenderCommand, WebGpuRenderer, WebGpuTexture } from "../core/runtime/webgpu_renderer.js";
+  import type { RenderCommand, RenderFrame, WebGpuRenderer, WebGpuTexture } from "../core/runtime/webgpu_renderer.js";
 
   type Props = { slug: string };
   type ExampleState = Readonly<{ status: "loading" | "ready"; ticks: number }>;
@@ -44,7 +44,7 @@
     return blob;
   };
 
-  const draw_example = (renderer: WebGpuRenderer, _ticks: number): void => {
+  const draw_example = (renderer: WebGpuRenderer, frame: RenderFrame, _ticks: number): void => {
     const commands: RenderCommand[] = [
       { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: rgba(0.04, 0.05, 0.09, 1) } },
     ];
@@ -135,7 +135,7 @@
         draw: { circle: { x: 400 + Math.cos(angle) * 120, y: 225 + Math.sin(angle) * 80, radius: 34 }, color: rgba(0.35, 1, 0.55, 1) },
       });
     }
-    void renderer.draw_commands(commands);
+    frame.draw_commands(commands);
   };
 
   const create_example = ({
@@ -178,8 +178,8 @@
         angle += delta_seconds;
         publish({ status: "ready", ticks: Math.round(angle * 60) });
       },
-      draw: () => {
-        if (active_game !== undefined) draw_example(active_game.renderer, Math.round(angle * 60));
+      draw: (frame) => {
+        if (active_game !== undefined) draw_example(active_game.renderer, frame, Math.round(angle * 60));
       },
     });
     active_game = game;

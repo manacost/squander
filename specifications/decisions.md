@@ -1,6 +1,6 @@
 # Architecture decision log
 
-Last updated: 2026-11-03.
+Last updated: 2026-11-12.
 
 These decisions describe the current accepted architecture. Capability specs
 define observable behavior and checkpoints preserve historical evidence. A
@@ -846,6 +846,21 @@ animation loop.
 
 Physical hardware availability is environment-dependent; the adapter seam and
 injected browser API are the verified contract. See [input-routing](../specs/input-routing/spec.md).
+
+## AD-063: Production rendering uses one logical frame boundary
+
+Normal game and scene drawing records high-level `RenderCommand` values through
+one `RenderFrame` supplied by the game runtime. The renderer clears once,
+preserves application-then-scene order, submits one presentation pass without
+readback, and releases frame leases only after submitted work is safe. Explicit
+`RenderFrame.capture()` requests diagnostic pixels for a frame; existing
+readback-oriented renderer methods remain compatibility and diagnostic APIs
+during migration.
+
+The renderer remains one public mechanism. Frame recording is a lifecycle seam,
+not a public collection of renderer subsystems. Raw encoders, passes, views,
+cache structures, and GPU resources remain private. See the
+[render-frame capability](../specs/render-frame/spec.md).
 
 ## Implementation readiness
 

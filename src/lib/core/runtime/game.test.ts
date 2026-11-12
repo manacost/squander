@@ -13,11 +13,17 @@ import type { ResourceHandle } from "./resource_ownership.js";
 import { create_resource_owner } from "./resource_ownership.js";
 import type { AssetManifest } from "./asset_loading.js";
 import type { WebGpuRenderer } from "./webgpu_renderer.js";
+import type { RenderCommand, RenderFrame } from "./webgpu_renderer.js";
 import { calculate_fixed_viewport, calculate_responsive_viewport, type ViewportSize } from "./viewport_sizing.js";
 
 const test_renderer_options = { canvas: {} as HTMLCanvasElement, width: 1, height: 1 };
 
-const create_fake_renderer = (): WebGpuRenderer => {
+type FakeRendererState = {
+  frames: { commands: RenderCommand[]; submissions: number; captures: number }[];
+  submission_gate?: Promise<void>;
+};
+
+const create_fake_renderer = (state: FakeRendererState = { frames: [] }): WebGpuRenderer => {
   const owner = create_resource_owner();
   let viewport = calculate_responsive_viewport({ css_width: 1, css_height: 1, device_pixel_ratio: 1 });
   const create_texture = (_pixels: Uint8Array, width: number, height: number) => {
@@ -31,6 +37,32 @@ const create_fake_renderer = (): WebGpuRenderer => {
     };
   };
   const draw = async () => new Uint8Array();
+  const begin_frame = (): RenderFrame => {
+    const frame_state = { commands: [] as RenderCommand[], submissions: 0, captures: 0 };
+    state.frames.push(frame_state);
+    let completed = false;
+    const assert_open = (): void => {
+      if (completed) throw new Error("frame is already completed");
+    };
+    return Object.freeze({
+      draw_commands: (commands: readonly RenderCommand[]) => {
+        assert_open();
+        frame_state.commands.push(...commands);
+      },
+      submit: async () => {
+        assert_open();
+        await state.submission_gate;
+        completed = true;
+        frame_state.submissions += 1;
+      },
+      capture: async () => {
+        assert_open();
+        completed = true;
+        frame_state.captures += 1;
+        return new Uint8Array();
+      },
+    });
+  };
   return {
     clear: draw,
     create_texture,
@@ -51,6 +83,7 @@ const create_fake_renderer = (): WebGpuRenderer => {
     draw_textures: draw,
     draw_text: draw,
     draw_commands: draw,
+    begin_frame,
     resize: (next_viewport: ViewportSize) => {
       viewport = next_viewport;
     },
@@ -127,6 +160,73 @@ describe("[game-lifecycle] game setup", () => {
     game.resize(resized);
     expect(game.get_viewport()).toBe(resized);
     await game.dispose();
+  });
+
+  it("composes application and scene commands into one submitted frame", async () => {
+    const scheduler = create_scheduler();
+    const state: FakeRendererState = { frames: [] };
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => create_fake_renderer(state),
+      scheduler: scheduler.scheduler,
+      update: () => undefined,
+      draw: (frame) => {
+        frame.draw_commands([
+          { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: { red: 1, green: 0, blue: 0, alpha: 1 } } },
+        ]);
+      },
+    });
+    await game.ready;
+    await game.scenes.mount(() => ({
+      name: "foreground",
+      draw: (frame) => {
+        frame.draw_commands([
+          { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: { red: 0, green: 1, blue: 0, alpha: 1 } } },
+        ]);
+      },
+    }));
+
+    scheduler.tick();
+    await Promise.resolve();
+
+    expect(state.frames).toHaveLength(1);
+    expect(state.frames[0]?.commands.map((command) => command.kind)).toEqual(["rectangle", "rectangle"]);
+    expect(state.frames[0]?.submissions).toBe(1);
+    expect(state.frames[0]?.captures).toBe(0);
+    await game.dispose();
+  });
+
+  it("waits for an in-flight frame before disposing the renderer", async () => {
+    const scheduler = create_scheduler();
+    let release_submission!: () => void;
+    const state: FakeRendererState = {
+      frames: [],
+      submission_gate: new Promise<void>((resolve) => {
+        release_submission = resolve;
+      }),
+    };
+    const renderer = create_fake_renderer(state);
+    const renderer_dispose = vi.spyOn(renderer, "dispose");
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => renderer,
+      scheduler: scheduler.scheduler,
+      update: () => undefined,
+      draw: (frame) => {
+        frame.draw_commands([]);
+      },
+    });
+    await game.ready;
+
+    scheduler.tick();
+    const disposal = game.dispose();
+    await Promise.resolve();
+    expect(renderer_dispose).not.toHaveBeenCalled();
+
+    release_submission();
+    await disposal;
+    expect(renderer_dispose).toHaveBeenCalledOnce();
+    expect(state.frames[0]?.submissions).toBe(1);
   });
 
   it("disposes a renderer when setup fails", async () => {

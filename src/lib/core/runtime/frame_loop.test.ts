@@ -215,6 +215,26 @@ describe("[game-lifecycle] frame loop", () => {
     expect(loop.get_state()).toBe("disposed");
   });
 
+  it("reports asynchronous draw failures without an unhandled rejection", async () => {
+    const scheduler = create_scheduler();
+    const errors: unknown[] = [];
+    const failure = new Error("submission failed");
+    const loop = create_frame_loop({
+      scheduler: scheduler.scheduler,
+      update: () => undefined,
+      draw: () => Promise.reject(failure),
+      on_error: (error) => errors.push(error),
+    });
+
+    loop.start();
+    scheduler.tick();
+    await Promise.resolve();
+
+    expect(errors).toEqual([failure]);
+    expect(loop.get_state()).toBe("stopped");
+    await loop.dispose();
+  });
+
   it("fails an active loop and ignores a later failure after disposal", async () => {
     const scheduler = create_scheduler();
     const errors: unknown[] = [];

@@ -15,6 +15,9 @@ Implemented.
 - An update/draw exception stops the loop and exposes a typed error; retain the instance for inspection and explicit disposal. Never resume automatically.
 - Game disposal immediately stops callbacks and signals cancellation; return the same cleanup-completion promise on repeated calls. The application or Svelte host calls it. Do not wait forever for arbitrary non-cooperative user work; safely release late managed resources.
 - Disposal is idempotent and wins over in-flight setup/loading. Signal cancellation, cancel where possible, and release late results without starting a loop.
+- The normal draw callback receives a `RenderFrame`; the game submits that frame
+  after application and scene recording completes. Submission failures are
+  routed through the runtime error path and do not become unhandled rejections.
 
 ## Scenarios
 
@@ -26,12 +29,21 @@ A host unmounts while setup awaits an asset. Disposal prevents setup completion 
 
 A draw callback throws. The caller receives an identifiable failure and subsequent frames do not invoke game callbacks.
 
+### Frame submission
+
+The application and active scenes record commands into one frame. The runtime
+submits it after draw callbacks return, and a rejected submission stops the
+loop with the original cause available through `GameRuntimeError`.
+
 ## Acceptance criteria
 
 - Hold setup pending with a controllable promise: no game callbacks occur before success; after disposal, resolving it never starts callbacks.
 - Fail setup after one resource acquisition: observe that ownership released and a typed error delivered, with no active loop.
 - Throw from update and draw separately: each halts future loop callbacks, leaves explicit disposal available, and preserves the original cause.
 - Dispose twice during setup and while running: no duplicate release, active listener, or scheduled game callback survives.
+- Record application and scene commands during one frame: verify order,
+  one submission, no production readback, and safe disposal while submission is
+  in flight.
 
 ## Usage description
 
@@ -47,7 +59,8 @@ Current verification:
   `[game-lifecycle] frame loop` suite.
 - [`src/lib/core/runtime/game.test.ts`](../../src/lib/core/runtime/game.test.ts)
   covers setup gating, disposal during setup, initialization errors, and
-  runtime errors in the `[game-lifecycle] game setup` suite.
+  runtime errors in the `[game-lifecycle] game setup` suite, including one
+  application-and-scene frame submission.
 
 The game controller exposes a synchronous factory with a `ready` promise. Setup
 receives an abort signal, renderer, geometry owner, resource owner, and asset

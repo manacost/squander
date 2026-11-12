@@ -86,7 +86,14 @@ export type RenderCommand = Readonly<
   | { kind: "text"; draw: TextDraw }
 >;
 
+export type RenderFrame = Readonly<{
+  draw_commands: (commands: readonly RenderCommand[]) => void;
+  submit: () => Promise<void>;
+  capture: () => Promise<Uint8Array>;
+}>;
+
 export type WebGpuRenderer = Readonly<{
+  begin_frame: (clear_color?: ClearColor) => RenderFrame;
   clear: (color: ClearColor) => Promise<Uint8Array>;
   create_texture: (pixels: Uint8Array, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
   create_texture_from_image: (image: CanvasImageSource, width: number, height: number, options?: TextureFilteringOptions) => WebGpuTexture;
@@ -118,6 +125,8 @@ const assert_color = (color: ClearColor): void => {
 };
 
 const copy_bytes_per_row_alignment = 256;
+
+const default_clear_color: ClearColor = Object.freeze({ red: 0, green: 0, blue: 0, alpha: 1 });
 
 const get_readback_bytes_per_row = (width: number): number =>
   Math.ceil((width * 4) / copy_bytes_per_row_alignment) * copy_bytes_per_row_alignment;
@@ -286,6 +295,11 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     return pixels;
   };
 
+  const submit_without_readback = async (encoder: GPUCommandEncoder): Promise<void> => {
+    device.queue.submit([encoder.finish()]);
+    await device.queue.onSubmittedWorkDone();
+  };
+
   const clear = async (color: ClearColor): Promise<Uint8Array> => {
     if (disposed) {
       throw new Error("WebGPU renderer is disposed");
@@ -378,11 +392,14 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     return draw_textures([{ texture, options: draw_options }]);
   };
 
-  const draw_commands = async (commands: readonly RenderCommand[]): Promise<Uint8Array> => {
+  const render_commands = async (
+    commands: readonly RenderCommand[],
+    submission: Readonly<{ readback: boolean; allow_empty: boolean; clear_color: ClearColor }>,
+  ): Promise<Uint8Array | undefined> => {
     if (disposed) {
       throw new Error("WebGPU renderer is disposed");
     }
-    if (commands.length === 0) {
+    if (commands.length === 0 && !submission.allow_empty) {
       throw new RangeError("at least one texture draw is required");
     }
     type GeometryDraw = Readonly<{ geometry: TriangleDraw; handle?: GeometryHandle; snapshot?: PreparedGeometry }>;
@@ -825,7 +842,12 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       colorAttachments: [
         {
           view: target.createView(),
-          clearValue: { r: 0, g: 0, b: 0, a: 1 },
+          clearValue: {
+            r: submission.clear_color.red,
+            g: submission.clear_color.green,
+            b: submission.clear_color.blue,
+            a: submission.clear_color.alpha,
+          },
           loadOp: "clear",
           storeOp: "store",
         },
@@ -840,7 +862,11 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     pass.end();
 
     try {
-      return await submit_and_readback(encoder, target);
+      if (submission.readback) {
+        return await submit_and_readback(encoder, target);
+      }
+      await submit_without_readback(encoder);
+      return undefined;
     } finally {
       leases.forEach((lease) => {
         lease.release();
@@ -852,6 +878,61 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         uniform.destroy();
       });
     }
+  };
+
+  const draw_commands = async (commands: readonly RenderCommand[]): Promise<Uint8Array> => {
+    const pixels = await render_commands(commands, { readback: true, allow_empty: false, clear_color: default_clear_color });
+    if (pixels === undefined) {
+      throw new Error("diagnostic render did not produce a capture");
+    }
+    return pixels;
+  };
+
+  const begin_frame = (clear_color: ClearColor = default_clear_color): RenderFrame => {
+    if (disposed) {
+      throw new Error("WebGPU renderer is disposed");
+    }
+    assert_color(clear_color);
+    const commands: RenderCommand[] = [];
+    let completed = false;
+    let capture_requested = false;
+    let capture_promise: Promise<Uint8Array> | undefined;
+    let resolve_capture: ((pixels: Uint8Array) => void) | undefined;
+    let reject_capture: ((cause: unknown) => void) | undefined;
+    const assert_open = (): void => {
+      if (completed) {
+        throw new Error("render frame is already completed");
+      }
+    };
+    const draw_frame_commands = (next_commands: readonly RenderCommand[]): void => {
+      assert_open();
+      commands.push(...next_commands);
+    };
+    const submit = async (): Promise<void> => {
+      assert_open();
+      completed = true;
+      try {
+        const pixels = await render_commands(commands, { readback: capture_requested, allow_empty: true, clear_color });
+        if (capture_requested && pixels !== undefined) {
+          resolve_capture?.(pixels);
+        }
+      } catch (cause) {
+        reject_capture?.(cause);
+        throw cause;
+      }
+    };
+    const capture = (): Promise<Uint8Array> => {
+      assert_open();
+      if (capture_promise === undefined) {
+        capture_requested = true;
+        capture_promise = new Promise<Uint8Array>((resolve, reject) => {
+          resolve_capture = resolve;
+          reject_capture = reject;
+        });
+      }
+      return capture_promise;
+    };
+    return Object.freeze({ draw_commands: draw_frame_commands, submit, capture });
   };
 
   const draw_textures = async (draws: readonly TextureDraw[]): Promise<Uint8Array> =>
@@ -903,6 +984,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
   };
 
   const renderer_api: WebGpuRenderer = Object.freeze({
+    begin_frame,
     clear,
     create_texture,
     create_texture_from_image,

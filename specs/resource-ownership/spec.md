@@ -19,7 +19,7 @@ documented separately in the scene capabilities.
 - Track explicit ownership independently of arbitrary JavaScript references.
 - Game ownership can outlive future scenes. After the final owner releases a resource, reclaim its underlying storage when prior accepted draws can safely finish (AD-038).
 - Releasing a handle immediately invalidates it for new draws, even if another owner keeps the resource alive. Repeated release is harmless.
-- Previously accepted draw commands retain valid underlying resources, including commands buffered before GPU submission. The renderer manages safe destruction/reuse; applications need not wait for GPU completion (AD-038).
+- Previously accepted draw commands retain valid underlying resources, including commands buffered in a `RenderFrame` before GPU submission. The renderer manages safe destruction/reuse; applications need not wait for GPU completion (AD-038, AD-063).
 - Using a released handle for drawing throws a descriptive error identifying the asset/handle; callback errors follow lifecycle policy.
 - Use opaque typed handles to reduce misuse, while retaining runtime checks because TypeScript cannot invalidate aliases.
 - Scene ownership retains assets until explicit release or scene disposal, not unmount. Scene automation is documented in the scene capabilities.

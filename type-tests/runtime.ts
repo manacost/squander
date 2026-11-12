@@ -15,6 +15,7 @@ import {
   triangulate_polygon,
   type GeometryHandle,
   type RenderCommand,
+  type RenderFrame,
   type Path,
   type Polygon,
   type WebGpuRenderer,
@@ -86,7 +87,9 @@ const game = create_game({
     handle.read(game_geometry);
   },
   update: () => undefined,
-  draw: () => undefined,
+  draw: (frame: RenderFrame) => {
+    frame.draw_commands([command]);
+  },
 });
 
 void game;
