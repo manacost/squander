@@ -3,6 +3,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { create_browser_input_adapter } from "./browser_input.js";
 import { create_input_router, type InputEvent } from "./input.js";
+import { calculate_fixed_viewport, calculate_responsive_viewport } from "./viewport_sizing.js";
 
 const pointer = (type: string, values: Record<string, unknown> = {}): PointerEvent => {
   const event = new Event(type, { bubbles: true, cancelable: true });
@@ -145,6 +146,85 @@ describe("[input-routing] create_browser_input_adapter", () => {
     expect(received[1]).toEqual(expect.objectContaining({ type: "pointer", phase: "move", x: 15, y: 20 }));
     expect(set_capture).toHaveBeenCalledWith(7);
     expect(release_capture).toHaveBeenCalledWith(7);
+    adapter.dispose();
+  });
+
+  it("maps fixed-fit pointer coordinates and identifies letterbox input", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ left: 5, top: 10 } as DOMRect);
+    const received: InputEvent[] = [];
+    const router = create_input_router();
+    router.on_global((event) => {
+      received.push(event);
+      return "pass";
+    });
+    const adapter = create_browser_input_adapter({
+      host,
+      router,
+      viewport: calculate_fixed_viewport({
+        logical_width: 800,
+        logical_height: 450,
+        css_width: 1000,
+        css_height: 1000,
+        device_pixel_ratio: 1,
+      }),
+    });
+
+    host.dispatchEvent(pointer("pointermove", { clientX: 505, clientY: 509 }));
+    host.dispatchEvent(pointer("pointermove", { clientX: 505, clientY: 109 }));
+
+    expect(received[0]).toEqual(
+      expect.objectContaining({ x: 500, y: 499, logical_x: 400, logical_y: 224.2, inside_logical_content: true }),
+    );
+    expect(received[1]).toEqual(expect.objectContaining({ logical_x: 400, logical_y: -95.8, inside_logical_content: false }));
+    adapter.dispose();
+  });
+
+  it("preserves logical mapping for responsive viewports", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    vi.spyOn(host, "getBoundingClientRect").mockReturnValue({ left: 0, top: 0 } as DOMRect);
+    const received: InputEvent[] = [];
+    const router = create_input_router();
+    router.on_global((event) => {
+      received.push(event);
+      return "pass";
+    });
+    const adapter = create_browser_input_adapter({
+      host,
+      router,
+      viewport: calculate_responsive_viewport({ css_width: 800, css_height: 450, device_pixel_ratio: 2 }),
+    });
+
+    host.dispatchEvent(pointer("pointermove", { clientX: 200, clientY: 100 }));
+
+    expect(received[0]).toEqual(expect.objectContaining({ x: 200, y: 100, logical_x: 200, logical_y: 100, inside_logical_content: true }));
+    adapter.dispose();
+  });
+
+  it("normalizes pointer cancellation and clears active input on blur", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const received: InputEvent[] = [];
+    const router = create_input_router();
+    router.on_global((event) => {
+      received.push(event);
+      return "pass";
+    });
+    const adapter = create_browser_input_adapter({ host, router });
+
+    host.dispatchEvent(new KeyboardEvent("keydown", { key: "A", code: "KeyA", bubbles: true }));
+    host.dispatchEvent(pointer("pointerdown"));
+    host.dispatchEvent(pointer("pointercancel"));
+    window.dispatchEvent(new Event("blur"));
+
+    expect(received.map((event) => (event.type === "pointer" ? event.phase : event.type === "key" ? event.phase : "other"))).toEqual([
+      "down",
+      "down",
+      "cancel",
+      "up",
+    ]);
     adapter.dispose();
   });
 

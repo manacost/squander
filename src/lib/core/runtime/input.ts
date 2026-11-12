@@ -21,6 +21,9 @@ export type PointerInputEvent = Readonly<{
   pointer_type: "mouse" | "pen" | "touch";
   x: number;
   y: number;
+  logical_x?: number;
+  logical_y?: number;
+  inside_logical_content?: boolean;
   button: number;
   buttons: number;
   movement_x: number;

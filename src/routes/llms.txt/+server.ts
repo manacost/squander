@@ -517,7 +517,10 @@ not current features.
 
 Use a 2D camera to draw world coordinates through position, zoom, and rotation.
 Use viewport sizing helpers to keep logical coordinates stable as CSS size,
-letterboxing, device pixels, and physical canvas size change.
+letterboxing, device pixels, and physical canvas size change. Pass the current
+viewport to \`create_browser_input_adapter\` when pointer events should include
+logical coordinates and an \`inside_logical_content\` flag; raw host-relative
+coordinates remain available.
 
 \`\`\`ts
 const camera = create_camera({

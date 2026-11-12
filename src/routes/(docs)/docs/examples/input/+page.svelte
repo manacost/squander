@@ -110,12 +110,18 @@
     Scene handlers are registered automatically with scene lifecycle. The newest active scene runs first; global handlers receive events
     only when scenes pass them. Gamepad state is sampled when the owner calls <code>poll()</code>.
   </p>
+  <p>
+    Pass <code>game.get_viewport()</code> to the browser adapter when fixed-fit gameplay needs logical pointer coordinates. Raw host-relative
+    coordinates remain available, and letterbox events are marked outside the logical content. Blur and visibility changes clear active keys and
+    pointers.
+  </p>
 
   <h2>Public types</h2>
   <ul>
     <li><code>InputEvent</code>, <code>InputDisposition</code>, and <code>InputRouter</code></li>
     <li><code>SceneDefinition.input</code> and <code>Game.input</code></li>
     <li><code>BrowserInputAdapter</code> and <code>BrowserGamepadAdapter</code></li>
+    <li><code>ViewportSize</code> and optional logical pointer fields</li>
     <li><code>GamepadState</code>, <code>GamepadSnapshot</code>, and <code>GamepadButtonSnapshot</code></li>
   </ul>
 
@@ -130,6 +136,7 @@ router.on_global((event) => {
 const browser_input = create_browser_input_adapter({
   host: game_host,
   router: game.input,
+  viewport: game.get_viewport(),
 });
 
 const gamepads = create_browser_gamepad_adapter({ router: game.input });

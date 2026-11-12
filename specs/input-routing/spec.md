@@ -23,6 +23,8 @@ This is the browser input-routing capability.
 - Provide a per-game gamepad adapter with immutable snapshots and frame-driven polling.
 - Leave action mapping, rebinding, text input, gestures, and renderable hit
   testing for later capabilities.
+- Optional logical viewport mapping and lifecycle input recovery are specified
+  in [input-coordinates](../input-coordinates/spec.md).
 
 ## Scenarios
 
