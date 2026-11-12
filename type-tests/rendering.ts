@@ -67,6 +67,11 @@ const invalid_stroke_options: RenderCommand = {
   // @ts-expect-error Stroke cap and join values are closed public unions.
   draw: { subpaths: [], width: 2, cap: "pill", join: "chamfer", color: { red: 1, green: 1, blue: 1, alpha: 1 } },
 };
+const invalid_stroke_units: RenderCommand = {
+  kind: "stroke",
+  // @ts-expect-error Stroke units are limited to world or screen.
+  draw: { subpaths: [], width: 2, units: "viewport", color: { red: 1, green: 1, blue: 1, alpha: 1 } },
+};
 const invalid_fill_rule: RenderCommand = {
   kind: "filled_path",
   // @ts-expect-error The first fill-rule contract is intentionally closed.
@@ -87,6 +92,7 @@ void bounded_command;
 void filled_path_command;
 void stroke_command;
 void invalid_stroke_options;
+void invalid_stroke_units;
 void invalid_fill_rule;
 void culling;
 void invalid_effect;
