@@ -22,13 +22,14 @@ acceptance evidence, and the relevant documentation.
   and the boundary between browser text editing and gameplay input.
 - **Camera extensions:** Define cursor-anchored zoom, swappable projections,
   and any screen-space stroke policy before implementation.
-- **Rendering extensions:** Define curved-fill correctness, holes,
-  fill rules, and renderer reuse with measured performance and real-device
-  evidence. Blend modes and render targets are accepted in their capability
-  specs. Constrained custom shader effects are accepted in
+- **Rendering extensions:** Define renderer reuse with measured performance and
+  real-device evidence. Blend modes, render targets, and even-odd filled curved
+  paths are accepted in their capability specs. Constrained custom shader
+  effects are accepted in
   [custom-shader-effects](../specs/custom-shader-effects/spec.md); broader
-  shader layouts, arbitrary bindings, and untrusted-source policy remain future
-  questions. The production frame boundary is accepted in
+  shader layouts, arbitrary bindings, broader fill rules, arbitrary
+  tessellation, and untrusted-source policy remain future questions. The
+  production frame boundary is accepted in
   [render-frame](../specs/render-frame/spec.md). Opt-in bounded render culling
   is specified in [render-culling](../specs/render-culling/spec.md), with
   benchmark evidence still required for promotion.

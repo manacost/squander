@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { triangulate_polygon } from "./triangulation.js";
+import { close, flatten_path, line_to, move_to } from "./path_flattening.js";
+import { triangulate_polygon, triangulate_subpaths } from "./triangulation.js";
 
 const triangle_area = (a: readonly [number, number], b: readonly [number, number], c: readonly [number, number]): number =>
   Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])) / 2;
@@ -16,6 +17,25 @@ const indexed_area = (result: ReturnType<typeof triangulate_polygon>): number =>
 };
 
 describe("[paths-and-polygons] polygon triangulation", () => {
+  it("fills a closed curved subpath with an even-odd hole", () => {
+    const outer = flatten_path([move_to(0, 0), line_to(4, 0), line_to(4, 4), line_to(0, 4), close()], 0.1)[0];
+    const hole = flatten_path([move_to(1, 1), line_to(1, 3), line_to(3, 3), line_to(3, 1), close()], 0.1)[0];
+    const result = triangulate_subpaths([outer, hole]);
+
+    expect(indexed_area(result)).toBe(12);
+  });
+
+  it("supports nested even-odd islands and rejects open subpaths", () => {
+    const paths = [
+      flatten_path([move_to(0, 0), line_to(10, 0), line_to(10, 10), line_to(0, 10), close()], 0.1)[0],
+      flatten_path([move_to(2, 2), line_to(2, 8), line_to(8, 8), line_to(8, 2), close()], 0.1)[0],
+      flatten_path([move_to(4, 4), line_to(6, 4), line_to(6, 6), line_to(4, 6), close()], 0.1)[0],
+    ];
+
+    expect(indexed_area(triangulate_subpaths(paths))).toBe(68);
+    expect(() => triangulate_subpaths([flatten_path([move_to(0, 0), line_to(1, 0)], 0.1)[0]])).toThrow(/closed/);
+  });
+
   it("covers a concave polygon without filling its notch", () => {
     const result = triangulate_polygon([
       { x: 0, y: 0 },

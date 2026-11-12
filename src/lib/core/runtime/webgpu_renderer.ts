@@ -17,7 +17,7 @@ import {
   type Rectangle,
 } from "./shapes.js";
 import { create_polygon, type PolygonPoint } from "./polygons.js";
-import { triangulate_polygon } from "./triangulation.js";
+import { triangulate_polygon, triangulate_subpaths, type FillRule } from "./triangulation.js";
 import type { FlattenedSubpath } from "./path_flattening.js";
 import { create_stroke_geometry } from "./stroke_geometry.js";
 import type { GeometryHandle, GeometryOwner, PreparedGeometry } from "./geometry_ownership.js";
@@ -102,6 +102,8 @@ export type StrokeDraw = Readonly<{ subpaths: readonly FlattenedSubpath[]; width
 export type PolygonDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; opacity?: number }> & DrawBlendOptions;
 export type PolygonOutlineDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; stroke_width: number; opacity?: number }> &
   DrawBlendOptions;
+export type FilledPathDraw = Readonly<{ subpaths: readonly FlattenedSubpath[]; fill_rule?: FillRule; color: Color; opacity?: number }> &
+  DrawBlendOptions;
 export type OwnedGeometryDraw = Readonly<{ geometry: GeometryHandle; owner: GeometryOwner; color: Color; opacity?: number }> &
   DrawBlendOptions;
 export type TextDraw = Readonly<{ font: WebGpuFont; text: string; options?: TextDrawOptions }>;
@@ -119,6 +121,7 @@ export type RenderCommand =
   | RenderCommandWithBounds<"stroke", StrokeDraw>
   | RenderCommandWithBounds<"polygon", PolygonDraw>
   | RenderCommandWithBounds<"polygon_outline", PolygonOutlineDraw>
+  | RenderCommandWithBounds<"filled_path", FilledPathDraw>
   | RenderCommandWithBounds<"geometry", OwnedGeometryDraw>
   | RenderCommandWithBounds<"text", TextDraw>;
 
@@ -787,6 +790,22 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         const opacity = command.draw.opacity ?? 1;
         if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1)
           throw new RangeError("opacity must be finite and between zero and one");
+        return {
+          geometry: {
+            vertices: geometry.vertices,
+            indices: geometry.indices,
+            color: command.draw.color,
+            opacity,
+          },
+        };
+      }
+      if (command.kind === "filled_path") {
+        const geometry = triangulate_subpaths(command.draw.subpaths, command.draw.fill_rule);
+        assert_color(command.draw.color);
+        const opacity = command.draw.opacity ?? 1;
+        if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1) {
+          throw new RangeError("opacity must be finite and between zero and one");
+        }
         return {
           geometry: {
             vertices: geometry.vertices,

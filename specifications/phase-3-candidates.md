@@ -29,8 +29,9 @@ implemented and listed below for historical traceability.
   cursor stationary while zoom changes; current camera zoom stays centered on the camera
   position (AD-042).
 - **Swappable cameras/projections:** a possible extension within the 2D commitment.
-- **Filled curved paths, polygon holes, and fill rules:** extensions beyond Phase
-  2's stroked paths and simple concave polygons.
+- **Filled curved paths, polygon holes, and fill rules:** promoted into the
+  [filled-curved-paths capability](../specs/filled-curved-paths/spec.md) with
+  an explicit even-odd contract. Broader fill rules remain separate.
 - **Constant screen-thickness strokes:** optional stroke widths independent of
   camera zoom, useful for selection outlines and debug overlays; define screen
   units and viewport/display-density interaction before implementation (AD-030).

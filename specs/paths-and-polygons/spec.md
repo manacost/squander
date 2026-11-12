@@ -14,8 +14,9 @@ exports for path/polygon preparation are covered by type tests and a real GPU
 create/update/readback fixture. Persistent owned-geometry GPU buffer reuse and
 replacement are also verified.
 
-The path and polygon contract is implemented and verified below. Filled curved paths,
-holes, and fill rules remain deferred.
+The path and polygon contract is implemented and verified below. Filled curved
+subpaths use the separate [filled-curved-paths](../filled-curved-paths/spec.md)
+capability.
 
 ## Requirements
 
@@ -30,7 +31,7 @@ holes, and fill rules remain deferred.
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
-- Support filled and outlined simple polygons, including concave polygons, without holes or self-intersections.
+- Support filled and outlined simple polygons, including concave polygons, without holes or self-intersections. Filled subpath holes use the separate filled-curved-paths contract.
 - Validate polygon creation and updates: accept either winding, remove consecutive duplicate points and an optional repeated closing point from the snapshot, and reject nonfinite coordinates, self-intersections, fewer than three distinct vertices, or zero area (AD-036). Do not mutate caller input.
 - Construct polygons from ordered point arrays, connecting the last vertex to the first implicitly. No repeated endpoint or `close()` command is required (AD-035).
 - Snapshot polygon point values at creation and explicit updates. Return an opaque stable handle; invalid updates throw and preserve previous geometry, just as for paths. Polygon updates happen outside `draw`; the update verb remains open.
@@ -41,7 +42,6 @@ holes, and fill rules remain deferred.
 - Construct paths from declarative typed command arrays; snapshot their values at creation. The resulting handle is opaque, not an editable/indexable command array (AD-033).
 - Permit explicit path updates using revised commands, snapshotting and validating them before changing active geometry. Invalid updates throw and preserve the previous geometry; successful updates retain the handle identity.
 - Update path geometry outside `draw`; use per-draw transforms for ordinary placement changes. The update operation's name remains open.
-- Filled curved paths, holes, and fill rules remain future capability candidates.
 
 ## Scenarios
 

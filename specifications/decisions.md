@@ -908,6 +908,17 @@ resource ownership. It remains disabled by default until separate CPU-bound and
 GPU-bound measurements show a useful tradeoff. See the [render culling
 capability](../specs/render-culling/spec.md).
 
+## AD-068: Filled curved paths use even-odd subpaths
+
+Filled path commands accept closed flattened subpaths and the explicit
+`even_odd` fill rule. Alternating containment depth determines solid regions,
+transparent holes, and nested islands; winding direction does not change the
+result. Repeated closing points and consecutive duplicates are normalized, and
+invalid or ambiguous self-intersecting geometry is rejected. The renderer uses
+its existing private indexed geometry path. Nonzero winding and broader
+tessellation plugins remain future capabilities. See the
+[filled curved paths capability](../specs/filled-curved-paths/spec.md).
+
 ## Implementation readiness
 
 Capability contracts live under [specs](../specs/README.md). Their lifecycle

@@ -33,6 +33,28 @@ const bounded_command: RenderCommand = {
   draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: { red: 1, green: 1, blue: 1, alpha: 1 } },
   bounds: { x: 0, y: 0, width: 1, height: 1 },
 };
+const filled_path_command: RenderCommand = {
+  kind: "filled_path",
+  draw: {
+    subpaths: [
+      {
+        points: [
+          { x: 0, y: 0 },
+          { x: 1, y: 0 },
+          { x: 0, y: 1 },
+        ],
+        closed: true,
+      },
+    ],
+    fill_rule: "even_odd",
+    color: { red: 1, green: 1, blue: 1, alpha: 1 },
+  },
+};
+const invalid_fill_rule: RenderCommand = {
+  kind: "filled_path",
+  // @ts-expect-error The first fill-rule contract is intentionally closed.
+  draw: { subpaths: [], fill_rule: "nonzero", color: { red: 1, green: 1, blue: 1, alpha: 1 } },
+};
 const culling: WebGpuRendererOptions["cull_offscreen"] = true;
 // @ts-expect-error Shader uniforms are finite numeric values, not strings.
 const invalid_effect: ShaderEffectOptions = { fragment_code: "return color;", uniforms: ["bright"] };
@@ -45,5 +67,7 @@ void effect_options;
 void effect;
 void effected_command;
 void bounded_command;
+void filled_path_command;
+void invalid_fill_rule;
 void culling;
 void invalid_effect;

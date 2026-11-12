@@ -1230,6 +1230,50 @@ test("[paths-and-polygons] renders quadratic and cubic path curves", async ({ pa
   expect(result.quadratic_peak[0]).toBeGreaterThan(0);
 });
 
+test("[paths-and-polygons] fills curved subpaths with an even-odd hole", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("filled-path verification requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("filled-path verification requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("filled-path verification adapter creation failed");
+    const device = await adapter.requestDevice();
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const path_url = new URL("/src/lib/core/runtime/path_flattening.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const path_module = (await import(/* @vite-ignore */ path_url)) as typeof import("../src/lib/core/runtime/path_flattening.js");
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 8, height: 8 });
+    const outer = path_module.flatten_path(
+      [
+        path_module.move_to(0, 0),
+        path_module.line_to(8, 0),
+        path_module.quadratic_to(8, 0, 8, 8),
+        path_module.line_to(0, 8),
+        path_module.close(),
+      ],
+      0.1,
+    )[0];
+    const hole = path_module.flatten_path(
+      [path_module.move_to(2, 2), path_module.line_to(2, 6), path_module.line_to(6, 6), path_module.line_to(6, 2), path_module.close()],
+      0.1,
+    )[0];
+    const pixels = await renderer.draw_commands([
+      { kind: "filled_path", draw: { subpaths: [outer, hole], color: { red: 1, green: 0, blue: 0, alpha: 1 }, fill_rule: "even_odd" } },
+    ]);
+    const pixel = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    renderer.dispose();
+    device.destroy();
+    return { secure: window.isSecureContext, gpu: "gpu" in navigator, corner: pixel(1, 1), hole: pixel(4, 4) };
+  });
+
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.corner).toEqual([255, 0, 0, 255]);
+  expect(result.hole).toEqual([0, 0, 0, 255]);
+});
+
 test("[paths-and-polygons] renders a concave polygon fill and preserves its notch", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

@@ -102,7 +102,27 @@ export const core_guides = [
       "const route = create_path([move_to(0, 0), quadratic_to(40, -30, 80, 0)]);\nconst marker = create_polygon([{ x: 0, y: 0 }, { x: 40, y: 0 }, { x: 20, y: 30 }]);\nroute.update([move_to(0, 0), line_to(100, 20)]);",
     proof:
       "CPU snapshots and tessellation tests cover geometry preparation. Real GPU fixtures verify curves, concave fills, outlines, updates, cache replacement, and ownership.",
-    limitations: "Holes, fill rules, and filled curved paths remain future capability candidates.",
+    limitations:
+      "Even-odd filled curved subpaths are available in the separate filled-curved-paths capability; broader fill rules remain deferred.",
+  },
+  {
+    slug: "filled-curved-paths",
+    label: "filled curved paths",
+    title: "Filled curved paths",
+    summary: "Fill curved subpaths with transparent holes using the even-odd rule.",
+    evidence_kind: "test",
+    evidence_label: "Read the filled-path GPU test",
+    test_file: "tests/webgpu-renderer.spec.ts",
+    example_description: "Render a curved outer region and a transparent inner hole as one command.",
+    explanation:
+      "Flatten closed path subpaths, then submit them through the filled_path command. Alternating containment depth creates solid regions, holes, and nested islands without exposing the tessellator or GPU buffers.",
+    types: ["FlattenedSubpath", "FillRule", "RenderCommand", "filled_path"],
+    sample:
+      'const outer = flatten_path([move_to(0, 0), line_to(200, 0), line_to(200, 120), line_to(0, 120), close()], 0.5)[0];\nconst hole = flatten_path([move_to(40, 30), line_to(40, 90), line_to(160, 90), line_to(160, 30), close()], 0.5)[0];\nframe.draw_commands([{ kind: "filled_path", draw: { subpaths: [outer, hole], fill_rule: "even_odd", color: rgba(1, 0, 0, 1) } }]);',
+    proof:
+      "CPU tessellation tests cover holes and nested islands. Trusted WebGPU readback verifies a curved filled region and transparent hole.",
+    limitations:
+      "Only closed subpaths and even_odd are supported. Nonzero winding, automatic closure, and arbitrary tessellation plugins remain deferred.",
   },
   {
     slug: "camera-2d",

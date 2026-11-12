@@ -562,8 +562,15 @@ trail.update([move_to(player.x, player.y), line_to(player.x - 80, player.y + 20)
 \`\`\`
 
 Use the exported path, flattening, stroke, polygon, and triangulation helpers
-from \`squander/core/runtime\`. Holes, fill rules, and filled curved paths are
-not current features.
+from \`squander/core/runtime\`. Filled curved subpaths use the explicit
+\`filled_path\` command and \`even_odd\` rule; nonzero winding and broader fill
+rules remain deferred.
+
+\`\`\`ts
+const outer = flatten_path([move_to(0, 0), line_to(200, 0), line_to(200, 120), line_to(0, 120), close()], 0.5)[0];
+const hole = flatten_path([move_to(40, 30), line_to(40, 90), line_to(160, 90), line_to(160, 30), close()], 0.5)[0];
+frame.draw_commands([{ kind: "filled_path", draw: { subpaths: [outer, hole], fill_rule: "even_odd", color: rgba(1, 0, 0, 1) } }]);
+\`\`\`
 
 ## Cameras and viewports
 

@@ -24,6 +24,7 @@
     "test:benchmark:renderer:browser": "node verification/run-renderer-benchmark.mjs browser",
     "test:benchmark:renderer:browser:guard": "node verification/run-renderer-benchmark.mjs browser --guard",
     "test:benchmark:renderer:culling": "playwright test --config=playwright.webgpu.config.ts tests/webgpu-renderer-culling-performance.spec.ts",
+    "test:benchmark:filled-paths": "vitest run --config verification/vitest.geometry.config.ts",
     "lint:format": "prettier --check .",
     "lint:code": "eslint . --max-warnings 0",
     "test:type": "tsc --noEmit -p tsconfig.type-tests.json",
