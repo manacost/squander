@@ -919,6 +919,19 @@ its existing private indexed geometry path. Nonzero winding and broader
 tessellation plugins remain future capabilities. See the
 [filled curved paths capability](../specs/filled-curved-paths/spec.md).
 
+## AD-069: Path stroke width and style options
+
+Path strokes retain centered world-space width by default. An explicit
+`units: "screen"` option divides the requested width by active camera zoom and
+display density before geometry preparation, keeping physical thickness stable
+across zoom and DPR. Open path caps are `butt`, `square`, or `round`; joins are
+`miter`, `bevel`, or `round`. Miter joins use a caller-provided finite limit,
+defaulting to 4, and fall back to the bevel geometry when the limit is exceeded.
+Closed paths do not receive open-end caps. These options remain draw-local and
+do not expose renderer subsystems or raw GPU resources. Primitive outline
+shader styles and inside/outside alignment remain separate capabilities. See
+the [stroke options capability](../specs/stroke-options/spec.md).
+
 ## Implementation readiness
 
 Capability contracts live under [specs](../specs/README.md). Their lifecycle

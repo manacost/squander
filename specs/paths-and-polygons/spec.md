@@ -22,9 +22,9 @@ capability.
 
 - Prepared geometry belongs to its creating game and remains valid until explicit release or game disposal. Reject drawing/updating released handles or use through another game; reclaim prior uses safely under AD-038 (AD-039).
 
-- Use flat ends for open strokes and sharp joins with a fixed limit and bevel fallback for excessive spikes (AD-031). The exact limit remains open; rounded/configurable styles are deferred.
+- Use the configurable cap, join, and miter-limit contract in [stroke-options](../stroke-options/spec.md) for path strokes. World units and the centered geometry convention remain the defaults.
 
-- Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
+- Measure stroke width in world units by default. Opt into screen units through the [stroke-options](../stroke-options/spec.md) contract when constant physical thickness is required.
 
 - Use normal source-over alpha blending by default. Per-draw `blend_mode` may
   select the documented [blend-modes](../blend-modes/spec.md) capability.
@@ -153,11 +153,12 @@ CPU curve flattening is covered by
 covering endpoint preservation, disconnected subpaths, closure, and tolerance
 validation.
 
-Flat-capped segment geometry is covered by
+Flat-capped and configurable segment geometry is covered by
 [`src/lib/core/runtime/stroke_geometry.test.ts`](../../src/lib/core/runtime/stroke_geometry.test.ts),
-covering centered width, disconnected subpaths, and zero-length segments.
-The same suite covers fixed-ratio miter joins, bevel fallback at excessive
-spikes, and the wraparound corner of a closed subpath.
+covering centered width, disconnected subpaths, configurable caps and joins,
+and zero-length segments. The same suite covers fixed-ratio miter joins, bevel
+fallback at excessive spikes, round joins, and the wraparound corner of a
+closed subpath.
 The real WebGPU renderer fixture
 [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts)
 covers indexed triangle, prepared-stroke, concave polygon fill, and polygon

@@ -1538,6 +1538,123 @@ test("[shape-drawing] places a clockwise corner join on the outer side", async (
   expect(result.inner).toEqual([0, 255, 0, 255]);
 });
 
+test("[stroke-options] verifies round caps and joins with GPU pixels", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 24, height: 16 });
+    const color = colors.rgba(1, 0, 0, 1);
+    const endpoint_subpath = [
+      {
+        points: [
+          { x: 5, y: 4 },
+          { x: 15, y: 4 },
+        ],
+        closed: false,
+      },
+    ];
+    const corner_subpath = [
+      {
+        points: [
+          { x: 5, y: 5 },
+          { x: 10, y: 5 },
+          { x: 10, y: 10 },
+        ],
+        closed: false,
+      },
+    ];
+    const butt = await renderer.draw_commands([{ kind: "stroke", draw: { subpaths: endpoint_subpath, width: 4, color } }]);
+    const round = await renderer.draw_commands([{ kind: "stroke", draw: { subpaths: endpoint_subpath, width: 4, cap: "round", color } }]);
+    const bevel = await renderer.draw_commands([{ kind: "stroke", draw: { subpaths: corner_subpath, width: 4, join: "bevel", color } }]);
+    const rounded = await renderer.draw_commands([{ kind: "stroke", draw: { subpaths: corner_subpath, width: 4, join: "round", color } }]);
+    renderer.dispose();
+    const pixel_at = (pixels: Uint8Array, x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
+    return {
+      butt_endpoint: pixel_at(butt, 3, 4),
+      round_endpoint: pixel_at(round, 3, 4),
+      bevel_corner: pixel_at(bevel, 11, 4),
+      round_corner: pixel_at(rounded, 11, 4),
+    };
+  });
+
+  expect(result.butt_endpoint).toEqual([0, 0, 0, 255]);
+  expect(result.round_endpoint[0]).toBeGreaterThan(0);
+  expect(result.round_corner[0]).toBeGreaterThan(result.bevel_corner[0]);
+});
+
+test("[stroke-options] keeps screen-space width stable across zoom and DPR", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const camera_url = new URL("/src/lib/core/runtime/camera.ts", location.origin).href;
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const camera_module = (await import(/* @vite-ignore */ camera_url)) as typeof import("../src/lib/core/runtime/camera.js");
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const camera = camera_module.create_camera({ viewport: { logical_width: 32, logical_height: 32 } });
+    const draw = async (zoom: number, device_pixel_ratio: number): Promise<number> => {
+      camera.set_zoom(zoom);
+      const canvas = document.createElement("canvas");
+      document.body.append(canvas);
+      const renderer = await renderer_module.create_webgpu_renderer({
+        canvas,
+        width: 32,
+        height: 32,
+        viewport: {
+          logical_width: 32,
+          logical_height: 32,
+          css_width: 32,
+          css_height: 32,
+          physical_width: 32 * device_pixel_ratio,
+          physical_height: 32 * device_pixel_ratio,
+          content_width: 32,
+          content_height: 32,
+          offset_x: 0,
+          offset_y: 0,
+        },
+      });
+      const pixels = await camera.draw(() =>
+        renderer.draw_commands([
+          {
+            kind: "stroke",
+            draw: {
+              subpaths: [
+                {
+                  points: [
+                    { x: -6, y: 0 },
+                    { x: 6, y: 0 },
+                  ],
+                  closed: false,
+                },
+              ],
+              width: 4,
+              units: "screen",
+              color: colors.rgba(1, 0, 0, 1),
+            },
+          },
+        ]),
+      );
+      let count = 0;
+      const center_x = 16 * device_pixel_ratio;
+      for (let y = 0; y < 32 * device_pixel_ratio; y += 1) {
+        const offset = y * 256 + center_x * 4;
+        if (pixels[offset] > 0) count += 1;
+      }
+      renderer.dispose();
+      return count;
+    };
+    return { zoom_one: await draw(1, 1), zoom_two: await draw(2, 1), dpr_two: await draw(1, 2) };
+  });
+
+  expect(Math.abs(result.zoom_one - result.zoom_two)).toBeLessThanOrEqual(1);
+  expect(Math.abs(result.zoom_one - result.dpr_two)).toBeLessThanOrEqual(1);
+});
+
 test("[texture-filtering] keeps nearest and linear sampling independent", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

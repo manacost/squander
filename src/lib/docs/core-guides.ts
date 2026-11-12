@@ -84,7 +84,8 @@ export const core_guides = [
       'frame.draw_commands([\n  { kind: "rectangle", draw: { rectangle: { x: 20, y: 20, width: 80, height: 40 }, color: rgba(0.2, 0.5, 1, 1) } },\n  { kind: "circle", draw: { circle: { x: 140, y: 40, radius: 20 }, color: rgba(1, 0.3, 0.3, 1) } },\n]);',
     proof:
       "CPU validation covers inputs. Real GPU fixtures verify fills, outlines, circles, lines, centered strokes, joins, and degenerate inputs.",
-    limitations: "Rounded caps/joins, dashed strokes, and inside/outside alignment are deferred.",
+    limitations:
+      "Path cap, join, and screen-unit options are documented separately; dashed strokes and inside/outside alignment remain deferred.",
   },
   {
     slug: "paths-and-polygons",
@@ -104,6 +105,25 @@ export const core_guides = [
       "CPU snapshots and tessellation tests cover geometry preparation. Real GPU fixtures verify curves, concave fills, outlines, updates, cache replacement, and ownership.",
     limitations:
       "Even-odd filled curved subpaths are available in the separate filled-curved-paths capability; broader fill rules remain deferred.",
+  },
+  {
+    slug: "stroke-options",
+    label: "stroke options",
+    title: "Stroke options",
+    summary: "Keep path stroke thickness stable or choose explicit endpoint and corner styles.",
+    evidence_kind: "test",
+    evidence_label: "Read the stroke geometry and GPU tests",
+    test_file: "tests/webgpu-renderer.spec.ts",
+    example_description: "Compare round endpoints and corners with a screen-space overlay stroke.",
+    explanation:
+      "Path strokes use world units, butt caps, and miter joins by default. Opt into screen units, square or round caps, bevel or round joins, and a finite miter limit without managing GPU resources.",
+    types: ["StrokeDraw", "StrokeUnits", "StrokeCap", "StrokeJoin"],
+    sample:
+      'frame.draw_commands([{ kind: "stroke", draw: { subpaths: outline, width: 2, units: "screen", cap: "round", join: "round", color: rgba(1, 1, 0, 1) } }]);',
+    proof:
+      "CPU geometry tests cover cap/join selection and miter limits. Trusted WebGPU readback covers endpoint, corner, zoom, and DPR behavior.",
+    limitations:
+      "Options currently apply to path stroke commands; dashed strokes, inside/outside alignment, and primitive outline styles remain deferred.",
   },
   {
     slug: "filled-curved-paths",

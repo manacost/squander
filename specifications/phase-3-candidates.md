@@ -32,9 +32,9 @@ implemented and listed below for historical traceability.
 - **Filled curved paths, polygon holes, and fill rules:** promoted into the
   [filled-curved-paths capability](../specs/filled-curved-paths/spec.md) with
   an explicit even-odd contract. Broader fill rules remain separate.
-- **Constant screen-thickness strokes:** optional stroke widths independent of
-  camera zoom, useful for selection outlines and debug overlays; define screen
-  units and viewport/display-density interaction before implementation (AD-030).
+- **Constant screen-thickness strokes:** promoted into the accepted
+  [stroke-options capability](../specs/stroke-options/spec.md). The first
+  contract applies to path strokes; inside/outside alignment remains separate.
 - **Inside/outside stroke alignment:** selectable alignment beyond the current
   centered strokes; define supported closed geometries and wide-stroke behavior
   before implementation (AD-029).
@@ -70,8 +70,8 @@ implemented and listed below for historical traceability.
 - Automatic restoration after GPU device loss.
 - Fixed-fill viewport cropping and integer-only viewport scaling.
 - Dashed strokes.
-- Configurable line caps/joins, including rounded ends and corners, beyond Phase
-  2’s fixed flat caps and limited sharp joins (AD-031).
+- Configurable line caps/joins on primitive outline shader paths; path stroke
+  caps and joins are covered by [stroke-options](../specs/stroke-options/spec.md).
 
 These are recorded so they are not lost; their place in the future-work backlog
 has not been agreed.

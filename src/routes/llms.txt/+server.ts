@@ -566,6 +566,20 @@ from \`squander/core/runtime\`. Filled curved subpaths use the explicit
 \`filled_path\` command and \`even_odd\` rule; nonzero winding and broader fill
 rules remain deferred.
 
+Path strokes use world units, butt caps, and miter joins by default. Configure
+\`units: "screen"\`, \`cap: "square" | "round"\`, \`join: "bevel" | "round"\`,
+and a finite \`miter_limit\` for selection outlines, trails, and effects. Screen
+units account for active camera zoom and display density. These options apply
+to path stroke commands; dashed strokes, inside/outside alignment, and primitive
+outline styles remain deferred.
+
+\`\`\`ts
+frame.draw_commands([{ kind: "stroke", draw: {
+  subpaths: outline, width: 2, units: "screen", cap: "round", join: "round",
+  color: rgba(1, 1, 0, 1),
+} }]);
+\`\`\`
+
 \`\`\`ts
 const outer = flatten_path([move_to(0, 0), line_to(200, 0), line_to(200, 120), line_to(0, 120), close()], 0.5)[0];
 const hole = flatten_path([move_to(40, 30), line_to(40, 90), line_to(160, 90), line_to(160, 30), close()], 0.5)[0];

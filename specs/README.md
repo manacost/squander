@@ -38,6 +38,7 @@ and slice evidence are archived under
 - [render-targets](render-targets/spec.md)
 - [custom-shader-effects](custom-shader-effects/spec.md)
 - [filled-curved-paths](filled-curved-paths/spec.md)
+- [stroke-options](stroke-options/spec.md)
 - [svelte-bridge](svelte-bridge/spec.md)
 - [text-drawing](text-drawing/spec.md)
 - [texture-filtering](texture-filtering/spec.md)

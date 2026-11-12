@@ -20,8 +20,10 @@ acceptance evidence, and the relevant documentation.
   router boundary is recorded in [action-mapping](../specs/action-mapping/spec.md).
 - **Text input and IME:** Define composition events, editable-control policy,
   and the boundary between browser text editing and gameplay input.
-- **Camera extensions:** Define cursor-anchored zoom, swappable projections,
-  and any screen-space stroke policy before implementation.
+- **Camera extensions:** Define cursor-anchored zoom and swappable projections
+  before implementation. Screen-space stroke units are accepted in
+  [stroke-options](../specs/stroke-options/spec.md); camera-relative/world-space
+  stroke alignment remains separate.
 - **Rendering extensions:** Define renderer reuse with measured performance and
   real-device evidence. Blend modes, render targets, and even-odd filled curved
   paths are accepted in their capability specs. Constrained custom shader

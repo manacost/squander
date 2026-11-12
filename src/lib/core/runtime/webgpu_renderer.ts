@@ -19,7 +19,7 @@ import {
 import { create_polygon, type PolygonPoint } from "./polygons.js";
 import { triangulate_polygon, triangulate_subpaths, type FillRule } from "./triangulation.js";
 import type { FlattenedSubpath } from "./path_flattening.js";
-import { create_stroke_geometry } from "./stroke_geometry.js";
+import { create_stroke_geometry, type StrokeCap, type StrokeJoin } from "./stroke_geometry.js";
 import type { GeometryHandle, GeometryOwner, PreparedGeometry } from "./geometry_ownership.js";
 import { create_webgpu_font, type FontOptions, type TextDrawOptions, type WebGpuFont } from "./font_loading.js";
 import type { BlendMode } from "./render_types.js";
@@ -87,6 +87,9 @@ export type TextureDrawOptions = Readonly<{
 
 export type TextureDraw = Readonly<{ texture: WebGpuTexture | WebGpuRenderTarget; options?: TextureDrawOptions }>;
 
+export type StrokeUnits = "world" | "screen";
+export type StrokeOptions = Readonly<{ units?: StrokeUnits; cap?: StrokeCap; join?: StrokeJoin; miter_limit?: number }>;
+
 type DrawBlendOptions = Readonly<{ blend_mode?: BlendMode }>;
 
 export type RectangleDraw = Readonly<{ rectangle: Rectangle; color: Color; opacity?: number }> & DrawBlendOptions;
@@ -98,6 +101,7 @@ export type CircleOutlineDraw = Readonly<{ circle: Circle; color: Color; stroke_
 export type TriangleDraw = Readonly<{ vertices: readonly PolygonPoint[]; indices: readonly number[]; color: Color; opacity?: number }> &
   DrawBlendOptions;
 export type StrokeDraw = Readonly<{ subpaths: readonly FlattenedSubpath[]; width: number; color: Color; opacity?: number }> &
+  StrokeOptions &
   DrawBlendOptions;
 export type PolygonDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; opacity?: number }> & DrawBlendOptions;
 export type PolygonOutlineDraw = Readonly<{ points: readonly PolygonPoint[]; color: Color; stroke_width: number; opacity?: number }> &
@@ -816,7 +820,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         };
       }
       if (command.kind === "stroke") {
-        const geometry = create_stroke_geometry(command.draw.subpaths, command.draw.width);
+        const scale = command.draw.units === "screen" ? (active_camera?.get_zoom() ?? 1) * Math.sqrt(device_scale_x * device_scale_y) : 1;
+        const geometry = create_stroke_geometry(command.draw.subpaths, command.draw.width / scale, command.draw);
         assert_color(command.draw.color);
         const opacity = command.draw.opacity ?? 1;
         if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1)
