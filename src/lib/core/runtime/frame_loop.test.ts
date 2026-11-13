@@ -119,6 +119,7 @@ describe("[game-lifecycle] frame loop", () => {
     let draws = 0;
     const loop = create_frame_loop({
       scheduler: scheduler.scheduler,
+      max_delta_seconds: 1,
       fixed_step: { step_seconds: 0.1, max_steps_per_frame: 2 },
       update: (time) => {
         updates.push({ delta: time.delta_seconds, discarded: time.discarded_seconds, clamped: time.delta_was_clamped });
@@ -139,9 +140,37 @@ describe("[game-lifecycle] frame loop", () => {
 
     expect(updates.map((update) => update.delta)).toEqual([0.1, 0.1, 0.1, 0.1]);
     expect(updates.at(-1)?.delta).toBeCloseTo(0.1);
-    expect(updates.at(-1)?.discarded).toBeCloseTo(0.55);
+    expect(updates.at(-1)?.discarded).toBeCloseTo(0.5);
     expect(updates.at(-1)?.clamped).toBe(true);
     expect(draws).toBe(4);
+  });
+
+  it("preserves the sub-step remainder when discarding overloaded whole steps", () => {
+    const scheduler = create_scheduler();
+    const updates: { elapsed: number; discarded: number }[] = [];
+    const loop = create_frame_loop({
+      scheduler: scheduler.scheduler,
+      max_delta_seconds: 1,
+      fixed_step: { step_seconds: 0.1, max_steps_per_frame: 2 },
+      update: (time) => updates.push({ elapsed: time.elapsed_seconds, discarded: time.discarded_seconds }),
+      draw: () => undefined,
+    });
+
+    loop.start();
+    scheduler.tick();
+    scheduler.advance(0.356);
+    scheduler.tick();
+    scheduler.advance(0.044);
+    scheduler.tick();
+    scheduler.advance(0.1);
+    scheduler.tick();
+
+    expect(updates.map((update) => update.elapsed)).toHaveLength(4);
+    expect(updates.map((update) => update.elapsed)).toEqual(
+      expect.arrayContaining([expect.closeTo(0.1), expect.closeTo(0.2), expect.closeTo(0.3), expect.closeTo(0.4)]),
+    );
+    expect(updates[1]?.discarded).toBeCloseTo(0.1);
+    expect(updates[3]?.discarded).toBe(0);
   });
 
   it("rejects invalid fixed-step options", () => {

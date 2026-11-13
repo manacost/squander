@@ -152,3 +152,83 @@ test("renderer production and diagnostic workloads record separate costs", async
   });
   console.log(JSON.stringify({ browser_version, os: process.platform, profile, environment, results }));
 });
+
+test("target switches record frame submission count and timing", async ({ page, browser }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("target-switch benchmark requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("target-switch benchmark requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("target-switch benchmark adapter creation failed");
+    const device = await adapter.requestDevice();
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 64, height: 64 });
+    const target = renderer.create_render_target({ width: 64, height: 64 });
+    const color = { red: 0.8, green: 0.3, blue: 0.1, alpha: 1 };
+    const group_count = 8;
+    const draw_group = (frame: ReturnType<typeof renderer.begin_frame>, index: number): void => {
+      frame.draw_commands([
+        {
+          kind: "rectangle",
+          draw: { rectangle: { x: index, y: index, width: 12, height: 12 }, color },
+        },
+      ]);
+    };
+    const median = (values: readonly number[]): number => {
+      const ordered = [...values].sort((left, right) => left - right);
+      return ordered[Math.floor(ordered.length / 2)] ?? 0;
+    };
+    const results: { switches: number; command_buffers_per_frame: number; median_frame_ms: number }[] = [];
+    for (const switches of [0, 1, 3, 7]) {
+      const group_total = switches + 1;
+      const run_frame = async (): Promise<void> => {
+        const frame = renderer.begin_frame();
+        for (let group = 0; group < group_total; group += 1) {
+          if (group > 0) frame.set_target(group % 2 === 1 ? target : undefined);
+          const first_command = Math.floor((group * group_count) / group_total);
+          const last_command = Math.floor(((group + 1) * group_count) / group_total);
+          for (let index = first_command; index < last_command; index += 1) draw_group(frame, index);
+        }
+        await frame.submit();
+      };
+      for (let warmup = 0; warmup < 5; warmup += 1) await run_frame();
+      const samples: number[] = [];
+      for (let repetition = 0; repetition < 15; repetition += 1) {
+        const start = performance.now();
+        await run_frame();
+        samples.push(performance.now() - start);
+      }
+      results.push({
+        switches,
+        command_buffers_per_frame: group_total,
+        median_frame_ms: Number(median(samples).toFixed(3)),
+      });
+    }
+    target.release();
+    renderer.dispose();
+    return {
+      browser_version: navigator.userAgent,
+      adapter: { vendor: adapter.info.vendor, architecture: adapter.info.architecture, description: adapter.info.description },
+      os: navigator.platform,
+      dpr: window.devicePixelRatio,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      fixture: { width: 64, height: 64, commands_per_frame: group_count, warmup_frames: 5, samples: 15 },
+      results,
+      device_lost_promise: device.lost instanceof Promise,
+    };
+  });
+
+  expect(result.device_lost_promise).toBe(true);
+  expect(result.results.map((entry) => entry.switches)).toEqual([0, 1, 3, 7]);
+  expect(result.results.map((entry) => entry.command_buffers_per_frame)).toEqual([1, 2, 4, 8]);
+  expect(result.results.every((entry) => Number.isFinite(entry.median_frame_ms) && entry.median_frame_ms >= 0)).toBe(true);
+  test.info().annotations.push({ type: "target-switch-benchmark", description: JSON.stringify(result) });
+  void test.info().attach("renderer-target-switch-benchmark.json", {
+    body: JSON.stringify(result, null, 2),
+    contentType: "application/json",
+  });
+  console.log(JSON.stringify({ benchmark: "target-switch", ...result, playwright_browser_version: browser.version() }));
+});

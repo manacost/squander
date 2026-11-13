@@ -1655,6 +1655,60 @@ test("[stroke-options] keeps screen-space width stable across zoom and DPR", asy
   expect(Math.abs(result.zoom_one - result.dpr_two)).toBeLessThanOrEqual(1);
 });
 
+test("[stroke-options] scales screen units through fixed-fit viewport content", async ({ page }) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const canvas = document.createElement("canvas");
+    document.body.append(canvas);
+    const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
+    const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
+    const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
+    const colors = (await import(/* @vite-ignore */ colors_url)) as typeof import("../src/lib/core/runtime/colors.js");
+    const renderer = await renderer_module.create_webgpu_renderer({
+      canvas,
+      width: 32,
+      height: 32,
+      viewport: {
+        logical_width: 32,
+        logical_height: 32,
+        css_width: 16,
+        css_height: 16,
+        physical_width: 32,
+        physical_height: 32,
+        content_width: 16,
+        content_height: 16,
+        offset_x: 0,
+        offset_y: 0,
+      },
+    });
+    const pixels = await renderer.draw_commands([
+      {
+        kind: "stroke",
+        draw: {
+          subpaths: [
+            {
+              points: [
+                { x: 8, y: 16 },
+                { x: 24, y: 16 },
+              ],
+              closed: false,
+            },
+          ],
+          width: 4,
+          units: "screen",
+          color: colors.rgba(1, 0, 0, 1),
+        },
+      },
+    ]);
+    renderer.dispose();
+    let count = 0;
+    for (let y = 0; y < 32; y += 1) if (pixels[y * 256 + 16 * 4] > 0) count += 1;
+    return count;
+  });
+
+  expect(result).toBe(4);
+});
+
 test("[texture-filtering] keeps nearest and linear sampling independent", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {

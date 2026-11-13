@@ -33,8 +33,8 @@ same `delta_seconds` despite uneven browser callback intervals.
 
 A long callback interval would require more than the configured catch-up
 budget. The runtime performs only the allowed number of updates, discards the
-remaining whole-step time, and exposes the discarded amount to the final
-update.
+remaining whole-step time, preserves the sub-step remainder, and exposes the
+discarded amount to the final update.
 
 ## Acceptance criteria
 

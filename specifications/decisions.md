@@ -852,15 +852,18 @@ injected browser API are the verified contract. See [input-routing](../specs/inp
 
 Normal game and scene drawing records high-level `RenderCommand` values through
 one `RenderFrame` supplied by the game runtime. The renderer clears once,
-preserves application-then-scene order, submits one presentation pass without
-readback, and releases frame leases only after submitted work is safe. Explicit
-`RenderFrame.capture()` requests diagnostic pixels for a frame; existing
-readback-oriented renderer methods remain compatibility and diagnostic APIs
-during migration.
+preserves application-then-scene order, submits one command buffer per
+production frame without readback, and releases frame leases only after
+submitted work is safe. A frame may contain multiple render passes when it
+switches between canvas and offscreen targets. Explicit `RenderFrame.capture()`
+requests diagnostic pixels for a frame; existing readback-oriented renderer
+methods remain compatibility and diagnostic APIs during migration.
 
 The renderer remains one public mechanism. Frame recording is a lifecycle seam,
-not a public collection of renderer subsystems. Raw encoders, passes, views,
-cache structures, and GPU resources remain private. See the
+not a public collection of renderer subsystems. Internal helpers may be split
+when they create a concrete test seam or demonstrate a measurable performance
+or allocation benefit; module size alone is not a reason to split them. Raw
+encoders, passes, views, cache structures, and GPU resources remain private. See the
 [render-frame capability](../specs/render-frame/spec.md).
 
 ## AD-064: Frame submission failures are lifecycle failures

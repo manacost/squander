@@ -100,8 +100,8 @@ export const create_frame_loop = (options: FrameLoopOptions): FrameLoop => {
             steps += 1;
           }
           if (steps === max_steps_per_frame && fixed_accumulator_seconds >= fixed_step.step_seconds) {
-            discarded_seconds = fixed_accumulator_seconds;
-            fixed_accumulator_seconds = 0;
+            discarded_seconds = Math.floor(fixed_accumulator_seconds / fixed_step.step_seconds) * fixed_step.step_seconds;
+            fixed_accumulator_seconds -= discarded_seconds;
           }
           if (discarded_seconds > 0) {
             const last_index = fixed_times.length - 1;

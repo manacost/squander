@@ -10,10 +10,10 @@ dynamic preparation changes its offset on each repetition.
 Environment: Node `v24.18.0`.
 
 | Segments | Static median (ms) | Dynamic median (ms) |
-| ---: | ---: | ---: |
-| 10 | 0.040 | 0.046 |
-| 100 | 0.181 | 0.188 |
-| 1,000 | 0.605 | 0.663 |
+| -------: | -----------------: | ------------------: |
+|       10 |              0.040 |               0.046 |
+|      100 |              0.181 |               0.188 |
+|    1,000 |              0.605 |               0.663 |
 
 This is preparation evidence, not a GPU frame-rate promise. Trusted Chromium
 WebGPU pixel fixtures separately verify round endpoint/corner coverage and

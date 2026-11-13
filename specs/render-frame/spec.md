@@ -11,16 +11,15 @@ is explicit and remains available for verification.
 
 Accepted.
 
-The public contract and CPU lifecycle path are implemented. Trusted-origin
-layered WebGPU evidence remains a promotion gate.
-
 ## Requirements
 
 - `WebGpuRenderer` remains the one public rendering mechanism.
 - `begin_frame` creates a frame context owned by the renderer.
 - A frame records commands in call order and accepts an empty command list.
-- `submit` uses one command encoder and one presentation pass, with the clear
-  operation at frame start only.
+- `submit` clears the canvas once at frame start and preserves command order
+  across target switches, using one command-buffer submission per logical
+  production frame. Multiple render passes may target the canvas and offscreen
+  targets within that encoder.
 - `submit` performs no readback and resolves only after submitted work is safe
   for frame-owned resource leases to release.
 - `capture` is an explicit diagnostic request. It schedules a readback for the
@@ -63,13 +62,14 @@ game disposal waits for the frame cleanup.
 
 ## Acceptance criteria
 
-- [ ] Application and scenes render in bottom-to-top order.
-- [ ] Multiple draw groups preserve order and alpha composition.
-- [ ] A production frame performs one presentation submission.
-- [ ] A production frame performs zero readbacks.
-- [ ] Diagnostic capture returns deterministic pixels.
-- [ ] Existing readback APIs continue working during migration.
-- [ ] Disposal cannot destroy resources before submitted work releases its
+- [x] Application and scenes render in bottom-to-top order.
+- [x] Multiple draw groups preserve order and alpha composition.
+- [ ] A production frame uses one command-buffer submission across target
+      switches.
+- [x] A production frame performs zero readbacks.
+- [x] Diagnostic capture returns deterministic pixels.
+- [x] Existing readback APIs continue working during migration.
+- [x] Disposal cannot destroy resources before submitted work releases its
       leases.
 
 ## Evidence map
@@ -113,9 +113,18 @@ orchestration` suite.
   verifies asynchronous draw rejection is reported without an unhandled
   rejection.
 
-Trusted-origin layered WebGPU verification is still required. The current
-fixture environment has a dev-server dynamic-import blocker, recorded in the
-local execution ledger; it is not a passing skip.
+Trusted-origin layered WebGPU verification passes in
+[`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts), including
+ordered layer readback and explicit diagnostic capture.
+
+The target-switch benchmark in
+[`benchmark-report.md`](benchmark-report.md) shows median time increasing from
+0.5 ms for one target group to 3.9 ms for eight groups in the recorded profile.
+The structural one-command-buffer gate is accepted as a performance
+requirement; absolute timings remain informational and profile-specific. The
+current renderer still submits once per target group, so implementation of the
+gate remains a promotion requirement. This does not affect the verified
+layer-order pixel behavior.
 
 ## Notes
 

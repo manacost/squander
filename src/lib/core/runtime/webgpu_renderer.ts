@@ -820,7 +820,15 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         };
       }
       if (command.kind === "stroke") {
-        const scale = command.draw.units === "screen" ? (active_camera?.get_zoom() ?? 1) * Math.sqrt(device_scale_x * device_scale_y) : 1;
+        const output_scale_x =
+          submission.target === undefined
+            ? (current_viewport.content_width * device_scale_x) / logical_width
+            : output_width / logical_width;
+        const output_scale_y =
+          submission.target === undefined
+            ? (current_viewport.content_height * device_scale_y) / logical_height
+            : output_height / logical_height;
+        const scale = command.draw.units === "screen" ? (active_camera?.get_zoom() ?? 1) * Math.sqrt(output_scale_x * output_scale_y) : 1;
         const geometry = create_stroke_geometry(command.draw.subpaths, command.draw.width / scale, command.draw);
         assert_color(command.draw.color);
         const opacity = command.draw.opacity ?? 1;
@@ -928,16 +936,16 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     const output_content_height = submission.target === undefined ? viewport.content_height * device_scale_y : output_height;
     const output_offset_x = submission.target === undefined ? viewport.offset_x * device_scale_x : 0;
     const output_offset_y = submission.target === undefined ? viewport.offset_y * device_scale_y : 0;
+    const to_clip_point = (point: PolygonPoint): [number, number] => {
+      const screen_point = active_camera?.world_to_screen(point) ?? point;
+      const physical_x = (screen_point.x * output_content_width) / canvas_width;
+      const physical_y = (screen_point.y * output_content_height) / canvas_height;
+      return [((physical_x + output_offset_x) / output_width) * 2 - 1, 1 - ((physical_y + output_offset_y) / output_height) * 2];
+    };
     const encoded_draws = draws.map((draw) => {
       if ("geometry" in draw) {
         const tint = draw.geometry.color;
         const opacity = draw.geometry.opacity ?? 1;
-        const to_clip_point = (point: PolygonPoint): [number, number] => {
-          const screen_point = active_camera?.world_to_screen(point) ?? point;
-          const physical_x = (screen_point.x * output_content_width) / canvas_width;
-          const physical_y = (screen_point.y * output_content_height) / canvas_height;
-          return [((physical_x + output_offset_x) / output_width) * 2 - 1, 1 - ((physical_y + output_offset_y) / output_height) * 2];
-        };
         const vertex_data = new Float32Array(
           draw.geometry.indices.flatMap((index) => {
             const [x, y] = to_clip_point(draw.geometry.vertices[index]);
@@ -1003,13 +1011,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
         return [x + centered_x * cos - centered_y * sin, y + centered_x * sin + centered_y * cos];
       };
       const corners = [corner(0, 0), corner(width, 0), corner(width, height), corner(0, height)];
-      const to_clip = ([point_x, point_y]: [number, number]): [number, number] => {
-        const screen_point = active_camera?.world_to_screen({ x: point_x, y: point_y }) ?? { x: point_x, y: point_y };
-        const physical_x = (screen_point.x * output_content_width) / canvas_width;
-        const physical_y = (screen_point.y * output_content_height) / canvas_height;
-        return [((physical_x + output_offset_x) / output_width) * 2 - 1, 1 - ((physical_y + output_offset_y) / output_height) * 2];
-      };
-      const positions = corners.map(to_clip);
+      const positions = corners.map(([point_x, point_y]) => to_clip_point({ x: point_x, y: point_y }));
       const u0 = region.x / texture.width;
       const v0 = region.y / texture.height;
       const u1 = (region.x + region.width) / texture.width;
