@@ -643,6 +643,8 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
       clear: boolean;
       target?: Readonly<{ lease: ResourceLease<GPUTexture>; width: number; height: number }>;
       target_leases?: ReadonlyMap<WebGpuRenderTarget, ResourceLease<GPUTexture>>;
+      encoder?: GPUCommandEncoder;
+      deferred_cleanup?: (() => void)[];
     }>,
   ): Promise<Uint8Array | undefined> => {
     if (disposed) {
@@ -1191,7 +1193,7 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     });
 
     const target = submission.target?.lease.resource ?? context.getCurrentTexture();
-    const encoder = device.createCommandEncoder();
+    const encoder = submission.encoder ?? device.createCommandEncoder();
     const pass = encoder.beginRenderPass({
       colorAttachments: [
         {
@@ -1220,19 +1222,26 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     pass.end();
 
     try {
+      if (submission.encoder !== undefined) {
+        return undefined;
+      }
       if (submission.readback) {
         return await submit_and_readback(encoder, target);
       }
       await submit_without_readback(encoder);
       return undefined;
     } finally {
-      owned_leases.forEach((lease) => {
-        lease.release();
-      });
-      uniform_leases.forEach((lease) => {
-        lease.release();
-      });
-      release_reusable_buffer(dynamic_vertex_storage);
+      const cleanup = (): void => {
+        owned_leases.forEach((lease) => {
+          lease.release();
+        });
+        uniform_leases.forEach((lease) => {
+          lease.release();
+        });
+        release_reusable_buffer(dynamic_vertex_storage);
+      };
+      if (submission.deferred_cleanup === undefined) cleanup();
+      else submission.deferred_cleanup.push(cleanup);
     }
   };
 
@@ -1290,17 +1299,17 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
     const submit = async (): Promise<void> => {
       assert_open();
       completed = true;
+      const deferred_cleanup: (() => void)[] = [];
       try {
-        const last_canvas_group = groups.findLastIndex((group) => group.target === undefined);
+        const encoder = device.createCommandEncoder();
         const seen_targets = new Set<object>();
         const canvas_key = {};
-        let captured_pixels: Uint8Array | undefined;
-        for (const [index, group] of groups.entries()) {
+        for (const group of groups) {
           const target_key = group.target?.state ?? canvas_key;
           const clear = !seen_targets.has(target_key);
           seen_targets.add(target_key);
-          const pixels = await render_commands(group.commands, {
-            readback: capture_requested && index === last_canvas_group,
+          await render_commands(group.commands, {
+            readback: false,
             allow_empty: true,
             clear,
             clear_color,
@@ -1309,16 +1318,23 @@ export const create_webgpu_renderer = async (options: WebGpuRendererOptions): Pr
                 ? undefined
                 : { lease: group.target.lease, width: group.target.state.width, height: group.target.state.height },
             target_leases,
+            encoder,
+            deferred_cleanup,
           });
-          if (pixels !== undefined) captured_pixels = pixels;
         }
-        if (capture_requested && captured_pixels !== undefined) {
+        if (capture_requested) {
+          const captured_pixels = await submit_and_readback(encoder, context.getCurrentTexture());
           resolve_capture?.(captured_pixels);
+        } else {
+          await submit_without_readback(encoder);
         }
       } catch (cause) {
         reject_capture?.(cause);
         throw cause;
       } finally {
+        deferred_cleanup.forEach((cleanup) => {
+          cleanup();
+        });
         target_leases.forEach((lease) => {
           lease.release();
         });

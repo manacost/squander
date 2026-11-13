@@ -147,6 +147,35 @@ afterEach(() => {
 });
 
 describe("[webgpu-runtime] renderer CPU orchestration", () => {
+  it("submits a frame with canvas and target switches through one command buffer", async () => {
+    const fake = install_webgpu();
+    const target_canvas = canvas();
+    (target_canvas.getContext as ReturnType<typeof vi.fn>).mockReturnValue(fake.context);
+    const renderer = await create_webgpu_renderer({ canvas: target_canvas, width: 2, height: 2 });
+    const target = renderer.create_render_target({ width: 2, height: 2 });
+    const frame = renderer.begin_frame();
+    const draw = { kind: "rectangle" as const, draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: rgba(1, 0, 0, 1) } };
+
+    frame.draw_commands([draw]);
+    frame.set_target(target);
+    frame.draw_commands([draw]);
+    frame.set_target();
+    frame.draw_commands([draw]);
+    const submissions_before = (fake.device.queue as { submit: ReturnType<typeof vi.fn> }).submit.mock.calls.length;
+    const encoders_before = (fake.device.createCommandEncoder as ReturnType<typeof vi.fn>).mock.calls.length;
+    await frame.submit();
+
+    expect((fake.device.queue as { submit: ReturnType<typeof vi.fn> }).submit.mock.calls.length - submissions_before).toBe(1);
+    expect((fake.device.createCommandEncoder as ReturnType<typeof vi.fn>).mock.calls.length - encoders_before).toBe(1);
+    expect(fake.render_passes.slice(-3)).toEqual([
+      expect.objectContaining({ colorAttachments: [expect.objectContaining({ loadOp: "clear" })] }),
+      expect.objectContaining({ colorAttachments: [expect.objectContaining({ loadOp: "clear" })] }),
+      expect.objectContaining({ colorAttachments: [expect.objectContaining({ loadOp: "load" })] }),
+    ]);
+    target.release();
+    renderer.dispose();
+  });
+
   it("reports initialization failures and destroys a device without a context", async () => {
     vi.stubGlobal("window", { isSecureContext: false });
     await expect(create_webgpu_renderer({ canvas: canvas(), width: 2, height: 2 })).rejects.toBeInstanceOf(WebGpuUnavailableError);

@@ -181,7 +181,7 @@ test("target switches record frame submission count and timing", async ({ page, 
       const ordered = [...values].sort((left, right) => left - right);
       return ordered[Math.floor(ordered.length / 2)] ?? 0;
     };
-    const results: { switches: number; command_buffers_per_frame: number; median_frame_ms: number }[] = [];
+    const results: { switches: number; command_buffers_per_frame: number; render_passes_per_frame: number; median_frame_ms: number }[] = [];
     for (const switches of [0, 1, 3, 7]) {
       const group_total = switches + 1;
       const run_frame = async (): Promise<void> => {
@@ -203,7 +203,8 @@ test("target switches record frame submission count and timing", async ({ page, 
       }
       results.push({
         switches,
-        command_buffers_per_frame: group_total,
+        command_buffers_per_frame: 1,
+        render_passes_per_frame: group_total,
         median_frame_ms: Number(median(samples).toFixed(3)),
       });
     }
@@ -223,7 +224,8 @@ test("target switches record frame submission count and timing", async ({ page, 
 
   expect(result.device_lost_promise).toBe(true);
   expect(result.results.map((entry) => entry.switches)).toEqual([0, 1, 3, 7]);
-  expect(result.results.map((entry) => entry.command_buffers_per_frame)).toEqual([1, 2, 4, 8]);
+  expect(result.results.map((entry) => entry.command_buffers_per_frame)).toEqual([1, 1, 1, 1]);
+  expect(result.results.map((entry) => entry.render_passes_per_frame)).toEqual([1, 2, 4, 8]);
   expect(result.results.every((entry) => Number.isFinite(entry.median_frame_ms) && entry.median_frame_ms >= 0)).toBe(true);
   test.info().annotations.push({ type: "target-switch-benchmark", description: JSON.stringify(result) });
   void test.info().attach("renderer-target-switch-benchmark.json", {

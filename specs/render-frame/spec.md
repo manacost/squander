@@ -9,7 +9,7 @@ is explicit and remains available for verification.
 
 ## Status
 
-Accepted.
+Implemented.
 
 ## Requirements
 
@@ -64,7 +64,7 @@ game disposal waits for the frame cleanup.
 
 - [x] Application and scenes render in bottom-to-top order.
 - [x] Multiple draw groups preserve order and alpha composition.
-- [ ] A production frame uses one command-buffer submission across target
+- [x] A production frame uses one command-buffer submission across target
       switches.
 - [x] A production frame performs zero readbacks.
 - [x] Diagnostic capture returns deterministic pixels.
@@ -118,13 +118,10 @@ Trusted-origin layered WebGPU verification passes in
 ordered layer readback and explicit diagnostic capture.
 
 The target-switch benchmark in
-[`benchmark-report.md`](benchmark-report.md) shows median time increasing from
-0.5 ms for one target group to 3.9 ms for eight groups in the recorded profile.
-The structural one-command-buffer gate is accepted as a performance
-requirement; absolute timings remain informational and profile-specific. The
-current renderer still submits once per target group, so implementation of the
-gate remains a promotion requirement. This does not affect the verified
-layer-order pixel behavior.
+[`benchmark-report.md`](benchmark-report.md) verifies one command-buffer
+submission for one, two, four, and eight render passes. In the recorded profile,
+the eight-pass workload improved from 3.9 ms to 1.0 ms. Absolute timings remain
+informational and profile-specific; the structural submission gate is enforced.
 
 ## Notes
 
