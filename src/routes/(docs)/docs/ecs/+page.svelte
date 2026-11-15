@@ -65,6 +65,20 @@
       they need and update them. This makes it easy to process many similar things—such as every projectile or enemy—without putting every behavior
       in one large game-object class.
     </p>
+    <p>
+      For a broader introduction, read <a href="https://www.wikiwand.com/en/Entity_component_system" target="_blank"
+        >Entity-component system on Wikiwand</a
+      >.
+    </p>
+  </section>
+
+  <section class="intro-section" aria-labelledby="ecs-performance-title">
+    <h2 id="ecs-performance-title">Current performance</h2>
+    <p>
+      The current implementation is benchmarked against a shared CPU workload of 1,000,000 entities in Node.js and 100,000 entities in
+      Chromium. It measures dense and sparse queries, structural remove/add operations, snapshot import/export, and teardown. These are
+      workload timings, not a universal frame-rate promise.
+    </p>
   </section>
 
   <section class="intro-section" aria-labelledby="play-ecs-arena-title">

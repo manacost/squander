@@ -337,6 +337,14 @@ putting every behavior in one large class. In Squander, define object-shaped
 component tokens in a local schema and create as many worlds as the application
 needs:
 
+For a broader introduction, see [Entity-component system on Wikiwand](https://www.wikiwand.com/en/Entity_component_system).
+
+The current implementation is benchmarked against a shared CPU workload of
+1,000,000 entities in Node.js and 100,000 entities in Chromium. It measures
+dense and sparse queries, structural remove/add operations, snapshot
+import/export, and teardown. These are workload timings, not a universal
+frame-rate promise.
+
 \`\`\`ts
 // Import the world factory and component definition helper.
 import { create_world, define_component } from "squander/ecs";
