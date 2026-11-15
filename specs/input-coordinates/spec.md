@@ -62,11 +62,10 @@ const input_adapter = create_browser_input_adapter({
 - [`src/lib/core/runtime/viewport_sizing.test.ts`](../../src/lib/core/runtime/viewport_sizing.test.ts)
   covers the viewport values consumed by the mapper.
 - [`tests/input-routing.spec.ts`](../../tests/input-routing.spec.ts) covers the
-  browser host behavior; a dedicated letterbox fixture remains planned.
-
-Planned verification for the dedicated letterbox browser fixture is explicit;
-the DOM-bound mapper and lifecycle recovery are covered by the focused unit
-tests above.
+  browser host behavior and the dedicated fixed-fit letterbox fixture. The
+  fixture verifies raw CSS coordinates, logical coordinates, and the
+  `inside_logical_content` flag for both content and letterbox pointers.
+- The dedicated browser case is tagged `[input-coordinates]` for focused runs.
 
 ## Notes
 
