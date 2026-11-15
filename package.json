@@ -27,7 +27,7 @@
     "test:benchmark:filled-paths": "vitest run --config verification/vitest.geometry.config.ts",
     "test:benchmark:strokes": "vitest run --config verification/vitest.geometry.config.ts verification/stroke-benchmark.test.ts",
     "lint:format": "prettier --check .",
-    "lint:code": "eslint . --max-warnings 0",
+    "lint:code": "node verification/run-eslint.mjs",
     "test:type": "tsc --noEmit -p tsconfig.type-tests.json",
     "test:webgpu": "playwright test --config=playwright.webgpu.config.ts",
     "test:coverage": "vitest run --coverage",
