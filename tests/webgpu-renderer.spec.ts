@@ -143,6 +143,11 @@ test("[webgpu-runtime] clears and reads back a real canvas texture", async ({ pa
 test("[render-frame] captures ordered layers from one logical frame", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("render-frame verification requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("render-frame verification requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("render-frame verification adapter creation failed");
+    const device = await adapter.requestDevice();
     const module_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
     const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
     const module = (await import(/* @vite-ignore */ module_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
@@ -159,9 +164,12 @@ test("[render-frame] captures ordered layers from one logical frame", async ({ p
     await frame.submit();
     const pixels = await capture;
     renderer.dispose();
+    device.destroy();
     return {
       secure: window.isSecureContext,
       gpu: "gpu" in navigator,
+      adapter: true,
+      device: device.lost instanceof Promise,
       first_pixel: Array.from(pixels.slice(0, 4)),
       second_pixel: Array.from(pixels.slice(4, 8)),
     };
@@ -169,6 +177,8 @@ test("[render-frame] captures ordered layers from one logical frame", async ({ p
 
   expect(result.secure).toBe(true);
   expect(result.gpu).toBe(true);
+  expect(result.adapter).toBe(true);
+  expect(result.device).toBe(true);
   expect(result.first_pixel).toEqual([255, 0, 0, 255]);
   expect(result.second_pixel).toEqual([0, 0, 255, 255]);
 });
@@ -1230,7 +1240,7 @@ test("[paths-and-polygons] renders quadratic and cubic path curves", async ({ pa
   expect(result.quadratic_peak[0]).toBeGreaterThan(0);
 });
 
-test("[paths-and-polygons] fills curved subpaths with an even-odd hole", async ({ page }) => {
+test("[paths-and-polygons] preserves multiple even-odd holes in a curved fill", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
     if (!window.isSecureContext) throw new Error("filled-path verification requires a secure context");
@@ -1244,34 +1254,50 @@ test("[paths-and-polygons] fills curved subpaths with an even-odd hole", async (
     const path_module = (await import(/* @vite-ignore */ path_url)) as typeof import("../src/lib/core/runtime/path_flattening.js");
     const canvas = document.createElement("canvas");
     document.body.append(canvas);
-    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 8, height: 8 });
+    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 12, height: 8 });
     const outer = path_module.flatten_path(
       [
         path_module.move_to(0, 0),
-        path_module.line_to(8, 0),
-        path_module.quadratic_to(8, 0, 8, 8),
+        path_module.line_to(12, 0),
+        path_module.quadratic_to(12, 0, 12, 8),
         path_module.line_to(0, 8),
         path_module.close(),
       ],
       0.1,
     )[0];
-    const hole = path_module.flatten_path(
+    const first_hole = path_module.flatten_path(
       [path_module.move_to(2, 2), path_module.line_to(2, 6), path_module.line_to(6, 6), path_module.line_to(6, 2), path_module.close()],
       0.1,
     )[0];
+    const second_hole = path_module.flatten_path(
+      [path_module.move_to(8, 2), path_module.line_to(8, 5), path_module.line_to(11, 5), path_module.line_to(11, 2), path_module.close()],
+      0.1,
+    )[0];
     const pixels = await renderer.draw_commands([
-      { kind: "filled_path", draw: { subpaths: [outer, hole], color: { red: 1, green: 0, blue: 0, alpha: 1 }, fill_rule: "even_odd" } },
+      {
+        kind: "filled_path",
+        draw: { subpaths: [outer, first_hole, second_hole], color: { red: 1, green: 0, blue: 0, alpha: 1 }, fill_rule: "even_odd" },
+      },
     ]);
     const pixel = (x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
     renderer.dispose();
     device.destroy();
-    return { secure: window.isSecureContext, gpu: "gpu" in navigator, corner: pixel(1, 1), hole: pixel(4, 4) };
+    return {
+      secure: window.isSecureContext,
+      gpu: "gpu" in navigator,
+      corner: pixel(1, 1),
+      first_hole: pixel(3, 3),
+      second_hole: pixel(9, 3),
+      edge: pixel(11, 7),
+    };
   });
 
   expect(result.secure).toBe(true);
   expect(result.gpu).toBe(true);
   expect(result.corner).toEqual([255, 0, 0, 255]);
-  expect(result.hole).toEqual([0, 0, 0, 255]);
+  expect(result.first_hole).toEqual([0, 0, 0, 255]);
+  expect(result.second_hole).toEqual([0, 0, 0, 255]);
+  expect(result.edge).toEqual([255, 0, 0, 255]);
 });
 
 test("[paths-and-polygons] renders a concave polygon fill and preserves its notch", async ({ page }) => {
@@ -1541,6 +1567,11 @@ test("[shape-drawing] places a clockwise corner join on the outer side", async (
 test("[stroke-options] verifies round caps and joins with GPU pixels", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("stroke verification requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("stroke verification requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("stroke verification adapter creation failed");
+    const device = await adapter.requestDevice();
     const canvas = document.createElement("canvas");
     document.body.append(canvas);
     const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
@@ -1573,16 +1604,25 @@ test("[stroke-options] verifies round caps and joins with GPU pixels", async ({ 
     const bevel = await renderer.draw_commands([{ kind: "stroke", draw: { subpaths: corner_subpath, width: 4, join: "bevel", color } }]);
     const rounded = await renderer.draw_commands([{ kind: "stroke", draw: { subpaths: corner_subpath, width: 4, join: "round", color } }]);
     renderer.dispose();
+    device.destroy();
     const pixel_at = (pixels: Uint8Array, x: number, y: number): number[] => Array.from(pixels.slice(y * 256 + x * 4, y * 256 + x * 4 + 4));
     return {
       butt_endpoint: pixel_at(butt, 3, 4),
       round_endpoint: pixel_at(round, 3, 4),
       bevel_corner: pixel_at(bevel, 11, 4),
       round_corner: pixel_at(rounded, 11, 4),
+      secure: window.isSecureContext,
+      gpu: "gpu" in navigator,
+      adapter: true,
+      device: device.lost instanceof Promise,
     };
   });
 
   expect(result.butt_endpoint).toEqual([0, 0, 0, 255]);
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.adapter).toBe(true);
+  expect(result.device).toBe(true);
   expect(result.round_endpoint[0]).toBeGreaterThan(0);
   expect(result.round_corner[0]).toBeGreaterThan(result.bevel_corner[0]);
 });
@@ -1590,6 +1630,11 @@ test("[stroke-options] verifies round caps and joins with GPU pixels", async ({ 
 test("[stroke-options] keeps screen-space width stable across zoom and DPR", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("screen-stroke verification requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("screen-stroke verification requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("screen-stroke verification adapter creation failed");
+    const device = await adapter.requestDevice();
     const camera_url = new URL("/src/lib/core/runtime/camera.ts", location.origin).href;
     const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
     const colors_url = new URL("/src/lib/core/runtime/colors.ts", location.origin).href;
@@ -1648,16 +1693,33 @@ test("[stroke-options] keeps screen-space width stable across zoom and DPR", asy
       renderer.dispose();
       return count;
     };
-    return { zoom_one: await draw(1, 1), zoom_two: await draw(2, 1), dpr_two: await draw(1, 2) };
+    const measurements = { zoom_one: await draw(1, 1), zoom_two: await draw(2, 1), dpr_two: await draw(1, 2) };
+    device.destroy();
+    return {
+      ...measurements,
+      secure: window.isSecureContext,
+      gpu: "gpu" in navigator,
+      adapter: true,
+      device: device.lost instanceof Promise,
+    };
   });
 
   expect(Math.abs(result.zoom_one - result.zoom_two)).toBeLessThanOrEqual(1);
   expect(Math.abs(result.zoom_one - result.dpr_two)).toBeLessThanOrEqual(1);
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.adapter).toBe(true);
+  expect(result.device).toBe(true);
 });
 
 test("[stroke-options] scales screen units through fixed-fit viewport content", async ({ page }) => {
   await page.goto("/");
   const result = await page.evaluate(async () => {
+    if (!window.isSecureContext) throw new Error("fixed-fit stroke verification requires a secure context");
+    if (!("gpu" in navigator)) throw new Error("fixed-fit stroke verification requires navigator.gpu");
+    const adapter = await navigator.gpu.requestAdapter();
+    if (adapter === null) throw new Error("fixed-fit stroke verification adapter creation failed");
+    const device = await adapter.requestDevice();
     const canvas = document.createElement("canvas");
     document.body.append(canvas);
     const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
@@ -1701,12 +1763,23 @@ test("[stroke-options] scales screen units through fixed-fit viewport content", 
       },
     ]);
     renderer.dispose();
+    device.destroy();
     let count = 0;
     for (let y = 0; y < 32; y += 1) if (pixels[y * 256 + 16 * 4] > 0) count += 1;
-    return count;
+    return {
+      count,
+      secure: window.isSecureContext,
+      gpu: "gpu" in navigator,
+      adapter: true,
+      device: device.lost instanceof Promise,
+    };
   });
 
-  expect(result).toBe(4);
+  expect(result.count).toBe(4);
+  expect(result.secure).toBe(true);
+  expect(result.gpu).toBe(true);
+  expect(result.adapter).toBe(true);
+  expect(result.device).toBe(true);
 });
 
 test("[texture-filtering] keeps nearest and linear sampling independent", async ({ page }) => {

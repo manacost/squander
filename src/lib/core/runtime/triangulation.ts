@@ -37,12 +37,7 @@ const point_in_triangle = (point: PolygonPoint, a: PolygonPoint, b: PolygonPoint
   );
 };
 
-const point_strictly_in_triangle = (point: PolygonPoint, a: PolygonPoint, b: PolygonPoint, c: PolygonPoint): boolean => {
-  const first = cross(a, b, point);
-  const second = cross(b, c, point);
-  const third = cross(c, a, point);
-  return (first > 0 && second > 0 && third > 0) || (first < 0 && second < 0 && third < 0);
-};
+const same_point = (left: PolygonPoint, right: PolygonPoint): boolean => left.x === right.x && left.y === right.y;
 
 const point_in_ring = (point: PolygonPoint, ring: readonly PolygonPoint[]): boolean => {
   let inside = false;
@@ -113,7 +108,10 @@ const triangulate_simple = (points: readonly PolygonPoint[]): TriangulatedPolygo
             candidate !== previous &&
             candidate !== current &&
             candidate !== next &&
-            point_strictly_in_triangle(points[candidate], points[previous], points[current], points[next]),
+            !same_point(points[candidate], points[previous]) &&
+            !same_point(points[candidate], points[current]) &&
+            !same_point(points[candidate], points[next]) &&
+            point_in_triangle(points[candidate], points[previous], points[current], points[next]),
         )
       )
         continue;

@@ -25,6 +25,16 @@ describe("[paths-and-polygons] polygon triangulation", () => {
     expect(indexed_area(result)).toBe(12);
   });
 
+  it("preserves multiple even-odd holes independent of input order", () => {
+    const outer = flatten_path([move_to(0, 0), line_to(12, 0), line_to(12, 8), line_to(0, 8), close()], 0.1)[0];
+    const first_hole = flatten_path([move_to(2, 2), line_to(2, 4), line_to(4, 4), line_to(4, 2), close()], 0.1)[0];
+    const second_hole = flatten_path([move_to(7, 2), line_to(7, 5), line_to(10, 5), line_to(10, 2), close()], 0.1)[0];
+
+    const first_order = triangulate_subpaths([outer, first_hole, second_hole]);
+    expect(indexed_area(first_order)).toBe(83);
+    expect(indexed_area(triangulate_subpaths([outer, second_hole, first_hole]))).toBe(83);
+  });
+
   it("preserves fill area when outer and hole windings are reversed", () => {
     const outer = flatten_path([move_to(0, 0), line_to(0, 4), line_to(4, 4), line_to(4, 0), close()], 0.1)[0];
     const hole = flatten_path([move_to(1, 1), line_to(3, 1), line_to(3, 3), line_to(1, 3), close()], 0.1)[0];
