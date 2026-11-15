@@ -25,6 +25,13 @@ describe("[paths-and-polygons] polygon triangulation", () => {
     expect(indexed_area(result)).toBe(12);
   });
 
+  it("preserves fill area when outer and hole windings are reversed", () => {
+    const outer = flatten_path([move_to(0, 0), line_to(0, 4), line_to(4, 4), line_to(4, 0), close()], 0.1)[0];
+    const hole = flatten_path([move_to(1, 1), line_to(3, 1), line_to(3, 3), line_to(1, 3), close()], 0.1)[0];
+
+    expect(indexed_area(triangulate_subpaths([outer, hole]))).toBe(12);
+  });
+
   it("supports nested even-odd islands and rejects open subpaths", () => {
     const paths = [
       flatten_path([move_to(0, 0), line_to(10, 0), line_to(10, 10), line_to(0, 10), close()], 0.1)[0],
@@ -102,6 +109,68 @@ describe("[paths-and-polygons] polygon triangulation", () => {
         { x: 1, y: 1 },
       ]),
     ).toThrow(RangeError);
+  });
+
+  it("rejects an empty set of filled subpaths", () => {
+    expect(() => triangulate_subpaths([])).toThrow(/at least one subpath/);
+  });
+
+  it("rejects unsupported fill rules at runtime", () => {
+    // @ts-expect-error Verify the runtime guard for JavaScript callers and untyped data.
+    expect(() => triangulate_subpaths([], "non_zero")).toThrow(/unsupported fill rule/);
+  });
+
+  it("normalizes a repeated closing point before filling", () => {
+    const result = triangulate_subpaths([
+      {
+        closed: true,
+        points: [
+          { x: 0, y: 0 },
+          { x: 4, y: 0 },
+          { x: 4, y: 4 },
+          { x: 0, y: 4 },
+          { x: 0, y: 0 },
+        ],
+      },
+    ]);
+
+    expect(indexed_area(result)).toBe(16);
+  });
+
+  it("triangulates a concave filled subpath with either winding", () => {
+    const clockwise = flatten_path(
+      [move_to(0, 0), line_to(0, 4), line_to(1, 4), line_to(1, 1), line_to(4, 1), line_to(4, 0), close()],
+      0.1,
+    )[0];
+
+    expect(indexed_area(triangulate_subpaths([clockwise]))).toBe(7);
+  });
+
+  it("bridges a hole inside a concave enclosing subpath", () => {
+    const outer = flatten_path(
+      [
+        move_to(0, 0),
+        line_to(10, 0),
+        line_to(10, 10),
+        line_to(7, 10),
+        line_to(7, 3),
+        line_to(3, 3),
+        line_to(3, 10),
+        line_to(0, 10),
+        close(),
+      ],
+      0.1,
+    )[0];
+    const hole = flatten_path([move_to(1, 5), line_to(1, 6), line_to(2, 6), line_to(2, 5), close()], 0.1)[0];
+
+    expect(indexed_area(triangulate_subpaths([outer, hole]))).toBe(71);
+  });
+
+  it("rejects a hole that crosses its enclosing boundary", () => {
+    const outer = flatten_path([move_to(0, 0), line_to(4, 0), line_to(4, 4), line_to(0, 4), close()], 0.1)[0];
+    const crossing_hole = flatten_path([move_to(2, 2), line_to(2, 6), line_to(6, 6), line_to(6, 2), close()], 0.1)[0];
+
+    expect(() => triangulate_subpaths([outer, crossing_hole])).toThrow(/cannot be connected/);
   });
 
   it("handles boundary points while preserving the polygon area", () => {

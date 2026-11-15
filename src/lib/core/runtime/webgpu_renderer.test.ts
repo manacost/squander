@@ -147,6 +147,47 @@ afterEach(() => {
 });
 
 describe("[webgpu-runtime] renderer CPU orchestration", () => {
+  it("validates owned texture, target, and shader-effect inputs", async () => {
+    const first_device = install_webgpu();
+    const first_canvas = canvas();
+    (first_canvas.getContext as ReturnType<typeof vi.fn>).mockReturnValue(first_device.context);
+    const renderer = await create_webgpu_renderer({ canvas: first_canvas, width: 2, height: 2 });
+
+    expect(() => renderer.create_texture(new Uint8Array(), 0, 1)).toThrow(/dimensions/);
+    expect(() => renderer.create_texture(new Uint8Array(), 1, 1)).toThrow(/shorter/);
+    expect(() => renderer.create_render_target({ width: 1.5, height: 1 })).toThrow(/dimensions/);
+    await expect(renderer.clear({ red: 2, green: 0, blue: 0, alpha: 1 })).rejects.toThrow(/red must be finite/);
+    expect(() => renderer.create_shader_effect({ fragment_code: "  " })).toThrow(/nonempty/);
+    expect(() => renderer.create_shader_effect({ fragment_code: "return vec4f(1.0);" })).not.toThrow();
+    expect(() => renderer.create_shader_effect({ fragment_code: "let x = 1;" })).toThrow(/return/);
+    expect(() => renderer.create_shader_effect({ fragment_code: "return vec4f(1.0); var x = 1;" })).toThrow(/WGSL items/);
+    expect(() => renderer.create_shader_effect({ fragment_code: "return vec4f(1.0);", uniforms: Array(17).fill(0) })).toThrow(/uniforms/);
+    expect(() => renderer.create_shader_effect({ fragment_code: "return vec4f(1.0);", uniforms: [Number.NaN] })).toThrow(/uniforms/);
+    const font = await renderer.create_font_from_url("coverage-font", { size: 12 });
+    await expect(renderer.draw_text(font, "A", { size: 0 })).rejects.toThrow(/text size/);
+    font.release();
+    const texture = renderer.create_texture(new Uint8Array(4), 1, 1);
+    await expect(renderer.draw_texture(texture, { region: { x: Number.NaN, y: 0, width: 1, height: 1 } })).rejects.toThrow(/finite/);
+    await expect(renderer.draw_texture(texture, { region: { x: 1, y: 0, width: 1, height: 1 } })).rejects.toThrow(/fit/);
+    await expect(renderer.draw_texture(texture, { width: 0 })).rejects.toThrow(/dimensions/);
+    await expect(renderer.draw_texture(texture, { x: Number.NaN })).rejects.toThrow(/finite/);
+    // @ts-expect-error Verify the runtime guard for JavaScript callers and untyped configuration.
+    await expect(renderer.draw_texture(texture, { blend_mode: "screen" })).rejects.toThrow(/unsupported blend mode/);
+    texture.release();
+
+    const foreign_device = install_webgpu();
+    const foreign_canvas = canvas();
+    (foreign_canvas.getContext as ReturnType<typeof vi.fn>).mockReturnValue(foreign_device.context);
+    const foreign_renderer = await create_webgpu_renderer({ canvas: foreign_canvas, width: 2, height: 2 });
+    const foreign_target = foreign_renderer.create_render_target({ width: 1, height: 1 });
+    expect(() => {
+      renderer.begin_frame().set_target(foreign_target);
+    }).toThrow(/does not belong/);
+    foreign_target.release();
+    foreign_renderer.dispose();
+    renderer.dispose();
+  });
+
   it("submits a frame with canvas and target switches through one command buffer", async () => {
     const fake = install_webgpu();
     const target_canvas = canvas();

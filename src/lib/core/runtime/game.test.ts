@@ -208,6 +208,35 @@ describe("[game-lifecycle] game setup", () => {
     await game.dispose();
   });
 
+  it("waits for asynchronous application drawing before submitting the scene", async () => {
+    const scheduler = create_scheduler();
+    const state: FakeRendererState = { frames: [] };
+    let finish_draw!: () => void;
+    const draw_finished = new Promise<void>((resolve) => {
+      finish_draw = resolve;
+    });
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => create_fake_renderer(state),
+      scheduler: scheduler.scheduler,
+      update: () => undefined,
+      draw: async (frame) => {
+        frame.draw_commands([
+          { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 1, height: 1 }, color: { red: 1, green: 0, blue: 0, alpha: 1 } } },
+        ]);
+        await draw_finished;
+      },
+    });
+    await game.ready;
+
+    scheduler.tick();
+    expect(state.frames[0]?.submissions).toBe(0);
+    finish_draw();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(state.frames[0]?.submissions).toBe(1);
+    await game.dispose();
+  });
+
   it("waits for an in-flight frame before disposing the renderer", async () => {
     const scheduler = create_scheduler();
     let release_submission!: () => void;
