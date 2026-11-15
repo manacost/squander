@@ -155,6 +155,15 @@ test("Svelte bridge samples render source syntax instead of HTML entities", asyn
 test("ECS guide refreshes its reactive component view after a query update", async ({ page }) => {
   await page.goto("/docs/ecs");
 
+  await expect(page.getByRole("link", { name: "Entity-component system on Wikiwand" })).toHaveAttribute(
+    "href",
+    "https://www.wikiwand.com/en/Entity_component_system",
+  );
+  await expect(page.getByRole("heading", { level: 2, name: "Current performance" })).toBeVisible();
+  const performance_summary = page.locator('section[aria-labelledby="ecs-performance-title"] p');
+  await expect(performance_summary).toContainText("1,000,000 entities in Node.js");
+  await expect(performance_summary).toContainText("100,000 entities in Chromium");
+
   const entity_rows = page.locator(".live-example li");
   await page.getByRole("button", { name: "Create entity" }).click();
   await expect(entity_rows).toHaveCount(1);

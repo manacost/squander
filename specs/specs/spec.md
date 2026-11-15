@@ -13,8 +13,9 @@ documentation generation. Building that generator is outside the current scope.
 Draft.
 
 The initial document structure, template, and lifecycle vocabulary are established.
-The spec-system design is still being discussed. Validation is an on-demand
-skill review; no automated enforcement or CI validator is required.
+The spec-system design is still being discussed. Traceability quality remains
+an on-demand skill review; `validate:specs` also enforces structural and index
+consistency in repository checks.
 
 ## Requirements
 
@@ -47,7 +48,9 @@ skill review; no automated enforcement or CI validator is required.
 - Implemented capabilities must have test references and a matching tagged
   suite. A matching tag alone does not prove that acceptance criteria are met.
 - Validation reports findings; it does not automatically edit files or promote
-  capability status. Automated CI enforcement is outside the agreed scope.
+  capability status. The repository's `validate:specs` command enforces
+  structural validity and consistency between product capability statuses and
+  the curated capability index.
 - Specifications can link the architecture decision log to explain rationale.
 - Keep intended behavior distinguishable from implemented and tested behavior.
 - Use one of these lifecycle statuses:
@@ -106,12 +109,16 @@ skill review; no automated enforcement or CI validator is required.
 - Missing tests and unresolved design details are visible.
 - The template and capability specs use the defined lifecycle vocabulary and
   distinguish planning metadata from status.
+- `npm run validate:specs` rejects missing, duplicated, or misclassified product
+  capability entries in `specs/README.md`.
 - Future documentation generation is described without claiming it is implemented.
 - A repository skill at `.agents/skills/spec-validate/SKILL.md` describes the
   on-demand checks and reports traceability without claiming behavioral coverage.
 
 These criteria describe the initial document structure, status vocabulary, and
-on-demand validation workflow. Automated enforcement is not required.
+the validation workflow. The on-demand skill remains the review surface for
+traceability quality; the repository validator enforces structural and index
+consistency.
 
 ## Usage description
 
@@ -122,12 +129,15 @@ refer to `asset-loading` directly. This example does not establish that capabili
 
 Use the requirements and scenarios to explain behavior, acceptance criteria to
 state how completion is assessed, and test references to locate verification.
-Use notes for open questions and links to supporting decisions.
+Use notes for concise durable rationale and unique links to supporting decisions
+or historical evidence. Keep temporary execution plans separate from lifecycle
+status and remove them after promotion.
 
 Before implementing a capability, use the
 [readiness guidance](../../specifications/implementation-readiness.md) to resolve
 relevant open contracts and choose observable acceptance evidence. The
-[capability index](../README.md) lists current framework drafts.
+[capability index](../README.md) lists current framework capabilities. Run
+`npm run validate:specs` to verify the index and lifecycle statuses.
 
 Invoke `/spec-validate` to review all specs, or name a capability to narrow the
 review. The [validation skill](../../.agents/skills/spec-validate/SKILL.md)
@@ -147,5 +157,6 @@ establish behavioral coverage or test traceability.
 - The existing candidate logs are planning backlogs, not capability specs. Their
   planning IDs do not replace capability names as stable spec IDs.
 - Open questions include the remaining section guidance.
-- The location of existing planning documents has not changed as part of
-  establishing the capability directory convention.
+- `.codex/plans/` is temporary execution state for active work; durable context
+  belongs in capability `Notes`, the decision log, candidate logs, or
+  `specifications/history/`.

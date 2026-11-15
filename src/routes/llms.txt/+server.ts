@@ -337,6 +337,14 @@ putting every behavior in one large class. In Squander, define object-shaped
 component tokens in a local schema and create as many worlds as the application
 needs:
 
+For a broader introduction, see [Entity-component system on Wikiwand](https://www.wikiwand.com/en/Entity_component_system).
+
+The current implementation is benchmarked against a shared CPU workload of
+1,000,000 entities in Node.js and 100,000 entities in Chromium. It measures
+dense and sparse queries, structural remove/add operations, snapshot
+import/export, and teardown. These are workload timings, not a universal
+frame-rate promise.
+
 \`\`\`ts
 // Import the world factory and component definition helper.
 import { create_world, define_component } from "squander/ecs";
@@ -821,6 +829,12 @@ Use the live page as the end-to-end reference for combining a pure game model,
   production game code.
 
 ## Verification
+
+Repository documentation uses specs/ for current capability contracts,
+specifications/decisions.md for durable rationale, specifications/history/ for
+audit evidence, and the phase candidate logs for future work. The gitignored
+.codex/plans/ directory contains only active temporary execution state; it does
+not define current behavior.
 
 For a repository checkout, run focused CPU tests with \`npm run test:unit\`,
 type checks with \`npm run test:type\`, and Svelte diagnostics with

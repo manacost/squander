@@ -17,7 +17,9 @@ and slice evidence are archived under
 - [`specifications/history/`](../specifications/history/README.md) contains
   historical plans and evidence. Read it only when auditing a past slice.
 - `.codex/plans/` contains temporary execution state and should contain only
-  active work.
+  active work. After promotion, move durable rationale to a capability's
+  `Notes`, the decision log, or historical evidence, then remove the temporary
+  plan artifacts.
 
 ## Implemented capabilities
 
@@ -30,6 +32,9 @@ and slice evidence are archived under
 - [game-lifecycle](game-lifecycle/spec.md)
 - [game-timing](game-timing/spec.md)
 - [fixed-step](fixed-step/spec.md)
+- [render-frame](render-frame/spec.md)
+- [renderer-performance](renderer-performance/spec.md)
+- [render-culling](render-culling/spec.md)
 - [paths-and-polygons](paths-and-polygons/spec.md)
 - [resource-ownership](resource-ownership/spec.md)
 - [shape-drawing](shape-drawing/spec.md)
@@ -47,6 +52,7 @@ and slice evidence are archived under
 
 ### Scenes and input
 
+- [input-coordinates](input-coordinates/spec.md)
 - [scene-lifecycle](scene-lifecycle/spec.md)
 - [scene-assets](scene-assets/spec.md)
 - [scene-signals](scene-signals/spec.md)
@@ -54,17 +60,14 @@ and slice evidence are archived under
 - [input-routing](input-routing/spec.md)
 - [action-mapping](action-mapping/spec.md)
 
-### Draft capabilities
+### ECS and utilities
 
 - [ecs-system](ecs-system/spec.md)
 - [ecs-system-composition](ecs-system-composition/spec.md)
-- [render-frame](render-frame/spec.md)
-- [renderer-performance](renderer-performance/spec.md)
-- [render-culling](render-culling/spec.md)
 
-The [render-frame](render-frame/spec.md) capability is in progress: its public
-contract and CPU lifecycle path are implemented, while full trusted-origin
-layered WebGPU evidence remains a promotion gate.
+All product capability specifications are currently implemented. The
+`specs/specs` document defines the specification format and is excluded from
+this product capability index.
 
 ## Verification baseline
 
@@ -90,9 +93,9 @@ readback. Coverage and mocked GPU tests do not replace real-device evidence.
 ## Future work
 
 Read the candidate logs for deferred behavior such as cursor-anchored zoom,
-automatic culling, broader custom shaders, and mipmaps. The
-[ecs-system](ecs-system/spec.md) document is a Draft contract;
-do not treat it as an accepted implementation until its evidence plan passes.
+occlusion culling, broader custom shaders, and mipmaps. Implemented behavior
+belongs in the capability specifications; candidate entries that were promoted
+remain only as labeled historical traceability.
 
 ## Adding or changing a capability
 
@@ -101,6 +104,8 @@ Keep lifecycle status separate from planning metadata, link the relevant
 architecture decisions, and add matching bracketed capability tags to focused
 test suites. Use the [implementation readiness guidance](../specifications/implementation-readiness.md)
 before implementation and run `npm run validate:specs` after contract changes.
+That validator also checks that this index matches each product capability's
+lifecycle status.
 
 The [spec-system capability](specs/spec.md) defines the format and lifecycle
 vocabulary. Validation is an on-demand structural and traceability review; it
