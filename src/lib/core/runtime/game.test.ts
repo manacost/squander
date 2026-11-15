@@ -237,6 +237,35 @@ describe("[game-lifecycle] game setup", () => {
     await game.dispose();
   });
 
+  it("waits for callable PromiseLike application drawing before submitting the scene", async () => {
+    const scheduler = create_scheduler();
+    const state: FakeRendererState = { frames: [] };
+    let finish_draw!: () => void;
+    const draw_finished = new Promise<void>((resolve) => {
+      finish_draw = resolve;
+    });
+    const callable_thenable = Object.assign(() => undefined, { then: draw_finished.then.bind(draw_finished) });
+    const game = create_game({
+      renderer: test_renderer_options,
+      renderer_factory: async () => create_fake_renderer(state),
+      scheduler: scheduler.scheduler,
+      update: () => undefined,
+      draw: (frame) => {
+        frame.draw_commands([]);
+        return callable_thenable;
+      },
+    });
+    await game.ready;
+
+    scheduler.tick();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(state.frames[0]?.submissions).toBe(0);
+    finish_draw();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(state.frames[0]?.submissions).toBe(1);
+    await game.dispose();
+  });
+
   it("waits for an in-flight frame before disposing the renderer", async () => {
     const scheduler = create_scheduler();
     let release_submission!: () => void;

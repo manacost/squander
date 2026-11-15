@@ -13,6 +13,7 @@ import {
 import type { ViewportSize } from "./viewport_sizing.js";
 import { create_scene_composer, create_scene_event_bus, type SceneComposer, type SceneEventMap } from "./scene.js";
 import { create_input_router, type InputRouter } from "./input.js";
+import { is_promise_like } from "./promise_like.js";
 
 export class GameInitializationError extends Error {
   public constructor(cause: unknown) {
@@ -203,12 +204,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
               pending_frame_submissions.add(tracked_submission);
             };
             const application_draw = options.draw(frame);
-            if (
-              application_draw !== undefined &&
-              typeof application_draw === "object" &&
-              "then" in application_draw &&
-              typeof application_draw.then === "function"
-            ) {
+            if (is_promise_like(application_draw)) {
               return Promise.resolve(application_draw).then(() => {
                 active_scene_controller.draw(frame);
                 submit_frame();

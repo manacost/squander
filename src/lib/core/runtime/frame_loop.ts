@@ -1,4 +1,5 @@
 import { create_update_clock, type FixedStepOptions, type UpdateClock, type UpdateTime } from "./timing.js";
+import { is_promise_like } from "./promise_like.js";
 
 export type FrameScheduler = Readonly<{
   request_frame: (callback: () => void) => unknown;
@@ -116,12 +117,7 @@ export const create_frame_loop = (options: FrameLoopOptions): FrameLoop => {
         }
       }
       const draw_result = options.draw();
-      if (
-        draw_result !== null &&
-        (typeof draw_result === "object" || typeof draw_result === "function") &&
-        "then" in draw_result &&
-        typeof draw_result.then === "function"
-      ) {
+      if (is_promise_like(draw_result)) {
         void Promise.resolve(draw_result).then(
           () => {
             schedule();
