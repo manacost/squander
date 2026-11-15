@@ -33,6 +33,8 @@ jobs:
 
       - name: Lint
         run: npm run lint
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Check types and Svelte diagnostics
         run: npm run check
