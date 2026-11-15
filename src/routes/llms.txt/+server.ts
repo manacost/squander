@@ -827,7 +827,12 @@ type checks with \`npm run test:type\`, and Svelte diagnostics with
 \`npm run check\`. Run \`npm run test:integration\` for browser flows and
 \`npm run test:benchmark:ecs\` plus \`npm run test:benchmark:ecs:browser\` for
 the Node and trusted-local-origin ECS benchmark profiles. Run
-\`npm run test:webgpu\` for real WebGPU rendering.
+\`npm run test:webgpu\` for real WebGPU rendering. Run \`npm run test:coverage\`
+before \`npm run check:coverage\`; the strict greater-than-90% source gate
+covers executable TypeScript under \`src/lib/core/\`. Verify Svelte lifecycle
+and documentation presentation through browser tests. Run
+\`npm run test:benchmark:renderer:browser:guard\` to compare renderer timing and
+retained-resource measurements with the matching recorded WebGPU profile.
 
 CI has two lanes. Pull requests use standard GitHub-hosted runners for portable
 CPU, type, package, documentation, browser, ECS, and advisory benchmark checks.

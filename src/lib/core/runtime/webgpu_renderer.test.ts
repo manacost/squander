@@ -188,7 +188,7 @@ describe("[webgpu-runtime] renderer CPU orchestration", () => {
     renderer.dispose();
   });
 
-  it("submits a frame with canvas and target switches through one command buffer", async () => {
+  it("[renderer-performance] keeps canvas and target switches within one command buffer", async () => {
     const fake = install_webgpu();
     const target_canvas = canvas();
     (target_canvas.getContext as ReturnType<typeof vi.fn>).mockReturnValue(fake.context);

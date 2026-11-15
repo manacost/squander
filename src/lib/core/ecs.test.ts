@@ -33,6 +33,41 @@ describe("ecs worlds", () => {
     expect(world.query().with(position, velocity).toArray()).toHaveLength(0);
   });
 
+  it("returns undefined for a valid component that an entity does not have", () => {
+    const world = create_world(schema);
+    const entity = world.create();
+
+    expect(world.get(entity, position)).toBeUndefined();
+    expect(() => world.read(entity, position)).toThrow(/does not have component/);
+  });
+
+  it("nests queries without flushing deferred changes before the outer iteration ends", () => {
+    const world = create_world({ position });
+    const first = world.create();
+    const second = world.create();
+    world.add(first, position, { x: 1, y: 0 });
+    world.add(second, position, { x: 2, y: 0 });
+    const outer_entities: number[] = [];
+
+    world
+      .query()
+      .with(position)
+      .each(({ entity, destroy }) => {
+        outer_entities.push(entity);
+        if (entity === first) {
+          destroy();
+          world
+            .query()
+            .with(position)
+            .each(() => undefined);
+          expect(world.has(first)).toBe(true);
+        }
+      });
+
+    expect(outer_entities).toEqual([first, second]);
+    expect(world.has(first)).toBe(false);
+  });
+
   it("supports nested arrays without changing the object-first storage path", () => {
     const world = create_world(schema);
     const entity = world.create();
@@ -113,12 +148,16 @@ describe("ecs worlds", () => {
     const world = create_world({ position });
     const foreign_position = define_component<Position>({ name: "position" });
     const entity = world.create();
+    world.add(entity, position, { x: 1, y: 2 });
 
     expect(() => {
       world.add(entity, foreign_position, { x: 0, y: 0 });
     }).toThrow(/does not belong to this world/);
 
     expect(() => world.query().with(foreign_position).toArray()).toThrow(/does not belong to this world/);
+
+    const snapshot = world.query().with(position).toSnapshots()[0];
+    expect(() => snapshot.read(foreign_position)).toThrow(/snapshot is missing component/);
   });
 
   it("replaces an existing component value and rejects duplicate component names", () => {
@@ -213,6 +252,13 @@ describe("ecs worlds", () => {
     });
 
     expect(world.create()).toBeGreaterThan(imported_entity);
+  });
+
+  it("adopts a monotonic entity below the process-wide allocator", () => {
+    const world = create_world({ position });
+
+    expect(world.adopt(1)).toBe(1);
+    expect(world.create()).toBeGreaterThan(1);
   });
 
   it("reuses generational slots while rejecting stale handles", () => {
@@ -327,8 +373,10 @@ describe("ecs worlds", () => {
 
   it("rejects invalid adopted entity handles", () => {
     const world = create_world({ position });
+    const generational_world = create_world({ position }, { entity_policy: "generational" });
 
     expect(() => world.adopt(0)).toThrow(/not valid/);
+    expect(() => generational_world.adopt(1)).toThrow(/not valid/);
   });
 
   it("rejects duplicate component entries and unknown snapshot components", () => {
@@ -356,6 +404,32 @@ describe("ecs worlds", () => {
     expect(world.read(entity, position)).toEqual({ x: 1, y: 2 });
   });
 
+  it("rejects malformed external snapshots before mutating the world", () => {
+    const world = create_world({ position });
+    const entity = world.create();
+    world.add(entity, position, { x: 1, y: 2 });
+    const snapshot = world.export();
+    const invalid_snapshots: unknown[] = [
+      null,
+      [],
+      { ...snapshot, format_version: 2 },
+      { ...snapshot, entity_policy: "invalid" },
+      { ...snapshot, entities: "invalid" },
+      { ...snapshot, entities: [0] },
+      { ...snapshot, components: [] },
+      { ...snapshot, components: { position: [null] } },
+      { ...snapshot, components: { position: [{ entity, value: null }] } },
+    ];
+
+    for (const invalid_snapshot of invalid_snapshots) {
+      expect(() => {
+        // External snapshots are runtime input and may not satisfy the declared TypeScript shape.
+        world.import(invalid_snapshot as Parameters<typeof world.import>[0]);
+      }).toThrow(/snapshot is malformed/);
+      expect(world.read(entity, position)).toEqual({ x: 1, y: 2 });
+    }
+  });
+
   it("rejects non-structured-cloneable component values at the snapshot boundary", () => {
     type RuntimeValue = { callback: () => void };
     const runtime_value = define_component<RuntimeValue>({ name: "runtime_value" });
@@ -373,6 +447,15 @@ describe("ecs worlds", () => {
     world.destroy(maximum_generation_handle);
 
     expect(world.has(maximum_generation_handle)).toBe(false);
+    expect(world.create()).not.toBe(maximum_generation_handle);
+  });
+
+  it("does not free a maximum-generation slot when importing an empty snapshot", () => {
+    const world = create_world({ position }, { entity_policy: "generational" });
+    const maximum_generation_handle = 134_217_727;
+    world.adopt(maximum_generation_handle);
+    world.import({ format_version: 1, entity_policy: "generational", entities: [], components: {} });
+
     expect(world.create()).not.toBe(maximum_generation_handle);
   });
 

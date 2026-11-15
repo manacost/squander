@@ -290,11 +290,16 @@ external input, current gameplay permissions, or runtime immutability of aliases
 
 ## AD-018: Verification and documentation acceptance
 
-Require greater than 90% statements, branches, functions, and lines across the
-framework's TypeScript/Svelte runtime code, including renderer CPU-side logic and
-Svelte integration. Exclude demos, generated files, and type-only declarations.
-Pair coverage with API type tests and real WebGPU rendering tests; mocked GPU
-calls do not prove shader or pixel correctness.
+Require greater than 90% statements, branches, functions, and lines for
+executable TypeScript under `src/lib/core/`, including renderer CPU-side logic
+and ECS behavior. Exclude demos, generated files, type-only declarations,
+documentation presentation code, and Svelte components from this source
+coverage threshold. Verify Svelte lifecycle and scene-UI behavior through
+mounted browser integration tests instead of counting transformed component
+lines; verify documentation presentation through docs browser tests. Keep those
+behavior gates explicit and separate from core TypeScript coverage. Pair
+coverage with API type tests and real WebGPU rendering tests; mocked GPU calls
+do not prove shader or pixel correctness.
 
 Acceptance includes an organized documentation library with focused runnable
 demos and relevant tests for every individual feature, plus a final playground /
@@ -852,12 +857,16 @@ injected browser API are the verified contract. See [input-routing](../specs/inp
 
 Normal game and scene drawing records high-level `RenderCommand` values through
 one `RenderFrame` supplied by the game runtime. The renderer clears once,
-preserves application-then-scene order, submits one command buffer per
-production frame without readback, and releases frame leases only after
-submitted work is safe. A frame may contain multiple render passes when it
-switches between canvas and offscreen targets. Explicit `RenderFrame.capture()`
-requests diagnostic pixels for a frame; existing readback-oriented renderer
-methods remain compatibility and diagnostic APIs during migration.
+preserves application-then-scene order, avoids production readback, and releases
+frame leases only after submitted work is safe. The renderer currently records
+canvas and offscreen target passes in one command buffer because the matching
+target-switch benchmark showed lower submission overhead. This is an internal
+performance target, not a standalone rendering-correctness guarantee; keep the
+benchmark as a regression signal and reconsider the submission shape if
+matching-profile evidence favors another strategy. Explicit
+`RenderFrame.capture()` requests diagnostic pixels for a frame; existing
+readback-oriented renderer methods remain compatibility and diagnostic APIs
+during migration.
 
 The renderer remains one public mechanism. Frame recording is a lifecycle seam,
 not a public collection of renderer subsystems. Internal helpers may be split

@@ -37,7 +37,7 @@ The playground combines geometry, sprites, labels, camera/viewport behavior, ass
 - Inventory every supported feature against a documentation entry, focused runnable demo, and relevant automated verification; identify missing entries explicitly.
 - Verify documentation routes and demo controls work in browser tests.
 - Exercise the combined playground’s loading, interaction, pause, disposal/recreation, and handled failure flows.
-- Report statements, branches, functions, and lines each greater than 90% for framework runtime code, including renderer CPU logic and Svelte integration, excluding demos/generated/type-only files.
+- Report statements, branches, functions, and lines each greater than 90% for executable TypeScript under `src/lib/core/`, including renderer CPU logic and ECS behavior. Verify Svelte lifecycle and scene-UI behavior through mounted browser integration tests, and verify documentation presentation through docs browser tests; these are separate behavior gates, not source-coverage percentages.
 - Record real GPU rendering and type-test results separately from runtime coverage; no passing claim may rely on silently skipped GPU tests.
 
 ## Usage description
@@ -53,6 +53,9 @@ The Core sidebar and focused text guide are covered by
 [`tests/text-example.spec.ts`](../../tests/text-example.spec.ts), and the real
 WebGPU proof in
 [`tests/webgpu-text-example.spec.ts`](../../tests/webgpu-text-example.spec.ts).
+Mounted Svelte bridge and scene-owned UI lifecycle behavior are covered by
+[`tests/webgpu-svelte-adapter.spec.ts`](../../tests/webgpu-svelte-adapter.spec.ts)
+and [`tests/webgpu-scene-ui.spec.ts`](../../tests/webgpu-scene-ui.spec.ts).
 The generated Core guide registry covers every remaining runtime area, and the
 guide inventory is browser-verified by
 [`tests/docs-core.spec.ts`](../../tests/docs-core.spec.ts). Each guide links to
@@ -65,7 +68,7 @@ synchronized when capabilities change.
 
 ## Notes
 
-AD-018. Open: route inventory and demo design, supported test machine/browser baseline, visual tolerances, coverage tooling, and CI GPU availability.
+AD-018. Open: route inventory and demo design, supported test machine/browser baseline, visual tolerances, and CI GPU availability.
 
 See the [decision log](../../specifications/decisions.md) and
 [implementation readiness guidance](../../specifications/implementation-readiness.md).
