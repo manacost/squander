@@ -830,6 +830,12 @@ Use the live page as the end-to-end reference for combining a pure game model,
 
 ## Verification
 
+Repository documentation uses specs/ for current capability contracts,
+specifications/decisions.md for durable rationale, specifications/history/ for
+audit evidence, and the phase candidate logs for future work. The gitignored
+.codex/plans/ directory contains only active temporary execution state; it does
+not define current behavior.
+
 For a repository checkout, run focused CPU tests with \`npm run test:unit\`,
 type checks with \`npm run test:type\`, and Svelte diagnostics with
 \`npm run check\`. Run \`npm run test:integration\` for browser flows and

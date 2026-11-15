@@ -24,17 +24,12 @@ acceptance evidence, and the relevant documentation.
   before implementation. Screen-space stroke units are accepted in
   [stroke-options](../specs/stroke-options/spec.md); camera-relative/world-space
   stroke alignment remains separate.
-- **Rendering extensions:** Define renderer reuse with measured performance and
-  real-device evidence. Blend modes, render targets, and even-odd filled curved
-  paths are accepted in their capability specs. Constrained custom shader
-  effects are accepted in
-  [custom-shader-effects](../specs/custom-shader-effects/spec.md); broader
-  shader layouts, arbitrary bindings, broader fill rules, arbitrary
-  tessellation, and untrusted-source policy remain future questions. The
-  production frame boundary is accepted in
-  [render-frame](../specs/render-frame/spec.md). Opt-in bounded render culling
-  is specified in [render-culling](../specs/render-culling/spec.md), with
-  benchmark evidence still required for promotion.
+- **Rendering extensions:** Renderer reuse, blend modes, render targets,
+  even-odd filled curved paths, constrained custom shader effects, the
+  production frame boundary, and opt-in bounded render culling are implemented
+  in their capability specs. Broader shader layouts, arbitrary bindings,
+  broader fill rules, arbitrary tessellation, untrusted-source policy, and
+  occlusion culling remain future questions.
 - **Text and assets:** Define rich layout, shaping, fallback, supplied atlas
   import, generated manifests, and advanced font workflows.
 - **Simulation and packaging:** Define desktop wrapper support, safe
