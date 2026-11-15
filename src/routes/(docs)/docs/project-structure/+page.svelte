@@ -81,8 +81,10 @@ export const start_game = async ({ scenes }: GameReadyContext): Promise<void> =>
     update: ({ delta_seconds }) => {
       movement_system(world, delta_seconds);
     },
-    draw: () => {
-      void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
+    draw: (frame) => {
+      frame.draw_commands([
+        { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: { red: 0.05, green: 0.08, blue: 0.15, alpha: 1 } } },
+      ]);
     },
   }));
 };`}

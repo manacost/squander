@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 declare global {
+  var __scene_ui_capture_requested: boolean | undefined;
   var __scene_ui_readback: Uint8Array | undefined;
   var __scene_ui_late_mount_rejected: boolean | undefined;
   var __pending_scene_ui: { mount: () => Promise<void> } | undefined;
@@ -9,6 +10,9 @@ declare global {
 
 test("[scene-ui] Game owns scene UI through onReady", async ({ page }) => {
   await page.goto("/scene-ui");
+  await page.evaluate(() => {
+    globalThis.__scene_ui_capture_requested = true;
+  });
   const gpu_environment = await page.evaluate(async () => {
     const adapter = await navigator.gpu.requestAdapter();
     const device = adapter === null ? null : await adapter.requestDevice();

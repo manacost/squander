@@ -11,6 +11,7 @@ describe("[game-timing] update clock", () => {
       update_index: 0,
       measured_delta_seconds: 0,
       delta_was_clamped: false,
+      discarded_seconds: 0,
     });
     expect(clock.sample(10.25)).toEqual({
       delta_seconds: 0.1,
@@ -18,6 +19,7 @@ describe("[game-timing] update clock", () => {
       update_index: 1,
       measured_delta_seconds: 0.25,
       delta_was_clamped: true,
+      discarded_seconds: 0,
     });
   });
 

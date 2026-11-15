@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 declare global {
   var __scene_evidence:
     { asset_loads: number; asset_destroys: number; events: number; base_events: number; overlay_events: number } | undefined;
+  var __scene_capture_requested: boolean | undefined;
   var __scene_readback: Uint8Array | undefined;
   var __remove_scene_overlay: (() => Promise<void>) | undefined;
   var __dispose_scene_demo: (() => Promise<void>) | undefined;
@@ -10,6 +11,9 @@ declare global {
 
 test("[scene-assets] shares a scene dependency and destroys it after game disposal", async ({ page }) => {
   await page.goto("/docs/examples/scenes");
+  await page.evaluate(() => {
+    globalThis.__scene_capture_requested = true;
+  });
   await expect(page.getByTestId("scene-status")).toHaveText("ready");
   await expect.poll(async () => page.evaluate(() => globalThis.__scene_evidence?.asset_loads ?? 0)).toBe(1);
   await page.evaluate(async () => globalThis.__remove_scene_overlay?.());

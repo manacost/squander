@@ -1,6 +1,6 @@
 # Architecture decision log
 
-Last updated: 2026-11-03.
+Last updated: 2026-11-12.
 
 These decisions describe the current accepted architecture. Capability specs
 define observable behavior and checkpoints preserve historical evidence. A
@@ -290,11 +290,16 @@ external input, current gameplay permissions, or runtime immutability of aliases
 
 ## AD-018: Verification and documentation acceptance
 
-Require greater than 90% statements, branches, functions, and lines across the
-framework's TypeScript/Svelte runtime code, including renderer CPU-side logic and
-Svelte integration. Exclude demos, generated files, and type-only declarations.
-Pair coverage with API type tests and real WebGPU rendering tests; mocked GPU
-calls do not prove shader or pixel correctness.
+Require greater than 90% statements, branches, functions, and lines for
+executable TypeScript under `src/lib/core/`, including renderer CPU-side logic
+and ECS behavior. Exclude demos, generated files, type-only declarations,
+documentation presentation code, and Svelte components from this source
+coverage threshold. Verify Svelte lifecycle and scene-UI behavior through
+mounted browser integration tests instead of counting transformed component
+lines; verify documentation presentation through docs browser tests. Keep those
+behavior gates explicit and separate from core TypeScript coverage. Pair
+coverage with API type tests and real WebGPU rendering tests; mocked GPU calls
+do not prove shader or pixel correctness.
 
 Acceptance includes an organized documentation library with focused runnable
 demos and relevant tests for every individual feature, plus a final playground /
@@ -407,17 +412,18 @@ calls. Developers can fade an item without constructing a new color.
 This defines source alpha, not the final framebuffer alpha or the blend equation.
 Invalid per-draw opacity handling and internal alpha encoding remain open.
 
-## AD-027: Normal alpha blending in the current runtime
+## AD-027: Explicit 2D blend modes
 
-Use normal source-over alpha blending for every draw: later sprites,
-shapes, paths, polygons, and text appear over earlier content, with transparency
-revealing what is behind them. Apply AD-026's effective source alpha consistently
-across primitive types. Batching must preserve these results and draw order.
+Use normal source-over alpha blending by default for every draw. Draws may
+explicitly select `normal`, `additive`, or `multiply` through the blend-modes
+capability. Later sprites, shapes, paths, polygons, and text remain in
+submission order, and AD-026's effective source alpha applies consistently
+across primitive types.
 
-Do not expose selectable blend modes in the current runtime. Additional modes,
-including additive and multiply blending, are future capability candidates rather
-than committed implementation scope. Internal alpha encoding and color-space handling remain
-implementation contracts to resolve and verify.
+Blend-mode changes are batch breaks. Compatible adjacent draws may batch only
+when the texture, sampler, target, and blend mode all match. Pipeline variants
+and blend equations remain private renderer details; callers do not manage raw
+WebGPU pipelines. Unsupported runtime values fail clearly.
 
 ## AD-028: Basic shape anchors
 
@@ -846,6 +852,97 @@ animation loop.
 
 Physical hardware availability is environment-dependent; the adapter seam and
 injected browser API are the verified contract. See [input-routing](../specs/input-routing/spec.md).
+
+## AD-063: Production rendering uses one logical frame boundary
+
+Normal game and scene drawing records high-level `RenderCommand` values through
+one `RenderFrame` supplied by the game runtime. The renderer clears once,
+preserves application-then-scene order, avoids production readback, and releases
+frame leases only after submitted work is safe. The renderer currently records
+canvas and offscreen target passes in one command buffer because the matching
+target-switch benchmark showed lower submission overhead. This is an internal
+performance target, not a standalone rendering-correctness guarantee; keep the
+benchmark as a regression signal and reconsider the submission shape if
+matching-profile evidence favors another strategy. Explicit
+`RenderFrame.capture()` requests diagnostic pixels for a frame; existing
+readback-oriented renderer methods remain compatibility and diagnostic APIs
+during migration.
+
+The renderer remains one public mechanism. Frame recording is a lifecycle seam,
+not a public collection of renderer subsystems. Internal helpers may be split
+when they create a concrete test seam or demonstrate a measurable performance
+or allocation benefit; module size alone is not a reason to split them. Raw
+encoders, passes, views, cache structures, and GPU resources remain private. See the
+[render-frame capability](../specs/render-frame/spec.md).
+
+## AD-064: Frame submission failures are lifecycle failures
+
+The game runtime owns the promise returned by each production frame
+submission. A rejection is delivered once through `GameRuntimeError`, keeps the
+original cause, cancels a queued follow-up frame, and stops the loop. Device
+loss remains a distinct `GameDeviceLostError`. Disposal waits for accepted
+submission cleanup before releasing renderer-owned resources and is idempotent.
+
+Application code does not need to await or catch the internal submission
+promise. See the [game-lifecycle capability](../specs/game-lifecycle/spec.md)
+and [resource-ownership capability](../specs/resource-ownership/spec.md).
+
+## AD-065: Fixed-step simulation is opt-in and bounded
+
+Variable-step browser timing remains the default. A caller may opt into
+`fixed_step` with a positive `step_seconds` and a bounded
+`max_steps_per_frame`. The runtime runs the available fixed updates, draws once
+after that batch, and discards excess catch-up time when the bound is reached.
+The final update reports `discarded_seconds`; pause, hidden visibility, and
+disposal do not advance the accumulator. Interpolation and rollback are not
+part of this contract. See the [fixed-step capability](../specs/fixed-step/spec.md).
+
+## AD-066: Custom effects use a constrained fragment-body contract
+
+Texture draws may opt into a renderer-owned fragment effect. The caller supplies
+only a validated fragment body plus at most 16 finite numeric uniform values;
+Squander owns the fixed vertex layout, sampled texture, uniform buffer, bind
+group, pipeline variants, and disposal. The body receives `color`, `uv`, and a
+four-vector uniform array and must return a `vec4f`. Raw WGSL module items,
+bindings, resources, custom vertex work, and arbitrary GPU objects remain
+private. Compilation failures follow the normal draw and game lifecycle error
+path. This is an API-shape restriction, not a security boundary for untrusted
+shader source. See the [custom shader effects capability](../specs/custom-shader-effects/spec.md).
+
+## AD-067: Offscreen culling is opt-in and conservative
+
+The renderer may skip a `RenderCommand` only when the caller supplies world
+axis-aligned `bounds`, culling is explicitly enabled on `WebGpuRendererOptions`,
+and the active camera's conservative `is_in_view` query returns false. Without a
+camera, without bounds, or when bounds touch/intersect the view, the command is
+submitted. Culling never affects simulation, input, command recording, or
+resource ownership. It remains disabled by default until separate CPU-bound and
+GPU-bound measurements show a useful tradeoff. See the [render culling
+capability](../specs/render-culling/spec.md).
+
+## AD-068: Filled curved paths use even-odd subpaths
+
+Filled path commands accept closed flattened subpaths and the explicit
+`even_odd` fill rule. Alternating containment depth determines solid regions,
+transparent holes, and nested islands; winding direction does not change the
+result. Repeated closing points and consecutive duplicates are normalized, and
+invalid or ambiguous self-intersecting geometry is rejected. The renderer uses
+its existing private indexed geometry path. Nonzero winding and broader
+tessellation plugins remain future capabilities. See the
+[filled curved paths capability](../specs/filled-curved-paths/spec.md).
+
+## AD-069: Path stroke width and style options
+
+Path strokes retain centered world-space width by default. An explicit
+`units: "screen"` option divides the requested width by active camera zoom and
+display density before geometry preparation, keeping physical thickness stable
+across zoom and DPR. Open path caps are `butt`, `square`, or `round`; joins are
+`miter`, `bevel`, or `round`. Miter joins use a caller-provided finite limit,
+defaulting to 4, and fall back to the bevel geometry when the limit is exceeded.
+Closed paths do not receive open-end caps. These options remain draw-local and
+do not expose renderer subsystems or raw GPU resources. Primitive outline
+shader styles and inside/outside alignment remain separate capabilities. See
+the [stroke options capability](../specs/stroke-options/spec.md).
 
 ## Implementation readiness
 

@@ -14,22 +14,24 @@ exports for path/polygon preparation are covered by type tests and a real GPU
 create/update/readback fixture. Persistent owned-geometry GPU buffer reuse and
 replacement are also verified.
 
-The path and polygon contract is implemented and verified below. Filled curved paths,
-holes, and fill rules remain deferred.
+The path and polygon contract is implemented and verified below. Filled curved
+subpaths use the separate [filled-curved-paths](../filled-curved-paths/spec.md)
+capability.
 
 ## Requirements
 
 - Prepared geometry belongs to its creating game and remains valid until explicit release or game disposal. Reject drawing/updating released handles or use through another game; reclaim prior uses safely under AD-038 (AD-039).
 
-- Use flat ends for open strokes and sharp joins with a fixed limit and bevel fallback for excessive spikes (AD-031). The exact limit remains open; rounded/configurable styles are deferred.
+- Use the configurable cap, join, and miter-limit contract in [stroke-options](../stroke-options/spec.md) for path strokes. World units and the centered geometry convention remain the defaults.
 
-- Measure stroke width in world units and scale it with the geometry and camera zoom (AD-030). Constant screen thickness is a future option.
+- Measure stroke width in world units by default. Opt into screen units through the [stroke-options](../stroke-options/spec.md) contract when constant physical thickness is required.
 
-- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are not currently supported (AD-027).
+- Use normal source-over alpha blending by default. Per-draw `blend_mode` may
+  select the documented [blend-modes](../blend-modes/spec.md) capability.
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 
-- Support filled and outlined simple polygons, including concave polygons, without holes or self-intersections.
+- Support filled and outlined simple polygons, including concave polygons, without holes or self-intersections. Filled subpath holes use the separate filled-curved-paths contract.
 - Validate polygon creation and updates: accept either winding, remove consecutive duplicate points and an optional repeated closing point from the snapshot, and reject nonfinite coordinates, self-intersections, fewer than three distinct vertices, or zero area (AD-036). Do not mutate caller input.
 - Construct polygons from ordered point arrays, connecting the last vertex to the first implicitly. No repeated endpoint or `close()` command is required (AD-035).
 - Snapshot polygon point values at creation and explicit updates. Return an opaque stable handle; invalid updates throw and preserve previous geometry, just as for paths. Polygon updates happen outside `draw`; the update verb remains open.
@@ -40,7 +42,6 @@ holes, and fill rules remain deferred.
 - Construct paths from declarative typed command arrays; snapshot their values at creation. The resulting handle is opaque, not an editable/indexable command array (AD-033).
 - Permit explicit path updates using revised commands, snapshotting and validating them before changing active geometry. Invalid updates throw and preserve the previous geometry; successful updates retain the handle identity.
 - Update path geometry outside `draw`; use per-draw transforms for ordinary placement changes. The update operation's name remains open.
-- Filled curved paths, holes, and fill rules remain future capability candidates.
 
 ## Scenarios
 
@@ -152,11 +153,12 @@ CPU curve flattening is covered by
 covering endpoint preservation, disconnected subpaths, closure, and tolerance
 validation.
 
-Flat-capped segment geometry is covered by
+Flat-capped and configurable segment geometry is covered by
 [`src/lib/core/runtime/stroke_geometry.test.ts`](../../src/lib/core/runtime/stroke_geometry.test.ts),
-covering centered width, disconnected subpaths, and zero-length segments.
-The same suite covers fixed-ratio miter joins, bevel fallback at excessive
-spikes, and the wraparound corner of a closed subpath.
+covering centered width, disconnected subpaths, configurable caps and joins,
+and zero-length segments. The same suite covers fixed-ratio miter joins, bevel
+fallback at excessive spikes, round joins, and the wraparound corner of a
+closed subpath.
 The real WebGPU renderer fixture
 [`tests/webgpu-renderer.spec.ts`](../../tests/webgpu-renderer.spec.ts)
 covers indexed triangle, prepared-stroke, concave polygon fill, and polygon

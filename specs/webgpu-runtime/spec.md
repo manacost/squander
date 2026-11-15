@@ -53,6 +53,9 @@ Current verification:
   verifies two production-renderer game instances remain isolated when one is
   disposed.
 
+Renderer-owned offscreen targets and target-to-canvas composition are specified
+in [render-targets](../render-targets/spec.md); raw target views remain private.
+
 The package consumer checks are recorded in the package-boundary and runtime
 coverage checkpoints.
 

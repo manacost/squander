@@ -154,14 +154,14 @@
           publish_playground_state();
         }
       },
-      draw: () => {
+      draw: (frame) => {
         if (texture === undefined || font === undefined) return;
         const current_texture = texture;
         const current_font = font;
         const stroke = flatten_path(path.get_commands(), 0.5);
         const polygon_points = polygon.get_points();
-        void camera.draw(() =>
-          active_game?.renderer.draw_commands([
+        camera.draw(() => {
+          frame.draw_commands([
             {
               kind: "texture",
               draw: {
@@ -190,8 +190,8 @@
               kind: "text" as const,
               draw: { font: current_font, text: `FPS ${String(fps)}`, options: { x: 700, y: 410, size: 18, color: rgba(0.5, 1, 0.65, 1) } },
             },
-          ]),
-        );
+          ]);
+        });
       },
     });
     active_game = game;

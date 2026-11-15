@@ -1,7 +1,14 @@
 import { expect, test } from "@playwright/test";
 
+declare global {
+  var __texture_capture_requested: boolean | undefined;
+}
+
 test("loads the bundled texture through the asset cache and renders its pixels", async ({ page }) => {
   await page.goto("/docs/examples/textures");
+  await page.evaluate(() => {
+    globalThis.__texture_capture_requested = true;
+  });
 
   const environment = await page.evaluate(async () => {
     const adapter = "gpu" in navigator ? await navigator.gpu.requestAdapter() : null;

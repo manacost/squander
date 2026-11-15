@@ -36,10 +36,23 @@
             await ui.mount();
             await status_ui.mount();
           },
-          draw: () => {
-            void renderer.clear({ red: 0.05, green: 0.15, blue: 0.35, alpha: 1 }).then((pixels) => {
-              globalThis.__scene_ui_readback = pixels;
-            });
+          draw: (frame) => {
+            const viewport = renderer.get_viewport();
+            frame.draw_commands([
+              {
+                kind: "rectangle",
+                draw: {
+                  rectangle: { x: 0, y: 0, width: viewport.logical_width, height: viewport.logical_height },
+                  color: { red: 0.05, green: 0.15, blue: 0.35, alpha: 1 },
+                },
+              },
+            ]);
+            if (Reflect.get(globalThis, "__scene_ui_capture_requested") === true) {
+              Reflect.set(globalThis, "__scene_ui_capture_requested", false);
+              void frame.capture().then((pixels) => {
+                Reflect.set(globalThis, "__scene_ui_readback", pixels);
+              });
+            }
           },
         };
       });

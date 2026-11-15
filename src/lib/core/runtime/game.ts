@@ -2,11 +2,18 @@ import { create_frame_loop, type FrameLoop, type FrameLoopOptions, type FrameLoo
 import { create_resource_owner, type ResourceOwner } from "./resource_ownership.js";
 import { create_geometry_owner, type GeometryOwner } from "./geometry_ownership.js";
 import { create_asset_cache, type AssetCache, type AssetManifest } from "./asset_loading.js";
-import type { UpdateTime } from "./timing.js";
-import { create_webgpu_renderer, type WebGpuRenderer, type WebGpuRendererOptions } from "./webgpu_renderer.js";
+import type { FixedStepOptions, UpdateTime } from "./timing.js";
+import {
+  create_webgpu_renderer,
+  type ClearColor,
+  type RenderFrame,
+  type WebGpuRenderer,
+  type WebGpuRendererOptions,
+} from "./webgpu_renderer.js";
 import type { ViewportSize } from "./viewport_sizing.js";
 import { create_scene_composer, create_scene_event_bus, type SceneComposer, type SceneEventMap } from "./scene.js";
 import { create_input_router, type InputRouter } from "./input.js";
+import { is_promise_like } from "./promise_like.js";
 
 export class GameInitializationError extends Error {
   public constructor(cause: unknown) {
@@ -54,10 +61,12 @@ export type GameOptions<Manifest extends AssetManifest = AssetManifest> = Readon
   manifest?: Manifest;
   setup?: (context: GameSetupContext<Manifest>) => void | Promise<void>;
   update: (time: UpdateTime) => void;
-  draw: () => void;
+  draw: (frame: RenderFrame) => void | PromiseLike<void>;
+  clear_color?: ClearColor;
   device_lost?: PromiseLike<unknown>;
   on_error?: (error: GameDeviceLostError | GameInitializationError | GameRuntimeError) => void;
   max_delta_seconds?: number;
+  fixed_step?: FixedStepOptions;
 }>;
 
 export type Game<Manifest extends AssetManifest = AssetManifest, EventMap extends SceneEventMap = SceneEventMap> = Readonly<{
@@ -81,13 +90,14 @@ const create_loop_options = (
   options: GameOptions,
   on_error: (error: unknown) => void,
   update: (time: UpdateTime) => void = options.update,
-  draw: () => void = options.draw,
+  draw: () => unknown = () => undefined,
 ): FrameLoopOptions => ({
   scheduler: options.scheduler,
   update,
   draw,
   on_error,
   max_delta_seconds: options.max_delta_seconds,
+  fixed_step: options.fixed_step,
 });
 
 function normalize_manifest<Manifest extends AssetManifest>(manifest: Manifest | undefined): Manifest;
@@ -129,6 +139,7 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
   });
   const lifecycle = { disposed: false, manually_paused: false, visible: true };
   let disposal_promise: Promise<void> | undefined;
+  const pending_frame_submissions = new Set<Promise<void>>();
 
   const ready = (async (): Promise<void> => {
     try {
@@ -175,8 +186,33 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
             active_scene_controller.update(time);
           },
           () => {
-            options.draw();
-            active_scene_controller.draw();
+            const frame = renderer?.begin_frame(options.clear_color);
+            if (frame === undefined) {
+              throw new Error("game renderer is not ready");
+            }
+            const submit_frame = (): void => {
+              const submission = frame.submit();
+              const tracked_submission = submission.then(
+                () => {
+                  pending_frame_submissions.delete(tracked_submission);
+                },
+                (cause: unknown) => {
+                  pending_frame_submissions.delete(tracked_submission);
+                  loop?.fail(cause);
+                },
+              );
+              pending_frame_submissions.add(tracked_submission);
+            };
+            const application_draw = options.draw(frame);
+            if (is_promise_like(application_draw)) {
+              return Promise.resolve(application_draw).then(() => {
+                active_scene_controller.draw(frame);
+                submit_frame();
+              });
+            }
+            active_scene_controller.draw(frame);
+            submit_frame();
+            return undefined;
           },
         ),
       );
@@ -233,7 +269,8 @@ export const create_game = <Manifest extends AssetManifest = AssetManifest, Even
     }
     lifecycle.disposed = true;
     abort_controller.abort();
-    disposal_promise = (loop?.dispose() ?? Promise.resolve()).then(() => {
+    disposal_promise = (loop?.dispose() ?? Promise.resolve()).then(async () => {
+      await Promise.all([...pending_frame_submissions]);
       return (scene_controller?.composer.dispose() ?? Promise.resolve()).then(() => {
         scene_events.clear();
         input.dispose();

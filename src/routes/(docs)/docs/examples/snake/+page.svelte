@@ -8,7 +8,6 @@
     type InputEvent,
     type RenderCommand,
     type RuntimeGame,
-    type WebGpuRenderer,
   } from "../../../../../lib/core/index.js";
   import type { GameAdapterView } from "../../../../../lib/svelte/adapter.js";
   import { create_snake_game, type Direction, type SnakeGame, type SnakeState } from "./snake.js";
@@ -36,7 +35,6 @@
 
   let active_snake: SnakeGame | undefined;
   let publish_state: ((state: SnakeState) => void) | undefined;
-  let active_renderer: WebGpuRenderer | undefined;
   let focus_game: (() => void) | undefined;
 
   const publish_current_state = (): void => {
@@ -158,8 +156,7 @@
         },
         now_seconds: () => performance.now() / 1000,
       },
-      setup: ({ input, renderer, signal }) => {
-        active_renderer = renderer;
+      setup: ({ input, signal }) => {
         const remove_input = input.on_global(handle_input);
         const browser_input = create_browser_input_adapter({ host: canvas, router: input, focus_on_pointer_down: true });
         focus_game = browser_input.focus;
@@ -180,15 +177,14 @@
         snake.update(time.delta_seconds);
         publish_state?.(snake.get_state());
       },
-      draw: () => {
-        const renderer = active_renderer;
-        if (renderer === undefined) return;
-        renderer
-          .draw_commands(create_draw_commands(snake.get_state()))
-          .then((pixels) => {
-            Object.assign(globalThis, { __snake_readback: pixels });
-          })
-          .catch(() => undefined);
+      draw: (frame) => {
+        frame.draw_commands(create_draw_commands(snake.get_state()));
+        if (Reflect.get(globalThis, "__snake_capture_requested") === true) {
+          Reflect.set(globalThis, "__snake_capture_requested", false);
+          void frame.capture().then((pixels) => {
+            Reflect.set(globalThis, "__snake_readback", pixels);
+          });
+        }
       },
     });
     return game;

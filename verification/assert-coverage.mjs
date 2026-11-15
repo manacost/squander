@@ -12,7 +12,7 @@ if (!fs.existsSync(summary_path)) {
 const summary = JSON.parse(fs.readFileSync(summary_path, "utf8"));
 const files =
   requested_files.length === 0
-    ? Object.keys(summary).filter((file) => file !== "total")
+    ? Object.keys(summary).filter((file) => file !== "total" && file.includes("/src/lib/core/") && file.endsWith(".ts"))
     : requested_files.map((file) => {
         const absolute = file.startsWith("/") ? file : `${process.cwd()}/${file}`;
         return absolute;

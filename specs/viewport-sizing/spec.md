@@ -57,7 +57,8 @@ viewport state is observable through `game.get_viewport()` and mutable through
 `game.resize(viewport)`. Responsive sizing, explicit resize, DPR updates, and
 logical placement are verified through the public game seam. Automatic DOM
 observation remains an application integration concern rather than a renderer
-runtime requirement.
+runtime requirement. Pointer conversion from this viewport is specified in
+[input-coordinates](../input-coordinates/spec.md).
 
 ## Notes
 

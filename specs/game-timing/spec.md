@@ -20,10 +20,13 @@ Implemented.
 - Update and draw are synchronous. Run one update followed by one draw in each active animation callback; skip draw if update fails.
 - First update after startup/resume has zero measured/simulation deltas, false clamping flag, unchanged accumulated time, and an advancing update index.
 - Provide a new read-only timing snapshot per update; never mutate retained snapshots.
+- `UpdateTime.discarded_seconds` reports fixed-step catch-up time discarded by
+  an enabled fixed-step loop; it is zero for variable-step updates.
 - Orchestrate fetching and explicit asset loading in setup/lifecycle hooks or commands/events, not update/draw. Automatic unseen-glyph preparation is a documented internal exception.
 - Explicit pause stops updating but continues drawing. Draw callbacks must not advance simulation state.
 - Hidden-document suspension stops updates and drawing. Reset the timing baseline on return and preserve explicit pause.
-- Fixed-step scheduling remains a future capability candidate; automatic draw skipping is not promised.
+- Fixed-step scheduling is specified separately in [fixed-step](../fixed-step/spec.md);
+  automatic draw skipping is not promised.
 
 ## Scenarios
 
@@ -55,7 +58,8 @@ Current verification:
   values in the `[game-timing] update clock` suite.
 - [`src/lib/core/runtime/frame_loop.test.ts`](../../src/lib/core/runtime/frame_loop.test.ts)
   covers update-before-draw ordering, pause/resume, visibility suspension, and
-  idempotent disposal in the `[game-lifecycle] frame loop` suite.
+  idempotent disposal in the `[game-lifecycle] frame loop` suite, including
+  bounded fixed-step catch-up.
 
 The frame-loop fixture covers visibility suspension and explicit pause behavior;
 the game lifecycle fixture covers setup gating and disposal races.

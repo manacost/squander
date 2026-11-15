@@ -1,7 +1,7 @@
 import type { AssetCache, AssetManifest, AssetResource } from "./asset_loading.js";
 import type { ResourceHandle } from "./resource_ownership.js";
 import type { UpdateTime } from "./timing.js";
-import type { WebGpuRenderer } from "./webgpu_renderer.js";
+import type { RenderFrame, WebGpuRenderer } from "./webgpu_renderer.js";
 import type { Signal } from "../../signals/signal.js";
 import type { InputHandler, InputRouter, InputSceneHandle } from "./input.js";
 
@@ -55,7 +55,7 @@ export type SceneDefinition<Manifest extends AssetManifest = AssetManifest, Even
   enter?: (context: SceneContext<Manifest, EventMap>) => void | SceneCleanup | Promise<void | SceneCleanup>;
   input?: InputHandler;
   update?: (time: UpdateTime) => void;
-  draw?: () => void;
+  draw?: (frame: RenderFrame) => void;
   exit?: () => void | Promise<void>;
 }>;
 
@@ -296,7 +296,7 @@ const create_scene_subscriptions = (on_error: (cause: unknown) => void): SceneSu
 type SceneComposerController<Manifest extends AssetManifest = AssetManifest, EventMap extends SceneEventMap = SceneEventMap> = Readonly<{
   composer: SceneComposer<Manifest, EventMap>;
   update: (time: UpdateTime) => void;
-  draw: () => void;
+  draw: (frame: RenderFrame) => void;
 }>;
 
 export const create_scene_composer = <Manifest extends AssetManifest = AssetManifest, EventMap extends SceneEventMap = SceneEventMap>(
@@ -618,12 +618,12 @@ export const create_scene_composer = <Manifest extends AssetManifest = AssetMani
     }
   };
 
-  const draw = (): void => {
+  const draw = (frame: RenderFrame): void => {
     if (structural_mutation_count > 0) return;
     in_frame_callback = true;
     try {
       for (const record of records) {
-        record.definition.draw?.();
+        record.definition.draw?.(frame);
       }
     } finally {
       in_frame_callback = false;

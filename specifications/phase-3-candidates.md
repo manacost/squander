@@ -29,20 +29,23 @@ implemented and listed below for historical traceability.
   cursor stationary while zoom changes; current camera zoom stays centered on the camera
   position (AD-042).
 - **Swappable cameras/projections:** a possible extension within the 2D commitment.
-- **Filled curved paths, polygon holes, and fill rules:** extensions beyond Phase
-  2's stroked paths and simple concave polygons.
-- **Constant screen-thickness strokes:** optional stroke widths independent of
-  camera zoom, useful for selection outlines and debug overlays; define screen
-  units and viewport/display-density interaction before implementation (AD-030).
+- **Filled curved paths, polygon holes, and fill rules:** promoted into the
+  [filled-curved-paths capability](../specs/filled-curved-paths/spec.md) with
+  an explicit even-odd contract. Broader fill rules remain separate.
+- **Constant screen-thickness strokes:** promoted into the accepted
+  [stroke-options capability](../specs/stroke-options/spec.md). The first
+  contract applies to path strokes; inside/outside alignment remains separate.
 - **Inside/outside stroke alignment:** selectable alignment beyond the current
   centered strokes; define supported closed geometries and wide-stroke behavior
   before implementation (AD-029).
-- **Additional blend modes:** additive and multiply blending, beyond the current
-  normal source-over alpha blending (AD-027).
+- **Additional blend modes:** promoted into the implemented
+  [blend-modes capability](../specs/blend-modes/spec.md); future modes still
+  require a separate contract and pixel evidence (AD-027).
 
-- **Automatic offscreen culling:** skip rendering work for definitely offscreen
-  bounds, building on the current camera capability's explicit `is_in_view` helper. Preserve visible
-  results and validate measured benefit; do not skip gameplay updates (AD-048).
+- **Automatic offscreen culling:** accepted as the opt-in
+  [render-culling capability](../specs/render-culling/spec.md); promotion still
+  requires real-device equivalence and CPU/GPU workload evidence. Preserve
+  visible results and do not skip gameplay updates (AD-048).
 - **Occlusion culling:** investigate skipping fully hidden content while respecting
   transparency and draw order. More advanced than offscreen checks; require
   correctness evidence and measured benefit before implementation (AD-048).
@@ -52,7 +55,9 @@ implemented and listed below for historical traceability.
 - Manual camera `begin()`/`end()` scopes if a concrete need emerges beyond the
   synchronous, exception-safe `camera.draw(callback)` API (AD-045).
 
-- Custom shaders, render targets, and advanced rendering effects.
+- Broader custom shader layouts and advanced rendering effects; the constrained
+  fragment-effect capability is now implemented in
+  [custom-shader-effects](../specs/custom-shader-effects/spec.md).
 - Generated asset manifests.
 - Advanced text layout, complex-script shaping, and richer font capabilities.
 - Desktop packaging validation against a concrete wrapper/OS/GPU support matrix.
@@ -65,8 +70,8 @@ implemented and listed below for historical traceability.
 - Automatic restoration after GPU device loss.
 - Fixed-fill viewport cropping and integer-only viewport scaling.
 - Dashed strokes.
-- Configurable line caps/joins, including rounded ends and corners, beyond Phase
-  2’s fixed flat caps and limited sharp joins (AD-031).
+- Configurable line caps/joins on primitive outline shader paths; path stroke
+  caps and joins are covered by [stroke-options](../specs/stroke-options/spec.md).
 
 These are recorded so they are not lost; their place in the future-work backlog
 has not been agreed.

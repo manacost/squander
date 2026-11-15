@@ -2,6 +2,88 @@ import { describe, expect, it } from "vitest";
 import { create_stroke_geometry } from "./stroke_geometry.js";
 
 describe("[paths-and-polygons] stroke segment geometry", () => {
+  it("supports square and round open caps", () => {
+    const square = create_stroke_geometry(
+      [
+        {
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+          ],
+          closed: false,
+        },
+      ],
+      2,
+      { cap: "square" },
+    );
+    expect(square.vertices).toContainEqual({ x: -1, y: 1 });
+    expect(square.vertices).toContainEqual({ x: 11, y: -1 });
+
+    const round = create_stroke_geometry(
+      [
+        {
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+          ],
+          closed: false,
+        },
+      ],
+      2,
+      { cap: "round" },
+    );
+    expect(round.vertices.length).toBeGreaterThan(square.vertices.length);
+    expect(round.indices.length).toBeGreaterThan(square.indices.length);
+  });
+
+  it("validates configurable join limits", () => {
+    expect(() =>
+      create_stroke_geometry(
+        [
+          {
+            points: [
+              { x: 0, y: 0 },
+              { x: 1, y: 0 },
+            ],
+            closed: false,
+          },
+        ],
+        1,
+        { join: "unsupported" as "miter" },
+      ),
+    ).toThrow(/join/);
+    expect(() =>
+      create_stroke_geometry(
+        [
+          {
+            points: [
+              { x: 0, y: 0 },
+              { x: 1, y: 0 },
+            ],
+            closed: false,
+          },
+        ],
+        1,
+        { miter_limit: 0 },
+      ),
+    ).toThrow(/miter_limit/);
+  });
+
+  it("selects bevel and round joins independently of the default miter", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+    ];
+    const bevel = create_stroke_geometry([{ points, closed: false }], 2, { join: "bevel" });
+    const round = create_stroke_geometry([{ points, closed: false }], 2, { join: "round" });
+
+    expect(bevel.vertices).toContainEqual({ x: 10, y: 0 });
+    expect(bevel.vertices).not.toContainEqual({ x: 11, y: -1 });
+    expect(round.vertices.length).toBeGreaterThan(bevel.vertices.length);
+    expect(round.indices.length).toBeGreaterThan(bevel.indices.length);
+  });
+
   it("centers a flat-capped width-2 segment on its centerline", () => {
     const result = create_stroke_geometry(
       [

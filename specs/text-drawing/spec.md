@@ -15,7 +15,8 @@ fallback, and arbitrary-script coverage remain deferred.
 
 ## Requirements
 
-- Use normal source-over alpha blending in draw order, consistently across all primitive types. Selectable blend modes are not currently supported (AD-027).
+- Use normal source-over alpha blending by default. Text may select the
+  documented [blend-modes](../blend-modes/spec.md) capability per draw.
 
 - Support per-draw `opacity`, defaulting to 1, multiplied by color alpha and applicable texture/glyph alpha or coverage (AD-026). Do not mutate colors or leak opacity into other draws.
 

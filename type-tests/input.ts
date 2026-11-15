@@ -1,4 +1,10 @@
-import { create_browser_gamepad_adapter, create_input_router, type InputDisposition, type InputEvent } from "../src/lib/index.js";
+import {
+  create_action_map,
+  create_browser_gamepad_adapter,
+  create_input_router,
+  type InputDisposition,
+  type InputEvent,
+} from "../src/lib/index.js";
 
 const router = create_input_router();
 
@@ -39,6 +45,22 @@ if (gamepad !== undefined) {
 }
 gamepad_adapter.poll();
 gamepad_adapter.dispose();
+
+const actions = create_action_map({
+  router,
+  bindings: {
+    confirm: [
+      { device: "keyboard", code: "Enter" },
+      { device: "gamepad_button", button: 0 },
+    ],
+    move: [{ device: "gamepad_axis", axis: 0, dead_zone: 0.2, invert: true, scale: 2 }],
+  },
+});
+actions.update();
+const confirm_pressed: boolean = actions.get("confirm").pressed;
+void confirm_pressed;
+// @ts-expect-error Action names are restricted to the declared binding map.
+actions.get("unknown");
 
 // @ts-expect-error Gamepad state keys are numeric indexes, not device names.
 router.dispatch({ type: "gamepad", phase: "axis", gamepad_id: "pad", index: 0, axis: 0, value: 0, label: "pad" });

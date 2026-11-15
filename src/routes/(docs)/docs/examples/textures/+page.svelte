@@ -82,28 +82,35 @@
           publish_texture_state("ready");
         }
       },
-      draw: () => {
+      draw: (frame) => {
         if (texture_handle === undefined || draw_pending) return;
         draw_pending = true;
         const texture = texture_handle.read();
-        void game.renderer
-          .draw_commands([
-            { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: background_color } },
-            {
-              kind: "texture",
-              draw: {
-                texture,
-                options: {
-                  x: 400,
-                  y: 225,
-                  width: sprite_size,
-                  height: sprite_size,
-                  origin: { x: 0.5, y: 0.5 },
-                  rotation: rotation_seconds,
-                },
+        frame.draw_commands([
+          { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: background_color } },
+          {
+            kind: "texture",
+            draw: {
+              texture,
+              options: {
+                x: 400,
+                y: 225,
+                width: sprite_size,
+                height: sprite_size,
+                origin: { x: 0.5, y: 0.5 },
+                rotation: rotation_seconds,
               },
             },
-          ])
+          },
+        ]);
+        if (Reflect.get(globalThis, "__texture_capture_requested") !== true) {
+          draw_pending = false;
+          publish_texture_state("ready");
+          return;
+        }
+        Reflect.set(globalThis, "__texture_capture_requested", false);
+        void frame
+          .capture()
           .then((pixels) => {
             let texture_sample = "not found";
             for (let index = 0; index < pixels.length; index += 4) {

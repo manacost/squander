@@ -26,8 +26,10 @@ game code, and agent-assisted development.
   supported and deferred behavior.
 
 Squander targets 2D browser games. WebGPU is the rendering path; a WebGL
-fallback is not promised. Advanced projections, custom shaders, render targets,
-mipmaps, and fixed-step simulation are future work rather than current APIs.
+fallback is not promised. Mipmaps, swappable projections, and arbitrary GPU
+resource APIs remain deferred. Production frames, render targets, and
+constrained texture fragment effects are available. Fixed-step simulation is
+available as an opt-in game timing mode.
 
 ## Current goals
 
@@ -52,14 +54,14 @@ mipmaps, and fixed-step simulation are future work rather than current APIs.
   capabilities. Use phase terminology only for active plans, candidate
   backlogs, or historical records; once a capability is implemented, refer to
   the feature and its observable behavior.
-- Keep deferred capabilities contract-driven: advanced projections, custom
-  shaders, render targets, mipmaps, fixed-step scheduling, and action mapping
+- Keep deferred capabilities contract-driven: advanced projections, broader
+  custom shaders, and mipmaps
   require their own supported behavior and evidence before inclusion.
 - The initial ECS capability is available from \`squander/ecs\`: define local
   object-shaped component tokens, create independent worlds, run typed fluent
-  queries, and use world-level \`export()\`/\`import()\` snapshots. The ECS does
-  not register or schedule systems; callers compose ordinary systems and
-  lifecycle hooks. Node and trusted-local-origin browser benchmark profiles
+  queries, and use world-level \`export()\`/\`import()\` snapshots. The optional
+  \`create_ecs_system_pipeline\` helper orders caller-owned systems but does
+  not register them with a global scheduler. Node and trusted-local-origin browser benchmark profiles
   guard the supported workloads. Monotonic numeric IDs are the default;
   create_world(schema, { entity_policy: "generational" }) opts into packed
   generational handles and stale-handle checks. Archetype and typed-column
@@ -222,8 +224,10 @@ export const start_game = async ({ scenes }: GameReadyContext): Promise<void> =>
   await scenes.mount(({ renderer }) => ({
     name: "play",
     update: ({ delta_seconds }) => movement_system(world, delta_seconds),
-    draw: () => {
-      void renderer.clear({ red: 0.05, green: 0.08, blue: 0.15, alpha: 1 });
+    draw: (frame) => {
+      frame.draw_commands([
+        { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: { red: 0.05, green: 0.08, blue: 0.15, alpha: 1 } } },
+      ]);
     },
   }));
 };
@@ -239,7 +243,32 @@ the runtime; Svelte reads only the state the game intentionally publishes.
 The package root exports the core runtime. A game owns its renderer, frame
 loop, input router, asset cache, resource owner, geometry owner, and scene
 composer. Setup runs before the frame loop starts. The \`update\` callback
-advances game state, and \`draw\` submits frame-local commands.
+advances game state, and \`draw(frame)\` records frame-local commands. The
+runtime submits one logical frame after application and scenes have recorded
+their commands.
+
+## Production frame submission
+
+Use the frame supplied to the game or scene draw callback for normal rendering.
+It preserves application-then-scene order, clears once, submits without
+readback, and accepts an empty frame. The renderer remains one public mechanism;
+the frame is only its recording boundary.
+
+\`WebGpuRenderer.begin_frame\` is available for lower-level code:
+
+\`\`\`ts
+const frame = renderer.begin_frame();
+frame.draw_commands([
+  { kind: "rectangle", draw: { rectangle: { x: 0, y: 0, width: 800, height: 450 }, color: rgba(0, 0, 0, 1) } },
+]);
+await frame.submit();
+\`\`\`
+
+Call \`frame.capture()\` before \`submit()\` only for diagnostic pixel
+evidence. It requests one readback for that frame; production frames should
+not request capture. Existing \`renderer.clear\`, \`draw_texture\`,
+\`draw_textures\`, \`draw_text\`, and \`draw_commands\` methods remain
+readback-oriented compatibility methods during migration.
 
 \`\`\`ts
 ${documentation_examples.root_game.trimEnd()}
@@ -273,6 +302,29 @@ events.emit("reset");
 
 These utilities are standalone and reusable. Game-scoped scene events add
 ownership, disposal, and runtime error routing through \`game.scenes.events\`.
+
+## Action mapping
+
+Use \`create_action_map\` to translate raw router events into named gameplay
+actions. The map can combine keyboard, pointer, gamepad button, and analog axis
+bindings, with dead zones, inversion, scale, and deterministic digital edges.
+Call \`update()\` explicitly once per simulation frame; rebinding validates the
+complete replacement atomically.
+
+\`\`\`ts
+const actions = create_action_map({
+  router: game.input,
+  bindings: {
+    confirm: [{ device: "keyboard", code: "Enter" }, { device: "gamepad_button", button: 0 }],
+    move_x: [{ device: "gamepad_axis", axis: 0, dead_zone: 0.2 }],
+  },
+});
+actions.update();
+if (actions.get("confirm").just_pressed) confirm();
+\`\`\`
+
+Action maps do not consume raw input, create a hidden loop, or replace the
+router. Text input, IME, gestures, and hit testing remain separate.
 
 ## Entity-component system
 
@@ -318,9 +370,20 @@ identity policy.
 World-level \`export()\` and \`import()\` preserve numeric entity IDs and
 component values without requiring persistence codecs on each component.
 JSON, binary formats, migrations, and runtime-only value policies belong in an
-application-owned serializer. The ECS provides no scheduler or system registry;
-callers decide whether an ordinary system exposes \`enter\`, \`update\`,
-\`draw\`, or \`exit\`, and where to invoke those hooks.
+application-owned serializer. The ECS provides no ambient scheduler or system
+registry; callers decide whether ordinary systems expose \`enter\`, \`update\`,
+\`draw\`, or \`exit\`, and where to invoke those hooks. When ordered updates
+are useful, use the optional caller-owned pipeline:
+
+\`\`\`ts
+import { create_ecs_system_pipeline } from "squander/ecs";
+
+const simulation = create_ecs_system_pipeline<typeof world.schema>([
+  { update: ({ world, time }) => movement_system(world, time.delta_seconds) },
+  { enabled: debug_enabled, update: ({ world }) => debug_system(world) },
+]);
+simulation.run(world, time);
+\`\`\`
 
 ## ECS Arena proof game
 
@@ -342,7 +405,10 @@ multiplayer.
 Use \`game.ready\` to await renderer creation and setup. Use \`pause\`,
 \`resume\`, and \`set_visibility\` for lifecycle control. Call \`dispose\`
 when a game leaves the page. The frame loop clamps unusually large deltas,
-resets timing after suspension, and does not update while paused.
+resets timing after suspension, and does not update while paused. The runtime
+owns frame-submission promises: a rejection stops future frames, reports one
+\`GameRuntimeError\` with the original cause, and is not an unhandled rejection.
+Disposal waits for accepted frame cleanup and is safe to call more than once.
 
 \`\`\`ts
 await game.ready;
@@ -351,8 +417,26 @@ game.resume();
 await game.dispose();
 \`\`\`
 
-Current timing is variable-step browser-frame timing. A fixed-step simulation is
-not part of the current runtime.
+Variable-step browser-frame timing remains the default. Opt into bounded fixed
+updates when simulation needs stable increments:
+
+\`\`\`ts
+const game = create_game({
+  renderer,
+  scheduler,
+  fixed_step: { step_seconds: 1 / 60, max_steps_per_frame: 5 },
+  update: (time) => {
+    simulate(time.delta_seconds);
+    if (time.discarded_seconds > 0) report_overload(time.discarded_seconds);
+  },
+  draw: (frame) => draw_game(frame),
+});
+\`\`\`
+
+The runtime runs a bounded update batch and draws once afterward. When the
+bound is reached, \`UpdateTime.discarded_seconds\` reports discarded catch-up
+time. Pause and hidden visibility do not advance the accumulator; interpolation
+and rollback are not included.
 
 ## WebGPU renderer
 
@@ -366,8 +450,34 @@ ${documentation_examples.webgpu.trimEnd()}
 \`\`\`
 
 Handle \`WebGpuUnavailableError\` and \`GameDeviceLostError\` at an
-application boundary. Custom shaders and render targets are not currently
-public features.
+application boundary. Renderer-owned targets and constrained texture fragment
+effects are available for offscreen composition and postprocessing; mipmaps,
+swappable projections, and arbitrary shader bindings remain outside the current
+contract.
+
+\`\`\`ts
+const target = renderer.create_render_target({ width: 800, height: 450 });
+const frame = renderer.begin_frame();
+frame.set_target(target);
+frame.draw_commands(scene_commands);
+frame.set_target();
+frame.draw_commands([{ kind: "texture", draw: { texture: target } }]);
+target.release();
+await frame.submit();
+\`\`\`
+
+Custom effects receive the sampled and tinted \`color\`, normalized \`uv\`, and
+up to 16 numeric values exposed as \`uniforms[0]\` through \`uniforms[3]\`.
+Squander owns shader bindings, pipelines, and GPU buffers.
+
+\`\`\`ts
+const effect = renderer.create_shader_effect({
+  fragment_code: "return vec4f(color.rgb * uniforms[0].x, color.a);",
+  uniforms: [0.75],
+});
+await renderer.draw_texture(texture, { effect });
+effect.release();
+\`\`\`
 
 ## Assets and resources
 
@@ -394,7 +504,7 @@ flip, tint, opacity, and submission order. Use \`nearest\` filtering for
 pixel-art games and \`linear\` filtering for smooth art.
 
 \`\`\`ts
-renderer.draw_texture(hero.read(), {
+frame.draw_commands([{ kind: "texture", draw: { texture: hero.read(), options: {
   x: player.x,
   y: player.y,
   width: 48,
@@ -404,11 +514,13 @@ renderer.draw_texture(hero.read(), {
   flip_x: player.facing_left,
   tint: rgba(1, 0.9, 0.9, 1),
   opacity: player.invulnerable ? 0.5 : 1,
-});
+} } }]);
 \`\`\`
 
-Draw order is observable. Selectable blend modes, mipmaps, and anisotropic
-filtering are not currently exposed.
+Draw order is observable. Each draw may use \`blend_mode: "normal"\`,
+\`"additive"\`, or \`"multiply"\`; normal is the default and blend-mode changes
+break batching. Mipmaps, anisotropic filtering, and swappable projections are
+not currently exposed.
 
 ## Shapes
 
@@ -417,7 +529,7 @@ geometry. Supported commands include filled and outlined rectangles, circles,
 and lines. Invalid geometry throws; valid zero-area geometry draws nothing.
 
 \`\`\`ts
-renderer.draw_commands([
+frame.draw_commands([
   {
     kind: "rectangle",
     draw: { rectangle: { x: 20, y: 20, width: 180, height: 24 }, color: rgba(0.1, 0.1, 0.15, 1) },
@@ -450,14 +562,38 @@ trail.update([move_to(player.x, player.y), line_to(player.x - 80, player.y + 20)
 \`\`\`
 
 Use the exported path, flattening, stroke, polygon, and triangulation helpers
-from \`squander/core/runtime\`. Holes, fill rules, and filled curved paths are
-not current features.
+from \`squander/core/runtime\`. Filled curved subpaths use the explicit
+\`filled_path\` command and \`even_odd\` rule; nonzero winding and broader fill
+rules remain deferred.
+
+Path strokes use world units, butt caps, and miter joins by default. Configure
+\`units: "screen"\`, \`cap: "square" | "round"\`, \`join: "bevel" | "round"\`,
+and a finite \`miter_limit\` for selection outlines, trails, and effects. Screen
+units account for active camera zoom and display density. These options apply
+to path stroke commands; dashed strokes, inside/outside alignment, and primitive
+outline styles remain deferred.
+
+\`\`\`ts
+frame.draw_commands([{ kind: "stroke", draw: {
+  subpaths: outline, width: 2, units: "screen", cap: "round", join: "round",
+  color: rgba(1, 1, 0, 1),
+} }]);
+\`\`\`
+
+\`\`\`ts
+const outer = flatten_path([move_to(0, 0), line_to(200, 0), line_to(200, 120), line_to(0, 120), close()], 0.5)[0];
+const hole = flatten_path([move_to(40, 30), line_to(40, 90), line_to(160, 90), line_to(160, 30), close()], 0.5)[0];
+frame.draw_commands([{ kind: "filled_path", draw: { subpaths: [outer, hole], fill_rule: "even_odd", color: rgba(1, 0, 0, 1) } }]);
+\`\`\`
 
 ## Cameras and viewports
 
 Use a 2D camera to draw world coordinates through position, zoom, and rotation.
 Use viewport sizing helpers to keep logical coordinates stable as CSS size,
-letterboxing, device pixels, and physical canvas size change.
+letterboxing, device pixels, and physical canvas size change. Pass the current
+viewport to \`create_browser_input_adapter\` when pointer events should include
+logical coordinates and an \`inside_logical_content\` flag; raw host-relative
+coordinates remain available.
 
 \`\`\`ts
 const camera = create_camera({
@@ -475,7 +611,19 @@ camera.draw(() => {
 
 Drawing inside a camera scope uses world space; drawing outside it uses screen
 space. Camera scope restoration is synchronous, including when a callback
-throws. Automatic culling and cursor-anchored zoom are deferred.
+throws. Opt-in bounded render culling is available; cursor-anchored zoom and
+swappable projections remain deferred.
+
+\`\`\`ts
+const renderer = await create_webgpu_renderer({ canvas, width: 800, height: 450, cull_offscreen: true });
+camera.draw(() => {
+  frame.draw_commands([{ kind: "texture", draw: { texture }, bounds: enemy_bounds }]);
+});
+\`\`\`
+
+Culling is disabled by default and skips only definitely offscreen bounded
+commands. Visible, edge-touching, and unbounded commands remain. It never skips
+simulation or input.
 
 ## Random
 
@@ -679,7 +827,12 @@ type checks with \`npm run test:type\`, and Svelte diagnostics with
 \`npm run check\`. Run \`npm run test:integration\` for browser flows and
 \`npm run test:benchmark:ecs\` plus \`npm run test:benchmark:ecs:browser\` for
 the Node and trusted-local-origin ECS benchmark profiles. Run
-\`npm run test:webgpu\` for real WebGPU rendering.
+\`npm run test:webgpu\` for real WebGPU rendering. Run \`npm run test:coverage\`
+before \`npm run check:coverage\`; the strict greater-than-90% source gate
+covers executable TypeScript under \`src/lib/core/\`. Verify Svelte lifecycle
+and documentation presentation through browser tests. Run
+\`npm run test:benchmark:renderer:browser:guard\` to compare renderer timing and
+retained-resource measurements with the matching recorded WebGPU profile.
 
 CI has two lanes. Pull requests use standard GitHub-hosted runners for portable
 CPU, type, package, documentation, browser, ECS, and advisory benchmark checks.

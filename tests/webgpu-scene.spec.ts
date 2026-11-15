@@ -1,11 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 declare global {
+  var __scene_capture_requested: boolean | undefined;
   var __scene_readback: Uint8Array | undefined;
 }
 
 test("[scene-lifecycle] mounts and renders an ordered scene stack", async ({ page }) => {
   await page.goto("/docs/examples/scenes");
+  await page.evaluate(() => {
+    globalThis.__scene_capture_requested = true;
+  });
   const gpu_environment = await page.evaluate(async () => {
     const adapter = await navigator.gpu.requestAdapter();
     const device = adapter === null ? null : await adapter.requestDevice();

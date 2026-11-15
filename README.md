@@ -124,6 +124,7 @@ npm run test:integration
 npm run test:benchmark:ecs
 npm run test:benchmark:ecs:browser
 npm run test:webgpu
+npm run test:coverage
 npm run check:coverage
 npm run validate:specs
 npm run package

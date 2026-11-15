@@ -29,10 +29,16 @@ and slice evidence are archived under
 - [feature-documentation](feature-documentation/spec.md)
 - [game-lifecycle](game-lifecycle/spec.md)
 - [game-timing](game-timing/spec.md)
+- [fixed-step](fixed-step/spec.md)
 - [paths-and-polygons](paths-and-polygons/spec.md)
 - [resource-ownership](resource-ownership/spec.md)
 - [shape-drawing](shape-drawing/spec.md)
 - [sprite-drawing](sprite-drawing/spec.md)
+- [blend-modes](blend-modes/spec.md)
+- [render-targets](render-targets/spec.md)
+- [custom-shader-effects](custom-shader-effects/spec.md)
+- [filled-curved-paths](filled-curved-paths/spec.md)
+- [stroke-options](stroke-options/spec.md)
 - [svelte-bridge](svelte-bridge/spec.md)
 - [text-drawing](text-drawing/spec.md)
 - [texture-filtering](texture-filtering/spec.md)
@@ -46,10 +52,19 @@ and slice evidence are archived under
 - [scene-signals](scene-signals/spec.md)
 - [scene-ui](scene-ui/spec.md)
 - [input-routing](input-routing/spec.md)
+- [action-mapping](action-mapping/spec.md)
 
 ### Draft capabilities
 
 - [ecs-system](ecs-system/spec.md)
+- [ecs-system-composition](ecs-system-composition/spec.md)
+- [render-frame](render-frame/spec.md)
+- [renderer-performance](renderer-performance/spec.md)
+- [render-culling](render-culling/spec.md)
+
+The [render-frame](render-frame/spec.md) capability is in progress: its public
+contract and CPU lifecycle path are implemented, while full trusted-origin
+layered WebGPU evidence remains a promotion gate.
 
 ## Verification baseline
 
@@ -74,9 +89,9 @@ readback. Coverage and mocked GPU tests do not replace real-device evidence.
 
 ## Future work
 
-Read the candidate logs for deferred behavior such as action mapping,
-cursor-anchored zoom, automatic culling, custom shaders, fixed-step scheduling,
-and mipmaps. The [ecs-system](ecs-system/spec.md) document is a Draft contract;
+Read the candidate logs for deferred behavior such as cursor-anchored zoom,
+automatic culling, broader custom shaders, and mipmaps. The
+[ecs-system](ecs-system/spec.md) document is a Draft contract;
 do not treat it as an accepted implementation until its evidence plan passes.
 
 ## Adding or changing a capability
