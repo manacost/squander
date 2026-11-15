@@ -88,13 +88,13 @@ assertion or hidden as a skip.
 
 ## Commits
 
-| Slice | Commit | Change |
-| --- | --- | --- |
-| C5 correctness | `c4b10b3` | Corrected multiple even-odd holes and added CPU/GPU regressions. |
-| Callable thenables | `f1a7b67` | Shared the PromiseLike guard across game and frame-loop draw paths. |
-| Fixed-fit input | `05e1b31` | Added the browser fixture and letterbox coordinate checks. |
-| A4 renderer evidence | `2bdbee8` | Added allocation/retention instrumentation and target-switch measurements. |
-| Coverage and spec | `4b0049b` | Set the coverage scope, filled core test gaps, and updated verification docs. |
+| Slice                | Commit    | Change                                                                        |
+| -------------------- | --------- | ----------------------------------------------------------------------------- |
+| C5 correctness       | `c4b10b3` | Corrected multiple even-odd holes and added CPU/GPU regressions.              |
+| Callable thenables   | `f1a7b67` | Shared the PromiseLike guard across game and frame-loop draw paths.           |
+| Fixed-fit input      | `05e1b31` | Added the browser fixture and letterbox coordinate checks.                    |
+| A4 renderer evidence | `2bdbee8` | Added allocation/retention instrumentation and target-switch measurements.    |
+| Coverage and spec    | `4b0049b` | Set the coverage scope, filled core test gaps, and updated verification docs. |
 
 This checkpoint records evidence; it does not replace commit history or test
 reports.
