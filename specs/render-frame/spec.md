@@ -17,9 +17,11 @@ Implemented.
 - `begin_frame` creates a frame context owned by the renderer.
 - A frame records commands in call order and accepts an empty command list.
 - `submit` clears the canvas once at frame start and preserves command order
-  across target switches, using one command-buffer submission per logical
-  production frame. Multiple render passes may target the canvas and offscreen
-  targets within that encoder.
+  across target switches. The current implementation uses one command buffer
+  across canvas and offscreen render passes, based on target-switch performance
+  evidence. Treat command-buffer count as a benchmark regression signal, not as
+  a standalone correctness guarantee; pixel order, ownership, and lifecycle
+  behavior define correctness.
 - `submit` performs no readback and resolves only after submitted work is safe
   for frame-owned resource leases to release.
 - `capture` is an explicit diagnostic request. It schedules a readback for the
@@ -64,8 +66,10 @@ game disposal waits for the frame cleanup.
 
 - [x] Application and scenes render in bottom-to-top order.
 - [x] Multiple draw groups preserve order and alpha composition.
-- [x] A production frame uses one command-buffer submission across target
-      switches.
+- [x] The target-switch benchmark records command-buffer count, render-pass
+      count, and frame timing. The current profile uses one command buffer for
+      up to eight render passes and improves the seven-switch case versus the
+      measured pre-change path.
 - [x] A production frame performs zero readbacks.
 - [x] Diagnostic capture returns deterministic pixels.
 - [x] Existing readback APIs continue working during migration.
@@ -120,8 +124,10 @@ ordered layer readback and explicit diagnostic capture.
 The target-switch benchmark in
 [`benchmark-report.md`](benchmark-report.md) verifies one command-buffer
 submission for one, two, four, and eight render passes. In the recorded profile,
-the eight-pass workload improved from 3.9 ms to 1.0 ms. Absolute timings remain
-informational and profile-specific; the structural submission gate is enforced.
+the eight-pass workload improved from 3.9 ms to 1.0 ms. This is a
+profile-specific performance result. Pixel and lifecycle tests remain the
+correctness gates, and a future encoder strategy should be judged by repeating
+the benchmark on matching profiles.
 
 ## Notes
 

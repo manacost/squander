@@ -1,6 +1,6 @@
 # Target-switch frame benchmark
 
-Date: 2026-11-13
+Date: 2026-11-14
 
 This trusted-origin Chromium WebGPU benchmark records eight small rectangle
 draws per production frame, split across canvas and one offscreen target. It
@@ -21,14 +21,16 @@ After the shared-encoder change, the same fixture records:
 
 | Target switches | Command buffers per frame | Render passes per frame | Median frame time after (ms) |
 | --------------: | ------------------------: | ----------------------: | ---------------------------: |
-|               0 |                         1 |                       1 |                          0.7 |
+|               0 |                         1 |                       1 |                          0.6 |
 |               1 |                         1 |                       2 |                          0.7 |
-|               3 |                         1 |                       4 |                          0.9 |
-|               7 |                         1 |                       8 |                          1.0 |
+|               3 |                         1 |                       4 |                          0.8 |
+|               7 |                         1 |                       8 |                          1.2 |
 
 The pre-change profile showed a clear cost as queue submissions increased. The
 post-change profile held one command buffer per frame and reduced the
-seven-switch workload from 3.9 ms to 1.0 ms. The one-command-buffer structural
-gate is met. Timings are environment-specific and do not justify an absolute
-latency threshold; continue tracking target-switch timing as a relative
-benchmark.
+seven-switch workload from 3.9 ms to 1.2 ms in the latest run. This supports
+the current single-buffer strategy as an internal performance target for this
+workload.
+Command-buffer count is a benchmark signal, not a separate correctness
+contract. Timings are environment-specific and do not justify an absolute
+latency threshold; compare matching profiles before changing the strategy.

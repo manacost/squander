@@ -4,8 +4,22 @@ import { readFileSync } from "node:fs";
 type RendererBenchmarkResult = Readonly<{
   sprite_count: number;
   cpu_preparation_ms: number;
+  cold_frame_ms: number;
   production_frame_ms: number;
   diagnostic_frame_ms: number;
+  transition_frame_ms: number;
+  cold_buffer_allocations: number;
+  warm_buffer_allocations: number;
+  transition_buffer_allocations: number;
+  cold_resource_allocations: number;
+  warm_resource_allocations: number;
+  transition_resource_allocations: number;
+  retained_buffers_after_warm: number;
+  retained_buffer_bytes_after_warm: number;
+  retained_textures_after_warm: number;
+  retained_buffers_after_dispose: number;
+  retained_buffer_bytes_after_dispose: number;
+  retained_textures_after_dispose: number;
   submissions: number;
   batch_breaks: number;
   production_readbacks: number;
@@ -13,11 +27,30 @@ type RendererBenchmarkResult = Readonly<{
 }>;
 
 type RendererBenchmarkModule = typeof import("../verification/renderer-benchmark-workload.js");
+type WebGpuInstrumentationModule = typeof import("../verification/webgpu-allocation-instrumentation.js");
 
 type RendererBenchmarkBaseline = Readonly<{
   version: number;
   time_regression_ratio: number;
-  profiles: Readonly<Partial<Record<string, Partial<Record<string, { production_frame_ms: number }>>>>>;
+  retained_resource_regression_ratio: number;
+  profiles: Readonly<
+    Partial<
+      Record<
+        string,
+        Partial<
+          Record<
+            string,
+            {
+              production_frame_ms: number;
+              retained_buffers_after_warm?: number;
+              retained_buffer_bytes_after_warm?: number;
+              retained_textures_after_warm?: number;
+            }
+          >
+        >
+      >
+    >
+  >;
 }>;
 
 function baseline(): RendererBenchmarkBaseline {
@@ -53,12 +86,11 @@ test("renderer production and diagnostic workloads record separate costs", async
   const results = await page.evaluate(async () => {
     const renderer_url = new URL("/src/lib/core/runtime/webgpu_renderer.ts", location.origin).href;
     const workload_url = new URL("/verification/renderer-benchmark-workload.ts", location.origin).href;
+    const instrumentation_url = new URL("/verification/webgpu-allocation-instrumentation.ts", location.origin).href;
     const renderer_module = (await import(/* @vite-ignore */ renderer_url)) as typeof import("../src/lib/core/runtime/webgpu_renderer.js");
     const workload_module = (await import(/* @vite-ignore */ workload_url)) as RendererBenchmarkModule;
-    const canvas = document.createElement("canvas");
-    document.body.append(canvas);
-    const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 800, height: 450 });
-    const texture = renderer.create_texture(new Uint8Array(4 * 4 * 4).fill(255), 4, 4, { filter: "nearest" });
+    const instrumentation_module = (await import(/* @vite-ignore */ instrumentation_url)) as WebGpuInstrumentationModule;
+    const instrumentation = instrumentation_module.install_webgpu_allocation_instrumentation();
     const elapsed = async (run: () => Promise<void>): Promise<number> => {
       const start = performance.now();
       await run();
@@ -68,32 +100,54 @@ test("renderer production and diagnostic workloads record separate costs", async
       const ordered = [...values].sort((left, right) => left - right);
       return ordered[Math.floor(ordered.length / 2)] ?? 0;
     };
+    const allocation_total = (snapshot: ReturnType<typeof instrumentation.snapshot>): number =>
+      snapshot.buffers_created +
+      snapshot.textures_created +
+      snapshot.samplers_created +
+      snapshot.bind_groups_created +
+      snapshot.pipelines_created;
     const measured: RendererBenchmarkResult[] = [];
     for (const sprite_count of workload_module.renderer_benchmark_sizes) {
       const workload = workload_module.create_renderer_benchmark_workload(sprite_count);
       const preparation_samples: number[] = [];
       const production_samples: number[] = [];
       const diagnostic_samples: number[] = [];
+      const transition_samples: number[] = [];
+      const canvas = document.createElement("canvas");
+      document.body.append(canvas);
+      const renderer = await renderer_module.create_webgpu_renderer({ canvas, width: 800, height: 450 });
+      const texture = renderer.create_texture(new Uint8Array(4 * 4 * 4).fill(255), 4, 4, { filter: "nearest" });
+      const transition_texture = renderer.create_texture(new Uint8Array(4 * 4 * 4).fill(220), 4, 4, { filter: "nearest" });
       let commands = workload_module.prepare_renderer_benchmark_commands(workload, texture);
+      const before_cold = instrumentation.snapshot();
+      const cold_frame_ms = await elapsed(async () => {
+        const frame = renderer.begin_frame();
+        frame.draw_commands(commands);
+        await frame.submit();
+      });
+      const after_cold = instrumentation.snapshot();
+      const cold_allocations = allocation_total(after_cold) - allocation_total(before_cold);
+      const cold_buffer_allocations = after_cold.buffers_created - before_cold.buffers_created;
       for (let warmup = 0; warmup < 2; warmup += 1) {
         const frame = renderer.begin_frame();
         frame.draw_commands(commands);
         await frame.submit();
       }
+      const before_warm = instrumentation.snapshot();
       for (let repetition = 0; repetition < 3; repetition += 1) {
         preparation_samples.push(
           await elapsed(async () => {
             commands = workload_module.prepare_renderer_benchmark_commands(workload, texture);
           }),
         );
-        production_samples.push(
-          await elapsed(async () => {
-            const frame = renderer.begin_frame();
-            frame.draw_commands(commands);
-            await frame.submit();
-          }),
-        );
+        const frame = renderer.begin_frame();
+        frame.draw_commands(commands);
+        production_samples.push(await elapsed(() => frame.submit()));
       }
+      const after_warm = instrumentation.snapshot();
+      const warm_allocations = allocation_total(after_warm) - allocation_total(before_warm);
+      const warm_buffer_allocations = after_warm.buffers_created - before_warm.buffers_created;
+      const retained_after_warm = after_warm;
       diagnostic_samples.push(
         await elapsed(async () => {
           const frame = renderer.begin_frame();
@@ -103,19 +157,62 @@ test("renderer production and diagnostic workloads record separate costs", async
           await capture;
         }),
       );
+      const split_index = Math.floor(workload.sprites.length / 2);
+      const first_workload = { ...workload, sprite_count: split_index, sprites: workload.sprites.slice(0, split_index) };
+      const second_workload = {
+        ...workload,
+        sprite_count: workload.sprites.length - split_index,
+        sprites: workload.sprites.slice(split_index),
+      };
+      const transition_commands = [
+        ...workload_module.prepare_renderer_benchmark_commands(first_workload, texture),
+        ...workload_module.prepare_renderer_benchmark_commands(second_workload, transition_texture),
+      ];
+      const before_transition = instrumentation.snapshot();
+      const transition_frame = renderer.begin_frame();
+      transition_frame.draw_commands(transition_commands);
+      transition_samples.push(await elapsed(() => transition_frame.submit()));
+      const after_first_transition = instrumentation.snapshot();
+      const transition_allocations = allocation_total(after_first_transition) - allocation_total(before_transition);
+      const transition_buffer_allocations = after_first_transition.buffers_created - before_transition.buffers_created;
+      const transition_batch_breaks = after_first_transition.draw_calls - before_transition.draw_calls - 1;
+      for (let repetition = 0; repetition < 3; repetition += 1) {
+        const frame = renderer.begin_frame();
+        frame.draw_commands(transition_commands);
+        transition_samples.push(await elapsed(() => frame.submit()));
+      }
+      const after_transition = instrumentation.snapshot();
+      texture.release();
+      transition_texture.release();
+      renderer.dispose();
+      const after_dispose = instrumentation.snapshot();
+      const warm_frames = 3;
       measured.push({
         sprite_count,
         cpu_preparation_ms: median(preparation_samples),
+        cold_frame_ms,
         production_frame_ms: median(production_samples),
         diagnostic_frame_ms: median(diagnostic_samples),
-        submissions: 1,
-        batch_breaks: workload.expected_batch_breaks,
-        production_readbacks: workload.expected_production_readbacks,
+        transition_frame_ms: median(transition_samples),
+        cold_buffer_allocations,
+        warm_buffer_allocations,
+        transition_buffer_allocations,
+        cold_resource_allocations: cold_allocations,
+        warm_resource_allocations: warm_allocations,
+        transition_resource_allocations: transition_allocations,
+        retained_buffers_after_warm: retained_after_warm.retained_buffers,
+        retained_buffer_bytes_after_warm: retained_after_warm.retained_buffer_bytes,
+        retained_textures_after_warm: retained_after_warm.retained_textures,
+        retained_buffers_after_dispose: after_dispose.retained_buffers,
+        retained_buffer_bytes_after_dispose: after_dispose.retained_buffer_bytes,
+        retained_textures_after_dispose: after_dispose.retained_textures,
+        submissions: (after_warm.submissions - before_warm.submissions) / warm_frames,
+        batch_breaks: transition_batch_breaks,
+        production_readbacks: (after_warm.readbacks - before_warm.readbacks + after_transition.readbacks - before_transition.readbacks) / 7,
         diagnostic_readbacks: 1,
       });
     }
-    texture.release();
-    renderer.dispose();
+    instrumentation.restore();
     return measured;
   });
 
@@ -126,9 +223,15 @@ test("renderer production and diagnostic workloads record separate costs", async
   expect(environment.device_lost_promise).toBe(true);
   expect(results.map((result) => result.sprite_count)).toEqual([100, 1_000, 10_000]);
   expect(results.every((result) => result.submissions === 1)).toBe(true);
-  expect(results.every((result) => result.batch_breaks === 0)).toBe(true);
+  expect(results.every((result) => result.batch_breaks === 1)).toBe(true);
   expect(results.every((result) => result.production_readbacks === 0)).toBe(true);
   expect(results.every((result) => result.diagnostic_readbacks === 1)).toBe(true);
+  expect(results.every((result) => result.warm_buffer_allocations === 0)).toBe(true);
+  expect(results.every((result) => result.warm_resource_allocations === 0)).toBe(true);
+  expect(results.every((result) => result.transition_buffer_allocations === 0)).toBe(true);
+  expect(results.every((result) => result.retained_buffers_after_dispose === 0)).toBe(true);
+  expect(results.every((result) => result.retained_buffer_bytes_after_dispose === 0)).toBe(true);
+  expect(results.every((result) => result.retained_textures_after_dispose === 0)).toBe(true);
 
   const profile = `${process.platform}-chromium-${browser_version}`;
   const expected_profile = baseline().profiles[profile];
@@ -139,6 +242,18 @@ test("renderer production and diagnostic workloads record separate costs", async
       expect(result.production_frame_ms, `${String(result.sprite_count)} sprite production timing regression`).toBeLessThanOrEqual(
         expected.production_frame_ms * baseline().time_regression_ratio,
       );
+      const retained_ratio = baseline().retained_resource_regression_ratio;
+      if (expected.retained_buffers_after_warm !== undefined) {
+        expect(result.retained_buffers_after_warm).toBeLessThanOrEqual(Math.ceil(expected.retained_buffers_after_warm * retained_ratio));
+      }
+      if (expected.retained_buffer_bytes_after_warm !== undefined) {
+        expect(result.retained_buffer_bytes_after_warm).toBeLessThanOrEqual(
+          Math.ceil(expected.retained_buffer_bytes_after_warm * retained_ratio),
+        );
+      }
+      if (expected.retained_textures_after_warm !== undefined) {
+        expect(result.retained_textures_after_warm).toBeLessThanOrEqual(Math.ceil(expected.retained_textures_after_warm * retained_ratio));
+      }
     }
   }
 

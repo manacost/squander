@@ -4,9 +4,24 @@
   "retained_resource_regression_ratio": 1.15,
   "profiles": {
     "darwin-chromium-156.0.8078.4": {
-      "100": { "production_frame_ms": 2.5 },
-      "1000": { "production_frame_ms": 5.2 },
-      "10000": { "production_frame_ms": 33.6 }
+      "100": {
+        "production_frame_ms": 1.7,
+        "retained_buffers_after_warm": 2,
+        "retained_buffer_bytes_after_warm": 32832,
+        "retained_textures_after_warm": 2
+      },
+      "1000": {
+        "production_frame_ms": 3.6,
+        "retained_buffers_after_warm": 2,
+        "retained_buffer_bytes_after_warm": 524352,
+        "retained_textures_after_warm": 2
+      },
+      "10000": {
+        "production_frame_ms": 26.5,
+        "retained_buffers_after_warm": 2,
+        "retained_buffer_bytes_after_warm": 4194368,
+        "retained_textures_after_warm": 2
+      }
     }
   }
 }

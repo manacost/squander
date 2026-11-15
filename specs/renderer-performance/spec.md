@@ -7,9 +7,8 @@ resource ownership, and the single public `WebGpuRenderer` mechanism.
 
 ## Status
 
-Accepted. The private reuse and batching implementation is in place; complete
-promotion requires the recorded cold/transition comparison and retained
-resource counters.
+Implemented. The private reuse and batching implementation has matching-profile
+cold, warm, transition, readback, and retained-resource evidence.
 
 ## Requirements
 
@@ -48,13 +47,13 @@ another ring slot.
 
 ## Acceptance criteria
 
-- [ ] Warm frames do not create one sampler, uniform buffer, bind group, and
+- [x] Warm frames do not create one sampler, uniform buffer, bind group, and
       transient vertex buffer per draw.
-- [ ] Compatible sprite groups produce fewer submissions than the baseline.
-- [ ] Texture, blend, target, and order changes preserve output.
-- [ ] Geometry updates replace only affected persistent GPU data.
-- [ ] Resource release remains safe while work is in flight.
-- [ ] Cold, warm, and transition measurements are recorded for 100, 1,000,
+- [x] Compatible sprite groups produce fewer submissions than the baseline.
+- [x] Texture, blend, target, and order changes preserve output.
+- [x] Geometry updates replace only affected persistent GPU data.
+- [x] Resource release remains safe while work is in flight.
+- [x] Cold, warm, and transition measurements are recorded for 100, 1,000,
       and 10,000 sprite workloads.
 
 ## Usage description
@@ -76,15 +75,20 @@ Current verification:
 - [`verification/renderer-benchmark.test.ts`](../../verification/renderer-benchmark.test.ts)
   records CPU preparation at 100, 1,000, and 10,000 sprites.
 - [`tests/webgpu-renderer-performance.spec.ts`](../../tests/webgpu-renderer-performance.spec.ts)
-  records warm production and diagnostic timings, submissions, batch breaks,
-  and readbacks at the same sizes.
+  records cold, warm, texture-transition, and diagnostic timings, submissions,
+  draw-derived batch breaks, readbacks, and retained WebGPU buffers/textures at
+  the same sizes.
+- [`verification/webgpu-allocation-instrumentation.ts`](../../verification/webgpu-allocation-instrumentation.ts)
+  counts actual device resource creation, submissions, draw calls, readbacks,
+  and live buffers/textures without exposing counters through the renderer API.
 - [`benchmark-report.md`](benchmark-report.md) records the matching browser,
   OS, adapter, DPR, viewport, fixture, warm-up, and sample profile.
 
-The current evidence does not claim a stable retained-resource counter or a
-separate cold/transition report. Those remain explicit promotion gaps rather
-than hidden skips. Planned verification for those gaps is tracked in A4 of the
-local core-evolution ledger.
+The recorded matching-profile baseline includes a 20% timing guard and a 15%
+retained-buffer and texture guard. Warm frames allocate no GPU resources, a
+single texture transition creates one new bind group and one batch break, and
+all tracked buffers/textures are released on renderer disposal. See the
+[benchmark report](benchmark-report.md) for environment and measurements.
 
 ## Notes
 
